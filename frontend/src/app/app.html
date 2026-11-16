@@ -1,0 +1,13 @@
+<h1>ItCardBrawl</h1>
+
+@switch (apiState()) {
+  @case ('loading') {
+    <p>Łączenie z API…</p>
+  }
+  @case ('ok') {
+    <p>API: ok</p>
+  }
+  @case ('error') {
+    <p>API niedostępne</p>
+  }
+}
