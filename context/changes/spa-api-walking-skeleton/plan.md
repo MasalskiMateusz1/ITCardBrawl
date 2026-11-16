@@ -212,26 +212,26 @@ Brak danych i istniejących użytkowników. Domyślny form login Springa znika (
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw test`
-- [x] 1.2 Test `GET /api/ping` → 200 `{"status":"ok"}` bez logowania przechodzi
-- [x] 1.3 Test nieuwierzytelnionego `GET /api/anything` → 401 przechodzi
+- [x] 1.1 Testy backendu przechodzą: `./mvnw test` — ee94830
+- [x] 1.2 Test `GET /api/ping` → 200 `{"status":"ok"}` bez logowania przechodzi — ee94830
+- [x] 1.3 Test nieuwierzytelnionego `GET /api/anything` → 401 przechodzi — ee94830
 
 #### Manual
 
-- [x] 1.4 Po `./mvnw spring-boot:run` adres `http://localhost:8080/api/ping` w przeglądarce pokazuje `{"status":"ok"}`, a `http://localhost:8080/api/foo` zwraca 401 bez strony logowania
+- [x] 1.4 Po `./mvnw spring-boot:run` adres `http://localhost:8080/api/ping` w przeglądarce pokazuje `{"status":"ok"}`, a `http://localhost:8080/api/foo` zwraca 401 bez strony logowania — ee94830
 
 ### Phase 2: Frontend — szkielet Angular z proxy
 
 #### Automated
 
-- [ ] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 2.3 `frontend/node_modules` nie jest śledzone przez git
-- [ ] 2.4 Testy backendu nadal przechodzą: `./mvnw test`
+- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 2.3 `frontend/node_modules` nie jest śledzone przez git
+- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test`
 
 #### Manual
 
-- [ ] 2.5 Przy uruchomionym Springu i `npm start` strona `http://localhost:4200` pokazuje „API: ok”
-- [ ] 2.6 W DevTools → Network żądanie pinga ma URL `http://localhost:4200/api/ping` i nie ma błędów CORS w konsoli
-- [ ] 2.7 Po zatrzymaniu Springa i odświeżeniu strona pokazuje „API niedostępne”
-- [ ] 2.8 Działa w Chrome i Firefox
+- [x] 2.5 Przy uruchomionym Springu i `npm start` strona `http://localhost:4200` pokazuje „API: ok”
+- [x] 2.6 W DevTools → Network żądanie pinga ma URL `http://localhost:4200/api/ping` i nie ma błędów CORS w konsoli
+- [x] 2.7 Po zatrzymaniu Springa i odświeżeniu strona pokazuje „API niedostępne”
+- [x] 2.8 Działa w Chrome i Firefox
