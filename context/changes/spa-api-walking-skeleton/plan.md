@@ -224,14 +224,14 @@ Brak danych i istniejących użytkowników. Domyślny form login Springa znika (
 
 #### Automated
 
-- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [x] 2.3 `frontend/node_modules` nie jest śledzone przez git
-- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test`
+- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 925f890
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 925f890
+- [x] 2.3 `frontend/node_modules` nie jest śledzone przez git — 925f890
+- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test` — 925f890
 
 #### Manual
 
-- [x] 2.5 Przy uruchomionym Springu i `npm start` strona `http://localhost:4200` pokazuje „API: ok”
-- [x] 2.6 W DevTools → Network żądanie pinga ma URL `http://localhost:4200/api/ping` i nie ma błędów CORS w konsoli
-- [x] 2.7 Po zatrzymaniu Springa i odświeżeniu strona pokazuje „API niedostępne”
-- [x] 2.8 Działa w Chrome i Firefox
+- [x] 2.5 Przy uruchomionym Springu i `npm start` strona `http://localhost:4200` pokazuje „API: ok” — 925f890
+- [x] 2.6 W DevTools → Network żądanie pinga ma URL `http://localhost:4200/api/ping` i nie ma błędów CORS w konsoli — 925f890
+- [x] 2.7 Po zatrzymaniu Springa i odświeżeniu strona pokazuje „API niedostępne” — 925f890
+- [x] 2.8 Działa w Chrome i Firefox — 925f890

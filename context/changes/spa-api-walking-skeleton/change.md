@@ -1,7 +1,7 @@
 ---
 change_id: spa-api-walking-skeleton
 title: Szkielet SPA (Angular) rozmawiającego z API przez jedno źródło
-status: implementing
+status: implemented
 created: 2026-11-16
 updated: 2026-11-16
 archived_at: null
