@@ -42,3 +42,6 @@ build/
 HELP.md
 .mvn/wrapper/maven-wrapper.jar
 ### STS ###
+
+### Local secrets ###
+.env.properties

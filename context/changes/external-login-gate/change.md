@@ -1,0 +1,12 @@
+---
+change_id: external-login-gate
+title: External login gate
+status: implementing
+created: 2026-11-18
+updated: 2026-11-18
+archived_at: null
+---
+
+## Notes
+
+<!-- Free-form notes for this change: links, ad-hoc context, decisions that don't belong in research/frame/plan. -->
