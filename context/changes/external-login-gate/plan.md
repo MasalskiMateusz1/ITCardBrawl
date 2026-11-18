@@ -356,30 +356,30 @@ Brak danych do migracji. Po wdrożeniu S-01 każdy deweloper potrzebuje `.env.pr
 
 #### Automated
 
-- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [x] 2.3 Brak odwołań do pinga we frontendzie: `git grep -nE "PingService|/api/ping" frontend/src` zwraca pusto
-- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test`
+- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 61f2bf3
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 61f2bf3
+- [x] 2.3 Brak odwołań do pinga we frontendzie: `git grep -nE "PingService|/api/ping" frontend/src` zwraca pusto — 61f2bf3
+- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test` — 61f2bf3
 
 #### Manual
 
-- [x] 2.5 Niezalogowany: `http://localhost:4200/` → `/sign-in` z dwoma przyciskami
-- [x] 2.6 Logowanie GitHubem → powrót na `http://localhost:4200/`, lobby z nazwą i awatarem
-- [x] 2.7 Logowanie Google (w nowym oknie incognito) → lobby z nazwą i awatarem
-- [x] 2.8 Anulowanie zgody u dostawcy → `/sign-in?error` z komunikatem błędu
-- [x] 2.9 Spring zatrzymany, odświeżenie `/` → `/sign-in?unavailable` z komunikatem
-- [x] 2.10 DevTools → Network: callback idzie na `localhost:4200/login/oauth2/code/...`, żadnych błędów CORS; po wejściu do lobby istnieje cookie `XSRF-TOKEN`
+- [x] 2.5 Niezalogowany: `http://localhost:4200/` → `/sign-in` z dwoma przyciskami — 61f2bf3
+- [x] 2.6 Logowanie GitHubem → powrót na `http://localhost:4200/`, lobby z nazwą i awatarem — 61f2bf3
+- [x] 2.7 Logowanie Google (w nowym oknie incognito) → lobby z nazwą i awatarem — 61f2bf3
+- [x] 2.8 Anulowanie zgody u dostawcy → `/sign-in?error` z komunikatem błędu — 61f2bf3
+- [x] 2.9 Spring zatrzymany, odświeżenie `/` → `/sign-in?unavailable` z komunikatem — 61f2bf3
+- [x] 2.10 DevTools → Network: callback idzie na `localhost:4200/login/oauth2/code/...`, żadnych błędów CORS; po wejściu do lobby istnieje cookie `XSRF-TOKEN` — 61f2bf3
 
 ### Phase 3: Frontend — cykl sesji
 
 #### Automated
 
-- [ ] 3.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 3.3 Testy backendu nadal przechodzą: `./mvnw test`
+- [x] 3.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 3.3 Testy backendu nadal przechodzą: `./mvnw test`
 
 #### Manual
 
-- [ ] 3.4 Klik „Wyloguj” w lobby → `/sign-in?logout` z „Wylogowano.”; w DevTools żądanie `POST /api/logout` ma nagłówek `X-XSRF-TOKEN` i status `204`
-- [ ] 3.5 Po wylogowaniu wejście na `/` → `/sign-in` (sesja naprawdę zakończona)
-- [ ] 3.6 Wygaśnięcie sesji: usunięcie cookie `JSESSIONID` w DevTools (lub restart Springa) i odświeżenie `/` → `/sign-in`
+- [x] 3.4 Klik „Wyloguj” w lobby → `/sign-in?logout` z „Wylogowano.”; w DevTools żądanie `POST /api/logout` ma nagłówek `X-XSRF-TOKEN` i status `204`
+- [x] 3.5 Po wylogowaniu wejście na `/` → `/sign-in` (sesja naprawdę zakończona)
+- [x] 3.6 Wygaśnięcie sesji: usunięcie cookie `JSESSIONID` w DevTools (lub restart Springa) i odświeżenie `/` → `/sign-in`

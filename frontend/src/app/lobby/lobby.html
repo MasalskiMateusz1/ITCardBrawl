@@ -4,3 +4,9 @@
   }
   <p>Witaj, {{ player.displayName }}</p>
 }
+
+<button type="button" (click)="logout()">Wyloguj</button>
+
+@if (logoutError(); as text) {
+  <p class="message">{{ text }}</p>
+}

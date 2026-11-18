@@ -54,6 +54,12 @@ describe('SignIn', () => {
     expect(element.textContent).toContain('Serwer gry niedostępny — spróbuj później.');
   });
 
+  it('shows the logout confirmation for ?logout', async () => {
+    const element = await render('/sign-in?logout');
+
+    expect(element.textContent).toContain('Wylogowano.');
+  });
+
   it('shows no message without query params', async () => {
     const element = await render('/sign-in');
 

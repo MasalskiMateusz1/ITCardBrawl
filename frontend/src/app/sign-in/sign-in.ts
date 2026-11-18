@@ -19,6 +19,9 @@ export class SignIn {
     if (params?.has('unavailable')) {
       return 'Serwer gry niedostępny — spróbuj później.';
     }
+    if (params?.has('logout')) {
+      return 'Wylogowano.';
+    }
     return null;
   });
 }
