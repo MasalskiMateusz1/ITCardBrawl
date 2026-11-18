@@ -26,5 +26,6 @@ ItCardBrawl is a small, browser-based card game built solo after hours within a 
 ## Post-bootstrap notes
 
 - 2026-11-16 — **View layer changed: separate frontend project instead of Thymeleaf.** The GUI will be a standalone SPA (Angular or React — not yet decided; location — sibling folder or `frontend/` — not yet decided). The Spring Boot app becomes a JSON API only.
+- 2026-11-16 — **Frontend framework decided: Angular** (TypeScript), living in `frontend/` in this repo (one PR per vertical slice, one CI workflow for API + SPA). Author has no prior Angular/React experience — chosen deliberately as a learning goal; keep the SPA thin (game rules and opponent stay in Java).
 - Recommended auth shape: Spring handles the OAuth2 login (`oauth2Login`) and keeps a session cookie; the SPA's dev server proxies API calls to Spring so the browser sees one origin (no tokens in the browser, no CORS).
 - Already added to `pom.xml` after scaffolding: `spring-boot-starter-security`, `spring-boot-starter-security-oauth2-client` (+ their `-test` starters). OAuth2 provider registration (`spring.security.oauth2.client.registration.*`) and a `SecurityFilterChain` are still to do.
