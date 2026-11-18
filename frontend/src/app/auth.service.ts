@@ -18,4 +18,8 @@ export class AuthService {
   loadMe(): Observable<Player> {
     return this.http.get<Player>('/api/me').pipe(tap((player) => this.currentUser.set(player)));
   }
+
+  logout(): Observable<void> {
+    return this.http.post<void>('/api/logout', null).pipe(tap(() => this.currentUser.set(null)));
+  }
 }
