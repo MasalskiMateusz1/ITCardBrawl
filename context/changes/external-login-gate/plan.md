@@ -374,12 +374,12 @@ Brak danych do migracji. Po wdrożeniu S-01 każdy deweloper potrzebuje `.env.pr
 
 #### Automated
 
-- [x] 3.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [x] 3.3 Testy backendu nadal przechodzą: `./mvnw test`
+- [x] 3.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — a05b33f
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — a05b33f
+- [x] 3.3 Testy backendu nadal przechodzą: `./mvnw test` — a05b33f
 
 #### Manual
 
-- [x] 3.4 Klik „Wyloguj” w lobby → `/sign-in?logout` z „Wylogowano.”; w DevTools żądanie `POST /api/logout` ma nagłówek `X-XSRF-TOKEN` i status `204`
-- [x] 3.5 Po wylogowaniu wejście na `/` → `/sign-in` (sesja naprawdę zakończona)
-- [x] 3.6 Wygaśnięcie sesji: usunięcie cookie `JSESSIONID` w DevTools (lub restart Springa) i odświeżenie `/` → `/sign-in`
+- [x] 3.4 Klik „Wyloguj” w lobby → `/sign-in?logout` z „Wylogowano.”; w DevTools żądanie `POST /api/logout` ma nagłówek `X-XSRF-TOKEN` i status `204` — a05b33f
+- [x] 3.5 Po wylogowaniu wejście na `/` → `/sign-in` (sesja naprawdę zakończona) — a05b33f
+- [x] 3.6 Wygaśnięcie sesji: usunięcie cookie `JSESSIONID` w DevTools (lub restart Springa) i odświeżenie `/` → `/sign-in` — a05b33f
