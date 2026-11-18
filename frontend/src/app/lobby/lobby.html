@@ -1,0 +1,6 @@
+@if (user(); as player) {
+  @if (player.avatarUrl !== null) {
+    <img [src]="player.avatarUrl" alt="" width="48" height="48" />
+  }
+  <p>Witaj, {{ player.displayName }}</p>
+}

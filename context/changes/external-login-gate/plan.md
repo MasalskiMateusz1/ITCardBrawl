@@ -342,33 +342,33 @@ Brak danych do migracji. Po wdrożeniu S-01 każdy deweloper potrzebuje `.env.pr
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw test`
-- [x] 1.2 `.env.properties` jest ignorowany: `git check-ignore .env.properties` zwraca ścieżkę
-- [x] 1.3 W repo brak sekretów: `git grep -nE "client-secret=[^$]"` zwraca pusto
+- [x] 1.1 Testy backendu przechodzą: `./mvnw test` — 61f0fa8
+- [x] 1.2 `.env.properties` jest ignorowany: `git check-ignore .env.properties` zwraca ścieżkę — 61f0fa8
+- [x] 1.3 W repo brak sekretów: `git grep -nE "client-secret=[^$]"` zwraca pusto — 61f0fa8
 
 #### Manual
 
-- [x] 1.4 Aplikacje zarejestrowane u GitHuba i Google z callbackami `http://localhost:4200/login/oauth2/code/{github,google}`, wartości w `.env.properties`
-- [x] 1.5 `./mvnw spring-boot:run` startuje; `curl -i http://localhost:8080/api/me` → `401` bez `Location`
-- [x] 1.6 `curl -i http://localhost:8080/oauth2/authorization/github` → `302` na `github.com/login/oauth/authorize` z prawdziwym `client_id`
+- [x] 1.4 Aplikacje zarejestrowane u GitHuba i Google z callbackami `http://localhost:4200/login/oauth2/code/{github,google}`, wartości w `.env.properties` — 61f0fa8
+- [x] 1.5 `./mvnw spring-boot:run` startuje; `curl -i http://localhost:8080/api/me` → `401` bez `Location` — 61f0fa8
+- [x] 1.6 `curl -i http://localhost:8080/oauth2/authorization/github` → `302` na `github.com/login/oauth/authorize` z prawdziwym `client_id` — 61f0fa8
 
 ### Phase 2: Frontend — bramka logowania
 
 #### Automated
 
-- [ ] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 2.3 Brak odwołań do pinga we frontendzie: `git grep -nE "PingService|/api/ping" frontend/src` zwraca pusto
-- [ ] 2.4 Testy backendu nadal przechodzą: `./mvnw test`
+- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 2.3 Brak odwołań do pinga we frontendzie: `git grep -nE "PingService|/api/ping" frontend/src` zwraca pusto
+- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test`
 
 #### Manual
 
-- [ ] 2.5 Niezalogowany: `http://localhost:4200/` → `/sign-in` z dwoma przyciskami
-- [ ] 2.6 Logowanie GitHubem → powrót na `http://localhost:4200/`, lobby z nazwą i awatarem
-- [ ] 2.7 Logowanie Google (w nowym oknie incognito) → lobby z nazwą i awatarem
-- [ ] 2.8 Anulowanie zgody u dostawcy → `/sign-in?error` z komunikatem błędu
-- [ ] 2.9 Spring zatrzymany, odświeżenie `/` → `/sign-in?unavailable` z komunikatem
-- [ ] 2.10 DevTools → Network: callback idzie na `localhost:4200/login/oauth2/code/...`, żadnych błędów CORS; po wejściu do lobby istnieje cookie `XSRF-TOKEN`
+- [x] 2.5 Niezalogowany: `http://localhost:4200/` → `/sign-in` z dwoma przyciskami
+- [x] 2.6 Logowanie GitHubem → powrót na `http://localhost:4200/`, lobby z nazwą i awatarem
+- [x] 2.7 Logowanie Google (w nowym oknie incognito) → lobby z nazwą i awatarem
+- [x] 2.8 Anulowanie zgody u dostawcy → `/sign-in?error` z komunikatem błędu
+- [x] 2.9 Spring zatrzymany, odświeżenie `/` → `/sign-in?unavailable` z komunikatem
+- [x] 2.10 DevTools → Network: callback idzie na `localhost:4200/login/oauth2/code/...`, żadnych błędów CORS; po wejściu do lobby istnieje cookie `XSRF-TOKEN`
 
 ### Phase 3: Frontend — cykl sesji
 
