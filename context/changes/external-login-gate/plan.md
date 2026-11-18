@@ -50,6 +50,7 @@ Najpierw backend, w pełni testowalny MockMvc bez prawdziwych dostawców (post-p
 - **Atrapy klientów w testach bez przesłaniania głównej konfiguracji**: plik testowy musi leżeć w `src/test/resources/config/application.properties`, a nie w `src/test/resources/application.properties` — ten drugi przesłoniłby na classpath główny `application.properties` (znikną rejestracje i import `.env.properties`, a testy przestałyby sprawdzać prawdziwą konfigurację). `classpath:/config/` jest ładowany dodatkowo, z wyższym priorytetem, więc wystarczy w nim podać wartości placeholderów. Testy nie mogą asertować konkretnego `client_id` (lokalny `.env.properties` dewelopera może mieć pierwszeństwo).
 - **Komunikaty z parametrów bez wartości**: `?error`, `?unavailable`, `?logout` nie mają wartości — wykrywać obecność (`queryParamMap.has(...)`), nie prawdziwość wartości (pusty string jest falsy).
 - **Kolejność CSRF po logowaniu**: po callbacku token jest wyczyszczony; nowe cookie `XSRF-TOKEN` powstaje dopiero przy sondzie `/api/me` wykonywanej przez guard lobby — dlatego `/api/me` musi wołać `getToken()`, a przycisk „Wyloguj” jest dostępny wyłącznie w lobby (za guardem).
+  - **Odstępstwo (wdrożenie, 61f0fa8)**: `getToken()` w `/api/me` pominięto — w Spring Security 7.1.2 `csrf(c -> c.spa())` sam wystawia cookie `XSRF-TOKEN` (zweryfikowane na działającej aplikacji). Pilnuje tego test `MeControllerTests.responseIssuesXsrfTokenCookie` oraz ręczna weryfikacja 3.4; jeśli test zacznie padać po aktualizacji Springa, przywrócić parametr `CsrfToken` i `getToken()`.
 
 ## Phase 1: Backend — oauth2Login, /api/me, CSRF, wylogowanie
 
@@ -97,6 +98,8 @@ Spring obsługuje logowanie GitHub/Google, trzyma sesję, udostępnia znormalizo
 | `google` | `name` → `given_name` → `email` → `getName()` | `picture` |
 
 `provider` = `getAuthorizedClientRegistrationId()`. Brak atrybutu awatara → `null`.
+
+> **Odstępstwo (wdrożenie)**: parametr `CsrfToken` / `getToken()` pominięty — zob. Critical Implementation Details → Kolejność CSRF po logowaniu.
 
 #### 5. Konfiguracja testowa
 

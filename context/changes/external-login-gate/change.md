@@ -1,7 +1,7 @@
 ---
 change_id: external-login-gate
 title: External login gate
-status: implemented
+status: impl_reviewed
 created: 2026-11-18
 updated: 2026-11-18
 archived_at: null

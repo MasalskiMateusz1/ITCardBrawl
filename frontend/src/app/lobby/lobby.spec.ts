@@ -88,4 +88,21 @@ describe('Lobby', () => {
       'Nie udało się wylogować — spróbuj ponownie.',
     );
   });
+
+  it('disables the logout button while the request is in flight', async () => {
+    signIn({ provider: 'github', displayName: 'Ada', avatarUrl: null });
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const fixture = await render();
+    const button = (fixture.nativeElement as HTMLElement).querySelector('button')!;
+
+    clickLogout(fixture);
+    await fixture.whenStable();
+    expect(button.disabled).toBe(true);
+
+    httpTesting
+      .expectOne({ method: 'POST', url: '/api/logout' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+    expect(button.disabled).toBe(false);
+  });
 });

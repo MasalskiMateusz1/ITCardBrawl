@@ -5,6 +5,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URLDecoder;
@@ -15,9 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -75,6 +78,30 @@ class SecurityFlowTests {
 			.andReturn();
 
 		assertThat(result.getResponse().getStatus()).isNotEqualTo(HttpStatus.NO_CONTENT.value());
+	}
+
+	@Test
+	void deniedConsentRedirectsToSignInWithError() throws Exception {
+		MvcResult start = mockMvc.perform(get("/oauth2/authorization/github"))
+			.andExpect(status().is3xxRedirection())
+			.andReturn();
+		String state = UriComponentsBuilder.fromUriString(start.getResponse().getHeader("Location"))
+			.build()
+			.getQueryParams()
+			.getFirst("state");
+
+		mockMvc.perform(get("/login/oauth2/code/github")
+				.session((MockHttpSession) start.getRequest().getSession())
+				.param("error", "access_denied")
+				.param("state", state))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/sign-in?error"));
+	}
+
+	@Test
+	void noGeneratedLoginPage() throws Exception {
+		mockMvc.perform(get("/login"))
+			.andExpect(status().isUnauthorized());
 	}
 
 }
