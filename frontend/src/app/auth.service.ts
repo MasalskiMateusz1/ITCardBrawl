@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { SKIP_AUTH_REDIRECT } from './auth.interceptor';
 
 export type Player = {
   provider: 'github' | 'google';
@@ -16,7 +17,11 @@ export class AuthService {
   readonly user = this.currentUser.asReadonly();
 
   loadMe(): Observable<Player> {
-    return this.http.get<Player>('/api/me').pipe(tap((player) => this.currentUser.set(player)));
+    // authGuard decides where a failed probe goes, so the interceptor must not redirect.
+    const context = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
+    return this.http
+      .get<Player>('/api/me', { context })
+      .pipe(tap((player) => this.currentUser.set(player)));
   }
 
   logout(): Observable<void> {

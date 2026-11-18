@@ -1,5 +1,6 @@
 import {
   HttpClient,
+  HttpContext,
   HttpErrorResponse,
   provideHttpClient,
   withInterceptors,
@@ -7,7 +8,8 @@ import {
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { authInterceptor } from './auth.interceptor';
+import { authInterceptor, SKIP_AUTH_REDIRECT } from './auth.interceptor';
+import { AuthService } from './auth.service';
 
 describe('authInterceptor', () => {
   let httpTesting: HttpTestingController;
@@ -47,8 +49,23 @@ describe('authInterceptor', () => {
     expect((errors[0] as HttpErrorResponse).status).toBe(401);
   });
 
-  it('does not redirect on 401 from /api/me and propagates the error', () => {
-    const errors = request('/api/me');
+  it('does not redirect on 401 when the request sets SKIP_AUTH_REDIRECT and propagates the error', () => {
+    const errors: unknown[] = [];
+    TestBed.inject(HttpClient)
+      .get('/api/other', { context: new HttpContext().set(SKIP_AUTH_REDIRECT, true) })
+      .subscribe({ error: (error: unknown) => errors.push(error) });
+    httpTesting.expectOne('/api/other').flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    expect(navigateByUrl).not.toHaveBeenCalled();
+    expect(errors.length).toBe(1);
+    expect((errors[0] as HttpErrorResponse).status).toBe(401);
+  });
+
+  it('does not redirect on 401 from the AuthService /api/me probe', () => {
+    const errors: unknown[] = [];
+    TestBed.inject(AuthService)
+      .loadMe()
+      .subscribe({ error: (error: unknown) => errors.push(error) });
     httpTesting.expectOne('/api/me').flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(navigateByUrl).not.toHaveBeenCalled();
