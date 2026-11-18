@@ -3,7 +3,7 @@ project: ItCardBrawl
 version: 1
 status: draft                    # draft | active | locked
 created: 2026-11-16
-updated: 2026-11-16
+updated: 2026-11-18
 prd_version: 1
 main_goal: learn
 top_blocker: skills
@@ -41,7 +41,7 @@ ItCardBrawl to przeglądarkowa gra karciana dla ludzi z IT na wieczór po pracy:
 
 | ID   | Change ID                   | Outcome (user can …)                                                                 | Prerequisites | PRD refs                                  | Status   |
 | ---- | --------------------------- | ------------------------------------------------------------------------------------ | ------------- | ----------------------------------------- | -------- |
-| F-01 | spa-api-walking-skeleton    | (foundation) aplikacja w przeglądarce rozmawia z API przez jedno źródło              | —             | NFR (przeglądarki), Guardrails            | in-progress |
+| F-01 | spa-api-walking-skeleton    | (foundation) aplikacja w przeglądarce rozmawia z API przez jedno źródło              | —             | NFR (przeglądarki), Guardrails            | done |
 | F-02 | deploy-pipeline-skeleton    | (foundation) każdy merge do main jest automatycznie wdrażany na serwer               | F-01          | NFR (bez instalacji), Guardrails          | blocked  |
 | S-01 | external-login-gate         | gracz loguje się zewnętrznym kontem; niezalogowany trafia na logowanie               | F-01          | FR-001, Access Control, NFR (dane konta)  | blocked  |
 | S-02 | match-setup-table           | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron           | S-01          | FR-002, FR-003, FR-007, US-01             | blocked  |
@@ -87,7 +87,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - — (rozstrzygnięte 2026-11-16: Angular, w folderze `frontend/` tego repo — zob. tech-stack.md §Post-bootstrap notes)
 - **Risk:** Pierwsza nowa technologia (SPA) wprowadzana samodzielnie, bez logowania i gry — zgodnie z blokadą `skills`; zbyt rozbudowany szkielet (routing, stan, komponenty „na zapas”) to dryf — tylko tyle, ile potrzebuje S-01.
-- **Status:** in-progress
+- **Status:** done
 
 ### F-02: Szkielet wdrożenia
 
@@ -220,3 +220,5 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 ## Milestone History
 
 ## Done
+
+- **F-01: (foundation) aplikacja przeglądarkowa uruchamia się lokalnie i wyświetla odpowiedź z API, przy czym przeglądarka widzi jedno źródło (wywołania API przechodzą przez proxy), zgodnie z kształtem zapisanym w tech-stack.md.** — Archived 2026-11-18 → `context/archive/2026-11-16-spa-api-walking-skeleton/`. Lesson: —.
