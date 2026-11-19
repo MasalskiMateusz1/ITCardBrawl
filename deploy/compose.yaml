@@ -13,7 +13,9 @@ services:
     # ruch z zewnatrz tylko przez Caddy w sieci compose (app:8080).
 
   caddy:
-    image: caddy:2
+    # Wersja przypieta (linia minor): deploy.sh pobiera tylko app, Caddy aktualizujemy recznie
+    # (zob. deploy/README.md, "Aktualizacja Caddy").
+    image: caddy:2.11
     restart: unless-stopped
     ports:
       - "80:80"

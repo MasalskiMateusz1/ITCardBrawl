@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
+
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
 
@@ -55,6 +57,21 @@ class SpaForwardTests {
 	void apiStaysProtected() throws Exception {
 		mockMvc.perform(get("/api/me"))
 			.andExpect(status().isUnauthorized());
+	}
+
+	// Regula tras SPA musi decydowac na zdekodowanej sciezce, tak jak routing MVC:
+	// "/%61pi/me" to "/api/me" i nie moze ominac uwierzytelnienia jako "trasa SPA".
+	@Test
+	void percentEncodedApiPathStaysProtected() throws Exception {
+		mockMvc.perform(get(URI.create("/%61pi/me")))
+			.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void percentEncodedSpaRouteStillForwardsToIndex() throws Exception {
+		mockMvc.perform(get(URI.create("/%73ign-in")))
+			.andExpect(status().isOk())
+			.andExpect(forwardedUrl("/index.html"));
 	}
 
 	@Test

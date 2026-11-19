@@ -25,6 +25,10 @@
 # Wymaga w katalogu skryptu: compose.yaml, Caddyfile, app.env i .env z APP_DOMAIN.
 set -euo pipefail
 
+# Zerwane SSH (anulowany job CI, siec) nie moze przerwac skryptu miedzy podmiana tagu a jej
+# przywroceniem: ignorujemy HUP/PIPE, a log() nie konczy skryptu, gdy stderr juz nie istnieje.
+trap '' HUP PIPE
+
 cd "$(dirname "$(readlink -f "$0")")"
 
 readonly IMAGE=ghcr.io/masalskimateusz1/itcardbrawl
@@ -32,7 +36,7 @@ readonly ENV_FILE=.env
 readonly PREV_FILE=.previous_tag
 readonly HEALTH_TIMEOUT=90
 
-log() { echo "[deploy] $*" >&2; }
+log() { echo "[deploy] $*" >&2 || true; }
 die() { log "BLAD: $*"; exit 1; }
 
 usage() {
