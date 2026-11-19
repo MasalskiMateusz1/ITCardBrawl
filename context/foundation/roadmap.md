@@ -3,7 +3,7 @@ project: ItCardBrawl
 version: 1
 status: draft                    # draft | active | locked
 created: 2026-11-16
-updated: 2026-11-18
+updated: 2026-11-19
 prd_version: 1
 main_goal: learn
 top_blocker: skills
@@ -42,7 +42,7 @@ ItCardBrawl to przeglądarkowa gra karciana dla ludzi z IT na wieczór po pracy:
 | ID   | Change ID                   | Outcome (user can …)                                                                 | Prerequisites | PRD refs                                  | Status   |
 | ---- | --------------------------- | ------------------------------------------------------------------------------------ | ------------- | ----------------------------------------- | -------- |
 | F-01 | spa-api-walking-skeleton    | (foundation) aplikacja w przeglądarce rozmawia z API przez jedno źródło              | —             | NFR (przeglądarki), Guardrails            | done |
-| F-02 | deploy-pipeline-skeleton    | (foundation) każdy merge do main jest automatycznie wdrażany na serwer               | F-01          | NFR (bez instalacji), Guardrails          | blocked  |
+| F-02 | deploy-pipeline-skeleton    | (foundation) każdy merge do main jest automatycznie wdrażany na serwer               | F-01          | NFR (bez instalacji), Guardrails          | in-progress |
 | S-01 | external-login-gate         | gracz loguje się zewnętrznym kontem; niezalogowany trafia na logowanie               | F-01          | FR-001, Access Control, NFR (dane konta)  | done |
 | S-02 | match-setup-table           | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron           | S-01          | FR-002, FR-003, FR-007, US-01             | blocked  |
 | S-03 | first-full-match            | gracz rozgrywa pełną partię postaciami przeciw komputerowi aż do wyniku              | S-02          | FR-004, FR-006, FR-008, US-01             | blocked  |
@@ -102,7 +102,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Na jakim serwerze / hostingu działa self-host i pod jaką domeną? — Owner: user. Block: yes.
 - **Risk:** Druga nowa technologia (kontener + CI) celowo osobno od logowania; wdrożenie wcześnie, bo przy celu `learn` i auto-deploy z tech-stack.md każdy kolejny wycinek uczy się na prawdziwym środowisku.
 - **Hand-off z F-01:** `SecurityConfig` ma `anyRequest().authenticated()` dla wszystkich ścieżek — po spakowaniu SPA do jara trzeba dodać `permitAll` dla zasobów statycznych SPA (`/`, `/index.html`, bundle JS/CSS, `/favicon.ico`), inaczej dostaną 401 (impl-review F1).
-- **Status:** blocked
+- **Status:** in-progress
 
 ## Slices
 

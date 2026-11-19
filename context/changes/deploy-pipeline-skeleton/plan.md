@@ -354,14 +354,14 @@ Push na `main` po zielonych testach buduje obraz, publikuje go w GHCR, wdraża n
 
 #### Automated
 
-- [x] 2.1 Obraz się buduje: `docker build -t itcardbrawl:local .`
-- [x] 2.2 W obrazie nie ma sekretów (`.env.properties`)
-- [x] 2.3 Kontener startuje i jest `healthy`
-- [x] 2.4 `/api/ping` zwraca `{"status":"ok"}`, a `/` zawiera `<app-root>`
+- [x] 2.1 Obraz się buduje: `docker build -t itcardbrawl:local .` — ce7041a
+- [x] 2.2 W obrazie nie ma sekretów (`.env.properties`) — ce7041a
+- [x] 2.3 Kontener startuje i jest `healthy` — ce7041a
+- [x] 2.4 `/api/ping` zwraca `{"status":"ok"}`, a `/` zawiera `<app-root>` — ce7041a
 
 #### Manual
 
-- [x] 2.5 `http://localhost:8080/` przekierowuje na `/sign-in` z przyciskami logowania
+- [x] 2.5 `http://localhost:8080/` przekierowuje na `/sign-in` z przyciskami logowania — ce7041a
 
 ### Phase 3: CI — testy na PR i main
 
