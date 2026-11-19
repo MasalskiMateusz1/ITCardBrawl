@@ -392,13 +392,13 @@ Push na `main` po zielonych testach buduje obraz, publikuje go w GHCR, wdraża n
 
 #### Automated
 
-- [x] 5.1 Workflow przechodzi actionlint
-- [ ] 5.2 Joby `test`, `image`, `deploy` zakończone `success` po merge do `main`
-- [ ] 5.3 Obraz `:<sha>` istnieje w GHCR
+- [x] 5.1 Workflow przechodzi actionlint — b3e0281
+- [x] 5.2 Joby `test`, `image`, `deploy` zakończone `success` po merge do `main` — b3e0281
+- [x] 5.3 Obraz `:<sha>` istnieje w GHCR — b3e0281
 
 #### Manual
 
-- [ ] 5.4 Zmiana zmergowana do `main` pojawia się na produkcji bez ręcznych kroków
-- [ ] 5.5 PR nie uruchamia jobów `image` ani `deploy`
-- [ ] 5.6 Zepsuta wersja: `deploy` czerwony, produkcja działa na poprzedniej wersji
-- [ ] 5.7 Logowanie → lobby → wylogowanie działa w czterech przeglądarkach
+- [x] 5.4 Zmiana zmergowana do `main` pojawia się na produkcji bez ręcznych kroków — b3e0281
+- [x] 5.5 PR nie uruchamia jobów `image` ani `deploy` — b3e0281
+- [x] 5.6 Zepsuta wersja: `deploy` czerwony, produkcja działa na poprzedniej wersji — b3e0281
+- [x] 5.7 Logowanie → lobby → wylogowanie działa w czterech przeglądarkach — b3e0281
