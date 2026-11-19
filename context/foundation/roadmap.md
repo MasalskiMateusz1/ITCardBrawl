@@ -180,7 +180,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Parallel with:** F-02
 - **Blockers:** —
 - **Unknowns:**
-  - Treść kart obu frakcji (nazwy, żarty, wartości) — Owner: user. Block: no.
+  - Treść kart obu frakcji (nazwy, żarty, wartości) — Owner: user. Block: no. Nazwy, opisy i teksty kart i frakcji muszą powstać po polsku i po angielsku (`factions.json` trzyma każde pole jako `{ "pl", "en" }`, a walidacja katalogu wymaga obu języków — zmiana ui-in-english-and-polish).
   - Jak sprawdzamy balans i czas partii przed udostępnieniem znajomym? — Owner: user. Block: no.
 - **Risk:** Balans ma sens dopiero przy kompletnych zasadach (wydarzenia) i sensownym przeciwniku, więc idzie na końcu; treść kart to praca autorska, której agent nie wymyśli za autora.
 - **Status:** proposed

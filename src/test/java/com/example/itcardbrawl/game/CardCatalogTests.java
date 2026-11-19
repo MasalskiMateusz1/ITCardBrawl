@@ -29,9 +29,9 @@ class CardCatalogTests {
 	@BeforeEach
 	void validData() {
 		factions = new ArrayList<>(List.of(
-				new Faction("alpha", "Alfa", "opis", true),
-				new Faction("beta", "Beta", "opis", true),
-				new Faction("neutral", "Neutralne", "opis", false)));
+				faction("alpha", true),
+				faction("beta", true),
+				faction("neutral", false)));
 		cards = new ArrayList<>();
 		decks = new LinkedHashMap<>();
 		for (String faction : List.of("alpha", "beta")) {
@@ -50,8 +50,17 @@ class CardCatalogTests {
 		}
 	}
 
+	private static LocalizedText text(String value) {
+		return new LocalizedText(value, value + " (en)");
+	}
+
+	private static Faction faction(String id, boolean playable) {
+		return new Faction(id, text("Frakcja " + id), text("opis"), playable);
+	}
+
 	private static Card card(String id, String faction, int cost) {
-		return new Card(id, faction, "Karta " + id, cost % 2 == 0 ? CardType.EVENT : CardType.CHARACTER, cost, "tekst");
+		return new Card(id, faction, text("Karta " + id), cost % 2 == 0 ? CardType.EVENT : CardType.CHARACTER, cost,
+				text("tekst"));
 	}
 
 	private CardCatalog build() {
@@ -64,7 +73,10 @@ class CardCatalogTests {
 				new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION));
 
 		assertThat(catalog.playableFactions()).extracting(Faction::id).containsExactly("developers", "testers");
-		assertThat(catalog.playableFactions()).extracting(Faction::name).containsExactly("Developerzy", "Testerzy");
+		assertThat(catalog.playableFactions()).extracting(f -> f.name().in(Language.PL))
+			.containsExactly("Developerzy", "Testerzy");
+		assertThat(catalog.playableFactions()).extracting(f -> f.name().in(Language.EN)).allSatisfy(
+				name -> assertThat(name).isNotBlank());
 		assertThat(catalog.faction("neutral")).get().extracting(Faction::playable).isEqualTo(false);
 		for (Faction faction : catalog.playableFactions()) {
 			List<Card> deck = catalog.deck(faction.id());
@@ -98,7 +110,7 @@ class CardCatalogTests {
 
 	@Test
 	void duplicateFactionIdIsRejected() {
-		factions.add(new Faction("beta", "Beta 2", "opis", false));
+		factions.add(faction("beta", false));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("powtórzone id frakcji 'beta'");
@@ -138,7 +150,7 @@ class CardCatalogTests {
 
 	@Test
 	void fewerThanTwoPlayableFactionsIsRejected() {
-		factions.set(1, new Faction("beta", "Beta", "opis", false));
+		factions.set(1, faction("beta", false));
 		decks.remove("beta");
 
 		assertThatIllegalStateException().isThrownBy(this::build)
@@ -147,7 +159,7 @@ class CardCatalogTests {
 
 	@Test
 	void moreThanTwoPlayableFactionsIsRejected() {
-		factions.add(new Faction("gamma", "Gamma", "opis", true));
+		factions.add(faction("gamma", true));
 		decks.put("gamma", decks.get("alpha"));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
@@ -195,16 +207,102 @@ class CardCatalogTests {
 	}
 
 	@Test
-	void factionWithoutNameIsRejected() {
-		factions.set(0, new Faction("alpha", " ", "opis", true));
+	void factionNameMissingInPolishIsRejected() {
+		factions.set(0, new Faction("alpha", new LocalizedText(null, "Alpha"), text("opis"), true));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
-			.withMessageContaining("frakcja 'alpha' nie ma nazwy");
+			.withMessageContaining("frakcja 'alpha': brak tekstu 'name' w języku PL");
+	}
+
+	@Test
+	void factionNameBlankInEnglishIsRejected() {
+		factions.set(0, new Faction("alpha", new LocalizedText("Alfa", " "), text("opis"), true));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("frakcja 'alpha': brak tekstu 'name' w języku EN");
+	}
+
+	@Test
+	void factionWithoutNameObjectIsRejectedInEveryLanguage() {
+		factions.set(0, new Faction("alpha", null, text("opis"), true));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("frakcja 'alpha': brak tekstu 'name' w języku PL")
+			.withMessageContaining("frakcja 'alpha': brak tekstu 'name' w języku EN");
+	}
+
+	@Test
+	void factionDescriptionBlankInPolishIsRejected() {
+		factions.set(0, new Faction("alpha", text("Alfa"), new LocalizedText("", "description"), true));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("frakcja 'alpha': brak tekstu 'description' w języku PL");
+	}
+
+	@Test
+	void factionDescriptionMissingInEnglishIsRejected() {
+		factions.set(0, new Faction("alpha", text("Alfa"), new LocalizedText("opis", null), true));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("frakcja 'alpha': brak tekstu 'description' w języku EN");
+	}
+
+	@Test
+	void cardNameMissingInPolishIsRejected() {
+		cards.set(0, new Card("alpha-1", "alpha", new LocalizedText(null, "Card"), CardType.CHARACTER, 1,
+				text("tekst")));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': brak tekstu 'name' w języku PL");
+	}
+
+	@Test
+	void cardNameBlankInEnglishIsRejected() {
+		cards.set(0, new Card("alpha-1", "alpha", new LocalizedText("Karta", "  "), CardType.CHARACTER, 1,
+				text("tekst")));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': brak tekstu 'name' w języku EN");
+	}
+
+	@Test
+	void cardTextBlankInPolishIsRejected() {
+		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1,
+				new LocalizedText(" ", "text")));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': brak tekstu 'text' w języku PL");
+	}
+
+	@Test
+	void cardTextMissingInEnglishIsRejected() {
+		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1,
+				new LocalizedText("tekst", null)));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': brak tekstu 'text' w języku EN");
+	}
+
+	@Test
+	void localizedTextIsReadFromJsonObject() {
+		String json = """
+				{ "factions": [], "cards": [
+				  { "id": "x", "faction": "f", "name": { "pl": "Nazwa", "en": "Name" }, "type": "EVENT", "cost": 1,
+				    "text": { "pl": "Tekst", "en": "Text" } }
+				] }
+				""";
+		var resource = new ByteArrayResource(json.getBytes(StandardCharsets.UTF_8), "katalog dwujęzyczny");
+
+		// Katalog jest niepoprawny (brak frakcji), ale komunikat nie może zgłaszać braku tekstów karty.
+		assertThatIllegalStateException()
+			.isThrownBy(() -> CardCatalogLoader.load(JsonMapper.builder().build(), resource))
+			.withMessageContaining("karta 'x' wskazuje nieistniejącą frakcję 'f'")
+			.withMessageNotContaining("brak tekstu");
 	}
 
 	@Test
 	void cardWithoutTypeIsRejected() {
-		cards.set(0, new Card("alpha-1", "alpha", "Karta alpha-1", null, 1, "tekst"));
+		cards.set(0, new Card("alpha-1", "alpha", text("Karta alpha-1"), null, 1, text("tekst")));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1' nie ma typu");

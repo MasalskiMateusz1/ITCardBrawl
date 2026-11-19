@@ -13,9 +13,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
+
+import com.example.itcardbrawl.game.Card;
+import com.example.itcardbrawl.game.CardCatalog;
+import com.example.itcardbrawl.game.Language;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -24,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +45,9 @@ class MatchControllerTests {
 
 	@Autowired
 	private ClientRegistrationRepository clientRegistrations;
+
+	@Autowired
+	private CardCatalog catalog;
 
 	// Magazyn partii jest współdzielony w kontekście Springa - każdy test używa własnego gracza.
 	// oauth2Login() bierze nazwę principala z atrybutu "sub".
@@ -86,6 +95,90 @@ class MatchControllerTests {
 			.andExpect(jsonPath("$[*].id", not(hasItem("neutral"))))
 			.andExpect(jsonPath("$[0].name").isNotEmpty())
 			.andExpect(jsonPath("$[0].description").isNotEmpty());
+	}
+
+	@Test
+	void factionsWithoutLanguageHeaderArePolish() throws Exception {
+		mockMvc.perform(get("/api/factions").with(newPlayer()))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[*].name", containsInAnyOrder("Developerzy", "Testerzy")));
+	}
+
+	@Test
+	void factionsInEnglishWhenRequested() throws Exception {
+		mockMvc.perform(get("/api/factions").with(newPlayer()).header(HttpHeaders.ACCEPT_LANGUAGE, "en"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[*].name", containsInAnyOrder("Developers", "Testers")))
+			.andExpect(jsonPath("$[0].id").value("developers"))
+			.andExpect(jsonPath("$[0].description")
+				.value(catalog.faction("developers").orElseThrow().description().in(Language.EN)));
+	}
+
+	@Test
+	void unsupportedPreferredLanguageFallsBackToSupportedEnglish() throws Exception {
+		mockMvc.perform(get("/api/factions").with(newPlayer()).header(HttpHeaders.ACCEPT_LANGUAGE, "de, en;q=0.9"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[*].name", containsInAnyOrder("Developers", "Testers")));
+	}
+
+	@Test
+	void unsupportedLanguageOnlyFallsBackToPolish() throws Exception {
+		mockMvc.perform(get("/api/factions").with(newPlayer()).header(HttpHeaders.ACCEPT_LANGUAGE, "de"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$[*].name", containsInAnyOrder("Developerzy", "Testerzy")));
+	}
+
+	@Test
+	void startInEnglishReturnsEnglishTable() throws Exception {
+		String json = mockMvc.perform(startMatch("{\"factionId\":\"developers\"}").with(newPlayer())
+				.header(HttpHeaders.ACCEPT_LANGUAGE, "en"))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.player.faction.name").value("Developers"))
+			.andExpect(jsonPath("$.opponent.faction.name").value("Testers"))
+			.andReturn().getResponse().getContentAsString();
+
+		assertHandIn(JsonPath.parse(json), Language.EN);
+	}
+
+	@Test
+	void sameMatchCanBeReadInBothLanguages() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		start(player, "developers");
+
+		DocumentContext polish = current(player, "pl");
+		DocumentContext english = current(player, "en");
+
+		assertThat((String) english.read("$.matchId")).isEqualTo(polish.read("$.matchId"));
+		List<Integer> polishIds = polish.read("$.player.hand[*].instanceId");
+		List<Integer> englishIds = english.read("$.player.hand[*].instanceId");
+		assertThat(englishIds).isEqualTo(polishIds);
+		assertThat((String) polish.read("$.player.faction.name")).isEqualTo("Developerzy");
+		assertThat((String) english.read("$.player.faction.name")).isEqualTo("Developers");
+		assertThat((String) english.read("$.player.hand[0].text"))
+			.isNotEqualTo(polish.read("$.player.hand[0].text"));
+		assertHandIn(polish, Language.PL);
+		assertHandIn(english, Language.EN);
+	}
+
+	private DocumentContext current(RequestPostProcessor player, String language) throws Exception {
+		String json = mockMvc.perform(get("/api/matches/current").with(player)
+				.header(HttpHeaders.ACCEPT_LANGUAGE, language))
+			.andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString();
+		return JsonPath.parse(json);
+	}
+
+	// Każda karta ręki ma nazwę i tekst z katalogu w danym języku.
+	private void assertHandIn(DocumentContext match, Language language) {
+		List<String> cardIds = match.read("$.player.hand[*].cardId");
+		List<String> names = match.read("$.player.hand[*].name");
+		List<String> texts = match.read("$.player.hand[*].text");
+		assertThat(cardIds).isNotEmpty();
+		for (int i = 0; i < cardIds.size(); i++) {
+			Card card = catalog.card(cardIds.get(i)).orElseThrow();
+			assertThat(names.get(i)).isEqualTo(card.name().in(language));
+			assertThat(texts.get(i)).isEqualTo(card.text().in(language));
+		}
 	}
 
 	@Test

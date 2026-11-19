@@ -88,9 +88,8 @@ public final class CardCatalog {
 				errors.add("frakcja bez id");
 				continue;
 			}
-			if (isBlank(faction.name())) {
-				errors.add("frakcja '%s' nie ma nazwy".formatted(faction.id()));
-			}
+			requireAllLanguages("frakcja", faction.id(), "name", faction.name(), errors);
+			requireAllLanguages("frakcja", faction.id(), "description", faction.description(), errors);
 			if (byId.putIfAbsent(faction.id(), faction) != null) {
 				errors.add("powtórzone id frakcji '%s'".formatted(faction.id()));
 			}
@@ -111,9 +110,8 @@ public final class CardCatalog {
 			if (!factions.containsKey(card.faction())) {
 				errors.add("karta '%s' wskazuje nieistniejącą frakcję '%s'".formatted(card.id(), card.faction()));
 			}
-			if (isBlank(card.name())) {
-				errors.add("karta '%s' nie ma nazwy".formatted(card.id()));
-			}
+			requireAllLanguages("karta", card.id(), "name", card.name(), errors);
+			requireAllLanguages("karta", card.id(), "text", card.text(), errors);
 			if (card.type() == null) {
 				errors.add("karta '%s' nie ma typu".formatted(card.id()));
 			}
@@ -187,6 +185,16 @@ public final class CardCatalog {
 			expanded.put(factionId, List.copyOf(deckCards));
 		}
 		return expanded;
+	}
+
+	// Każde pole tekstowe musi mieć niepustą wartość w każdym obsługiwanym języku.
+	private static void requireAllLanguages(String kind, String id, String field, LocalizedText value,
+			List<String> errors) {
+		for (Language language : Language.values()) {
+			if (value == null || isBlank(value.in(language))) {
+				errors.add("%s '%s': brak tekstu '%s' w języku %s".formatted(kind, id, field, language));
+			}
+		}
 	}
 
 	private static boolean isNonPlayable(Faction faction) {
