@@ -1,7 +1,6 @@
 package com.example.itcardbrawl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+
+import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,11 +57,23 @@ class SecurityFlowTests {
 			.contains("redirect_uri=http://localhost/login/oauth2/code/google");
 	}
 
+	// Token CSRF pobierany jak w SPA (cookie XSRF-TOKEN -> naglowek X-XSRF-TOKEN). Celowo bez
+	// post-procesora csrf(): podmienia on repozytorium tokenow w CsrfFilter wspoldzielonego kontekstu,
+	// przez co pozniejsze testy (MeControllerTests) nie dostaja cookie XSRF-TOKEN.
 	@Test
 	void logoutWithCsrfReturnsNoContent() throws Exception {
+		var github = clientRegistrations.findByRegistrationId("github");
+		Cookie xsrf = mockMvc.perform(get("/api/me").with(oauth2Login().clientRegistration(github)))
+			.andExpect(status().isOk())
+			.andReturn()
+			.getResponse()
+			.getCookie("XSRF-TOKEN");
+		assertThat(xsrf).isNotNull();
+
 		mockMvc.perform(post("/api/logout")
-				.with(oauth2Login().clientRegistration(clientRegistrations.findByRegistrationId("github")))
-				.with(csrf()))
+				.with(oauth2Login().clientRegistration(github))
+				.cookie(xsrf)
+				.header("X-XSRF-TOKEN", xsrf.getValue()))
 			.andExpect(status().isNoContent());
 	}
 
