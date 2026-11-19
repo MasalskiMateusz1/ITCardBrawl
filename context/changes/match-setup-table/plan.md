@@ -311,25 +311,25 @@ Brak danych do migracji. Wdrożenie (F-02) restartuje kontener i kasuje trwając
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 1.2 `CardCatalogTests` pokrywa każdy przypadek walidacji katalogu i wczytanie prawdziwego `factions.json`
-- [x] 1.3 `MatchFactoryTests` pokrywa obie gałęzie zaczynającego i odrzucenie frakcji neutralnej
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 4b1f338
+- [x] 1.2 `CardCatalogTests` pokrywa każdy przypadek walidacji katalogu i wczytanie prawdziwego `factions.json` — 4b1f338
+- [x] 1.3 `MatchFactoryTests` pokrywa obie gałęzie zaczynającego i odrzucenie frakcji neutralnej — 4b1f338
 
 #### Manual
 
-- [x] 1.4 Przegląd placeholderów w `factions.json`: nazwy kart czytelne dla ludzi z IT, obie frakcje mają postacie i wydarzenia w różnych kosztach
+- [x] 1.4 Przegląd placeholderów w `factions.json`: nazwy kart czytelne dla ludzi z IT, obie frakcje mają postacie i wydarzenia w różnych kosztach — 4b1f338
 
 ### Phase 2: API partii
 
 #### Automated
 
-- [ ] 2.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [ ] 2.2 `MatchControllerTests` pokrywa 201/400/404/401/403, zastępowanie partii i izolację graczy
-- [ ] 2.3 `BackendRoutesTests` dalej zielone (nowe endpointy tylko pod `/api`)
+- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify`
+- [x] 2.2 `MatchControllerTests` pokrywa 201/400/404/401/403, zastępowanie partii i izolację graczy
+- [x] 2.3 `BackendRoutesTests` dalej zielone (nowe endpointy tylko pod `/api`)
 
 #### Manual
 
-- [ ] 2.4 Lokalnie po zalogowaniu `GET /api/factions` i `GET /api/matches/current` (404) w przeglądarce zwracają oczekiwany JSON
+- [x] 2.4 Lokalnie po zalogowaniu `GET /api/factions` i `GET /api/matches/current` (404) w przeglądarce zwracają oczekiwany JSON
 
 ### Phase 3: Ekran wyboru frakcji
 
