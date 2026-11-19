@@ -6,6 +6,17 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Set <html lang> before bootstrap; mirrors LanguageService (stored choice, else browser language).
+    (function () {
+      var lang = /^pl/i.test(navigator.language || '') ? 'pl' : 'en';
+      try {
+        var stored = localStorage.getItem('itcardbrawl.language');
+        if (stored === 'pl' || stored === 'en') lang = stored;
+      } catch (e) {}
+      document.documentElement.lang = lang;
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

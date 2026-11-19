@@ -105,6 +105,13 @@ class MatchControllerTests {
 	}
 
 	@Test
+	void localizedResponsesVaryByAcceptLanguage() throws Exception {
+		mockMvc.perform(get("/api/factions").with(newPlayer()).header(HttpHeaders.ACCEPT_LANGUAGE, "en"))
+			.andExpect(status().isOk())
+			.andExpect(header().stringValues(HttpHeaders.VARY, hasItem(HttpHeaders.ACCEPT_LANGUAGE)));
+	}
+
+	@Test
 	void factionsInEnglishWhenRequested() throws Exception {
 		mockMvc.perform(get("/api/factions").with(newPlayer()).header(HttpHeaders.ACCEPT_LANGUAGE, "en"))
 			.andExpect(status().isOk())

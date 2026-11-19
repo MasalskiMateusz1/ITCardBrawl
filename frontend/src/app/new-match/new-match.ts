@@ -57,6 +57,8 @@ export class NewMatch {
       error: (error: unknown) => {
         // A 401 is handled by authInterceptor, which redirects to /sign-in.
         if (!(error instanceof HttpErrorResponse && error.status === 401)) {
+          // Drop factions from an earlier load so they aren't shown in the old language next to the error.
+          this.factions.set([]);
           this.error.set('loadFactions');
         }
       },

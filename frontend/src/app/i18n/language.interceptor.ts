@@ -4,7 +4,7 @@ import { LanguageService } from './language.service';
 
 /** Sends the current UI language with every API request, so the backend returns content in it. */
 export const languageInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!req.url.startsWith('/api')) {
+  if (req.url !== '/api' && !req.url.startsWith('/api/')) {
     return next(req);
   }
   const language = inject(LanguageService).language();

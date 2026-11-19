@@ -44,6 +44,8 @@ export class MatchTable {
           void this.router.navigateByUrl('/new-match');
         } else if (!(error instanceof HttpErrorResponse && error.status === 401)) {
           // A 401 is handled by authInterceptor, which redirects to /sign-in.
+          // Drop data from an earlier load so it isn't shown in the old language next to the error.
+          this.match.set(null);
           this.error.set('loadMatch');
         }
       },
