@@ -1,0 +1,24 @@
+# Artefakty buildu i zaleznosci (budowane w obrazie)
+target/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+# SPA trafia do static/ wylacznie z etapu 1 Dockerfile
+src/main/resources/static/
+
+# Sekrety
+.env.properties
+**/.env.properties
+
+# Repo, IDE, narzedzia agentow, dokumentacja
+.git/
+.idea/
+.vscode/
+.claude/
+context/
+.10x-cli.json
+HELP.md
+frontend/README.md
+mvnw.cmd
+Dockerfile
+.dockerignore
