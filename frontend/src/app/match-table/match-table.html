@@ -1,0 +1,67 @@
+@if (match(); as m) {
+  <section class="zone opponent" aria-label="Przeciwnik">
+    <h2>Przeciwnik: {{ m.opponent.faction.name }}</h2>
+    <dl class="stats">
+      <div class="stress">
+        <dt>Stres</dt>
+        <dd>{{ m.opponent.stress }}/{{ m.opponent.stressLimit }}</dd>
+      </div>
+      <div class="resource">
+        <dt>Zasób</dt>
+        <dd>{{ m.opponent.resource.current }}/{{ m.opponent.resource.max }}</dd>
+      </div>
+      <div class="hand-count">
+        <dt>Kart na ręce</dt>
+        <dd>{{ m.opponent.handCount }}</dd>
+      </div>
+      <div class="deck-count">
+        <dt>Kart w talii</dt>
+        <dd>{{ m.opponent.deckCount }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <p class="turn">
+    Tura {{ m.turn.number }} —
+    {{ m.turn.active === 'PLAYER' ? 'Twoja tura' : 'tura przeciwnika' }}
+  </p>
+
+  <section class="zone player" aria-label="Ty">
+    <h2>Ty: {{ m.player.faction.name }}</h2>
+    <dl class="stats">
+      <div class="stress">
+        <dt>Stres</dt>
+        <dd>{{ m.player.stress }}/{{ m.player.stressLimit }}</dd>
+      </div>
+      <div class="resource">
+        <dt>Zasób</dt>
+        <dd>{{ m.player.resource.current }}/{{ m.player.resource.max }}</dd>
+      </div>
+      <div class="deck-count">
+        <dt>Kart w talii</dt>
+        <dd>{{ m.player.deckCount }}</dd>
+      </div>
+    </dl>
+
+    <h3>Twoja ręka</h3>
+    <ul class="hand">
+      @for (card of m.player.hand; track card.instanceId) {
+        <li class="card">
+          <strong class="card-name">{{ card.name }}</strong>
+          <span class="card-type">{{ cardTypeLabel(card.type) }}</span>
+          <span class="card-cost">Koszt: {{ card.cost }}</span>
+          @if (card.neutral) {
+            <span class="card-neutral">Neutralna</span>
+          }
+          <p class="card-text">{{ card.text }}</p>
+        </li>
+      }
+    </ul>
+  </section>
+}
+
+@if (error(); as text) {
+  <p class="message">{{ text }}</p>
+}
+
+<a routerLink="/">Wróć do lobby</a>

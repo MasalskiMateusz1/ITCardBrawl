@@ -335,24 +335,24 @@ Brak danych do migracji. Wdrożenie (F-02) restartuje kontener i kasuje trwając
 
 #### Automated
 
-- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — e5b09b5
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — e5b09b5
 
 #### Manual
 
-- [x] 3.3 Lokalnie: lobby → „Nowa partia” → widać Developerów i Testerów, start przenosi na `/match`
+- [x] 3.3 Lokalnie: lobby → „Nowa partia” → widać Developerów i Testerów, start przenosi na `/match` — e5b09b5
 
 ### Phase 4: Stół partii
 
 #### Automated
 
-- [ ] 4.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 4.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 4.3 Testy backendu dalej zielone: `./mvnw -B verify`
+- [x] 4.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 4.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 4.3 Testy backendu dalej zielone: `./mvnw -B verify`
 
 #### Manual
 
-- [ ] 4.4 Pełny przepływ lokalnie: logowanie → lobby → `/new-match` → wybór frakcji → stół z 5 kartami, 25/25 w taliach, stresem 0/30 obu stron, zasobem i turą
-- [ ] 4.5 Odświeżenie `/match` pokazuje tę samą rękę; nowy start z `/new-match` daje inną partię
-- [ ] 4.6 Wejście na `/match` po restarcie backendu przenosi na `/new-match`
-- [ ] 4.7 Stół czytelny w Chrome i Firefox na szerokości desktopowej
+- [x] 4.4 Pełny przepływ lokalnie: logowanie → lobby → `/new-match` → wybór frakcji → stół z 5 kartami, 25/25 w taliach, stresem 0/30 obu stron, zasobem i turą
+- [x] 4.5 Odświeżenie `/match` pokazuje tę samą rękę; nowy start z `/new-match` daje inną partię
+- [x] 4.6 Wejście na `/match` po restarcie backendu przenosi na `/new-match`
+- [x] 4.7 Stół czytelny w Chrome i Firefox na szerokości desktopowej
