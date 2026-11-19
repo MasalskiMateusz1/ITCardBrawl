@@ -1,0 +1,102 @@
+{
+	"factions": [
+		{
+			"id": "developers",
+			"name": "Developerzy",
+			"description": "Piszą kod szybciej, niż ktokolwiek zdąży go przetestować.",
+			"playable": true
+		},
+		{
+			"id": "testers",
+			"name": "Testerzy",
+			"description": "Znajdą błąd w każdym kodzie — zwłaszcza tuż przed releasem.",
+			"playable": true
+		},
+		{
+			"id": "neutral",
+			"name": "Neutralne",
+			"description": "Wspólna pula kart z biurowej codzienności, trafiająca do obu talii.",
+			"playable": false
+		}
+	],
+	"cards": [
+		{ "id": "dev-junior", "faction": "developers", "name": "Junior Developer", "type": "CHARACTER", "cost": 1, "text": "Pisze szybko, commituje jeszcze szybciej. Testy? Jakie testy?" },
+		{ "id": "dev-stackoverflow", "faction": "developers", "name": "Kopiuj-wklej ze Stack Overflow", "type": "EVENT", "cost": 2, "text": "Działa. Nikt nie wie dlaczego." },
+		{ "id": "dev-fullstack", "faction": "developers", "name": "Full-stack Developer", "type": "CHARACTER", "cost": 3, "text": "Zna każdą warstwę systemu. Każdą trochę." },
+		{ "id": "dev-works-on-my-machine", "faction": "developers", "name": "U mnie działa", "type": "EVENT", "cost": 3, "text": "Zgłoszenie zamknięte jako niereprodukowalne." },
+		{ "id": "dev-friday-hotfix", "faction": "developers", "name": "Hotfix w piątek o 16:59", "type": "EVENT", "cost": 4, "text": "Weekend właśnie przestał być spokojny." },
+		{ "id": "dev-backend", "faction": "developers", "name": "Backendowiec", "type": "CHARACTER", "cost": 5, "text": "Nie dotyka CSS-a. Nigdy. Pod żadnym pozorem." },
+		{ "id": "dev-force-push", "faction": "developers", "name": "git push --force", "type": "EVENT", "cost": 6, "text": "Historię piszą zwycięzcy." },
+		{ "id": "dev-senior", "faction": "developers", "name": "Senior Developer", "type": "CHARACTER", "cost": 7, "text": "Na każde pytanie odpowiada „to zależy” — i ma rację." },
+		{ "id": "dev-legacy-refactor", "faction": "developers", "name": "Refaktoryzacja legacy", "type": "EVENT", "cost": 8, "text": "Ruszyłeś jedną linijkę. Posypało się czterysta testów." },
+		{ "id": "dev-tech-lead", "faction": "developers", "name": "Tech Lead", "type": "CHARACTER", "cost": 10, "text": "Ostatni commit: 2019. Ostatnie code review: dziś, bezlitosne." },
+
+		{ "id": "tst-intern", "faction": "testers", "name": "Stażysta QA", "type": "CHARACTER", "cost": 1, "text": "Kliknął wszystko naraz. Aplikacja tego nie przeżyła." },
+		{ "id": "tst-vague-bug-report", "faction": "testers", "name": "Zgłoszenie bez kroków", "type": "EVENT", "cost": 2, "text": "„Nie działa”. Załącznik: zdjęcie monitora zrobione telefonem." },
+		{ "id": "tst-manual", "faction": "testers", "name": "Tester manualny", "type": "CHARACTER", "cost": 3, "text": "Przeklikał ścieżkę 47 razy. Za 48. razem znalazł buga." },
+		{ "id": "tst-edge-case", "faction": "testers", "name": "Przypadek brzegowy", "type": "EVENT", "cost": 3, "text": "Wpisał emoji w pole PESEL." },
+		{ "id": "tst-regression", "faction": "testers", "name": "Testy regresji", "type": "EVENT", "cost": 4, "text": "Stare błędy wracają jak bumerang." },
+		{ "id": "tst-automation", "faction": "testers", "name": "Automatyk testów", "type": "CHARACTER", "cost": 5, "text": "Jego testy są zielone. Prawie zawsze. Zwykle." },
+		{ "id": "tst-flaky-test", "faction": "testers", "name": "Niestabilny test", "type": "EVENT", "cost": 6, "text": "Raz przechodzi, raz nie. Jak humor zespołu." },
+		{ "id": "tst-performance", "faction": "testers", "name": "Tester wydajności", "type": "CHARACTER", "cost": 7, "text": "Wysłał milion żądań naraz, bo „klient też może”." },
+		{ "id": "tst-production-bug", "faction": "testers", "name": "Błąd na produkcji", "type": "EVENT", "cost": 8, "text": "Znaleziony przez klienta. W niedzielę o trzeciej w nocy." },
+		{ "id": "tst-qa-lead", "faction": "testers", "name": "QA Lead", "type": "CHARACTER", "cost": 10, "text": "Release zablokowany. Do odwołania." },
+
+		{ "id": "neu-coffee", "faction": "neutral", "name": "Kawa z automatu", "type": "EVENT", "cost": 1, "text": "Paliwo projektu. Smakuje jak deadline." },
+		{ "id": "neu-daily-standup", "faction": "neutral", "name": "Daily standup", "type": "EVENT", "cost": 2, "text": "Piętnaście minut, które trwa godzinę." },
+		{ "id": "neu-rubber-duck", "faction": "neutral", "name": "Gumowa kaczka", "type": "CHARACTER", "cost": 2, "text": "Słucha cierpliwie. Debuguje lepiej niż połowa zespołu." },
+		{ "id": "neu-scrum-master", "faction": "neutral", "name": "Scrum Master", "type": "CHARACTER", "cost": 3, "text": "Usuwa przeszkody. Głównie z kalendarza." },
+		{ "id": "neu-sprint-planning", "faction": "neutral", "name": "Planowanie sprintu", "type": "EVENT", "cost": 4, "text": "Wszystko wycenione na 3 punkty. Wszystko." },
+		{ "id": "neu-devops", "faction": "neutral", "name": "DevOps", "type": "CHARACTER", "cost": 5, "text": "Pipeline jest czerwony? To nie pipeline, to ty." },
+		{ "id": "neu-project-manager", "faction": "neutral", "name": "Project Manager", "type": "CHARACTER", "cost": 6, "text": "„To tylko mała zmiana” — pięć słów, trzy sprinty." },
+		{ "id": "neu-meeting", "faction": "neutral", "name": "Spotkanie, które mogło być mailem", "type": "EVENT", "cost": 7, "text": "Zjada czas wszystkim uczestnikom po równo." },
+		{ "id": "neu-deadline", "faction": "neutral", "name": "Nieprzesuwalny deadline", "type": "EVENT", "cost": 9, "text": "Jednak przesunięty. Na wcześniej." },
+		{ "id": "neu-client", "faction": "neutral", "name": "Klient", "type": "CHARACTER", "cost": 10, "text": "Wie dokładnie, czego chce — dopóki tego nie zobaczy." }
+	],
+	"decks": {
+		"developers": [
+			{ "card": "dev-junior", "copies": 2 },
+			{ "card": "dev-stackoverflow", "copies": 2 },
+			{ "card": "dev-fullstack", "copies": 2 },
+			{ "card": "dev-works-on-my-machine", "copies": 2 },
+			{ "card": "dev-friday-hotfix", "copies": 2 },
+			{ "card": "dev-backend", "copies": 2 },
+			{ "card": "dev-force-push", "copies": 2 },
+			{ "card": "dev-senior", "copies": 2 },
+			{ "card": "dev-legacy-refactor", "copies": 2 },
+			{ "card": "dev-tech-lead", "copies": 2 },
+			{ "card": "neu-coffee", "copies": 1 },
+			{ "card": "neu-daily-standup", "copies": 1 },
+			{ "card": "neu-rubber-duck", "copies": 1 },
+			{ "card": "neu-scrum-master", "copies": 1 },
+			{ "card": "neu-sprint-planning", "copies": 1 },
+			{ "card": "neu-devops", "copies": 1 },
+			{ "card": "neu-project-manager", "copies": 1 },
+			{ "card": "neu-meeting", "copies": 1 },
+			{ "card": "neu-deadline", "copies": 1 },
+			{ "card": "neu-client", "copies": 1 }
+		],
+		"testers": [
+			{ "card": "tst-intern", "copies": 2 },
+			{ "card": "tst-vague-bug-report", "copies": 2 },
+			{ "card": "tst-manual", "copies": 2 },
+			{ "card": "tst-edge-case", "copies": 2 },
+			{ "card": "tst-regression", "copies": 2 },
+			{ "card": "tst-automation", "copies": 2 },
+			{ "card": "tst-flaky-test", "copies": 2 },
+			{ "card": "tst-performance", "copies": 2 },
+			{ "card": "tst-production-bug", "copies": 2 },
+			{ "card": "tst-qa-lead", "copies": 2 },
+			{ "card": "neu-coffee", "copies": 1 },
+			{ "card": "neu-daily-standup", "copies": 1 },
+			{ "card": "neu-rubber-duck", "copies": 1 },
+			{ "card": "neu-scrum-master", "copies": 1 },
+			{ "card": "neu-sprint-planning", "copies": 1 },
+			{ "card": "neu-devops", "copies": 1 },
+			{ "card": "neu-project-manager", "copies": 1 },
+			{ "card": "neu-meeting", "copies": 1 },
+			{ "card": "neu-deadline", "copies": 1 },
+			{ "card": "neu-client", "copies": 1 }
+		]
+	}
+}
