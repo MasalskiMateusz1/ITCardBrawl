@@ -1,0 +1,31 @@
+# Produkcja: aplikacja (Spring + SPA w jednym obrazie) za reverse proxy Caddy z TLS (Let's Encrypt).
+# Na serwerze w /opt/itcardbrawl obok tego pliku (nie w repo, zob. deploy/README.md):
+#   .env    - APP_TAG (ustawia deploy.sh) i APP_DOMAIN
+#   app.env - SPRING_PROFILES_ACTIVE=prod i sekrety OAuth2 (chmod 600)
+name: itcardbrawl
+
+services:
+  app:
+    image: ghcr.io/masalskimateusz1/itcardbrawl:${APP_TAG:?APP_TAG nie ustawiony w .env}
+    env_file: app.env
+    restart: unless-stopped
+    # Healthcheck z obrazu (HEALTHCHECK w Dockerfile, /api/ping). Brak publikowanych portow:
+    # ruch z zewnatrz tylko przez Caddy w sieci compose (app:8080).
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?APP_DOMAIN nie ustawiony w .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

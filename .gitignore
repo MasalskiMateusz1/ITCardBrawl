@@ -46,3 +46,8 @@ HELP.md
 
 ### Local secrets ###
 .env.properties
+
+### Serwer produkcyjny (deploy/): sekrety i stan wdrozenia tylko na serwerze ###
+deploy/app.env
+deploy/.env
+deploy/.previous_tag
