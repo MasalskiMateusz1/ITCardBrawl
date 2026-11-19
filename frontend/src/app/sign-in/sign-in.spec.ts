@@ -3,12 +3,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { LANGUAGE_STORAGE_KEY, LanguageService } from '../i18n/language.service';
 import { SignIn } from './sign-in';
 
 describe('SignIn', () => {
   let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
+    // Polish before LanguageService is created (jsdom reports navigator.language = en-US).
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'pl');
     await TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -22,12 +25,17 @@ describe('SignIn', () => {
 
   afterEach(() => {
     httpTesting.verify();
+    localStorage.clear();
   });
 
-  async function render(url: string): Promise<HTMLElement> {
+  async function renderHarness(url: string): Promise<RouterTestingHarness> {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(url, SignIn);
-    return harness.routeNativeElement as HTMLElement;
+    return harness;
+  }
+
+  async function render(url: string): Promise<HTMLElement> {
+    return (await renderHarness(url)).routeNativeElement as HTMLElement;
   }
 
   it('links to both OAuth providers', async () => {
@@ -64,5 +72,29 @@ describe('SignIn', () => {
     const element = await render('/sign-in');
 
     expect(element.querySelector('.message')).toBeNull();
+  });
+
+  it('renders in English when English is chosen', async () => {
+    TestBed.inject(LanguageService).setLanguage('en');
+
+    const element = await render('/sign-in?error');
+
+    const links = Array.from(element.querySelectorAll('a'));
+    expect(links[0].textContent).toContain('Sign in with GitHub');
+    expect(links[1].textContent).toContain('Sign in with Google');
+    expect(element.textContent).toContain('Sign-in failed — please try again.');
+  });
+
+  it('switches the texts and the message live when the language changes', async () => {
+    const harness = await renderHarness('/sign-in?logout');
+    const element = harness.routeNativeElement as HTMLElement;
+    expect(element.textContent).toContain('Wylogowano.');
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await harness.fixture.whenStable();
+
+    expect(element.textContent).toContain('Signed out.');
+    expect(element.textContent).toContain('Sign in with GitHub');
+    expect(element.textContent).not.toContain('Zaloguj przez GitHub');
   });
 });

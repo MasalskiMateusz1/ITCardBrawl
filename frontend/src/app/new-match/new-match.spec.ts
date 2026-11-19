@@ -3,11 +3,17 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { FactionSummary, MatchView } from '../game/match';
+import { LANGUAGE_STORAGE_KEY, LanguageService } from '../i18n/language.service';
 import { NewMatch } from './new-match';
 
 const FACTIONS: FactionSummary[] = [
   { id: 'developers', name: 'Developerzy', description: 'Budują szybko.' },
   { id: 'testers', name: 'Testerzy', description: 'Znajdują każdy błąd.' },
+];
+
+const FACTIONS_EN: FactionSummary[] = [
+  { id: 'developers', name: 'Developers', description: 'They build fast.' },
+  { id: 'testers', name: 'Testers', description: 'They find every bug.' },
 ];
 
 const MATCH: MatchView = {
@@ -35,6 +41,8 @@ describe('NewMatch', () => {
   let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
+    // Polish before LanguageService is created (jsdom reports navigator.language = en-US).
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'pl');
     await TestBed.configureTestingModule({
       imports: [NewMatch],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -45,6 +53,7 @@ describe('NewMatch', () => {
 
   afterEach(() => {
     httpTesting.verify();
+    localStorage.clear();
   });
 
   async function render(): Promise<ComponentFixture<NewMatch>> {
@@ -158,5 +167,60 @@ describe('NewMatch', () => {
       candidate.textContent?.includes('Wróć do lobby'),
     );
     expect(link?.getAttribute('href')).toBe('/');
+  });
+
+  it('renders in English when English is chosen', async () => {
+    TestBed.inject(LanguageService).setLanguage('en');
+    const fixture = await render();
+    httpTesting.expectOne({ method: 'GET', url: '/api/factions' }).flush(FACTIONS_EN);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('h1')?.textContent).toContain('New match');
+    expect(element.querySelector('legend')?.textContent).toContain('Choose a faction');
+    expect(element.querySelector('button')?.textContent).toContain('Start match');
+    expect(element.querySelector('a')?.textContent).toContain('Back to lobby');
+    expect(element.textContent).toContain('Developers');
+  });
+
+  it('refetches the factions once on a language change and keeps the chosen faction', async () => {
+    const fixture = await renderWithFactions();
+    const element = fixture.nativeElement as HTMLElement;
+    await chooseFaction(fixture, 'testers');
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await fixture.whenStable();
+    httpTesting.expectOne({ method: 'GET', url: '/api/factions' }).flush(FACTIONS_EN);
+    await fixture.whenStable();
+
+    expect(element.querySelector('h1')?.textContent).toContain('New match');
+    expect(element.querySelector('button')?.textContent).toContain('Start match');
+    expect(element.textContent).toContain('Testers');
+    expect(element.textContent).toContain('They find every bug.');
+    expect(element.textContent).not.toContain('Testerzy');
+    expect(
+      element.querySelector<HTMLInputElement>('input[type="radio"][value="testers"]')!.checked,
+    ).toBe(true);
+    expect(element.querySelector('button')!.disabled).toBe(false);
+  });
+
+  it('shows a factions load error in English after switching from Polish', async () => {
+    const fixture = await render();
+    const element = fixture.nativeElement as HTMLElement;
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/factions' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+    expect(element.textContent).toContain('Nie udało się wczytać frakcji — odśwież stronę.');
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await fixture.whenStable();
+
+    expect(element.textContent).toContain('Could not load factions — refresh the page.');
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/factions' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+    expect(element.textContent).toContain('Could not load factions — refresh the page.');
   });
 });

@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { HandCard, MatchView, Side } from '../game/match';
+import { LANGUAGE_STORAGE_KEY, LanguageService } from '../i18n/language.service';
 import { MatchTable } from './match-table';
 
 const HAND: HandCard[] = [
@@ -80,6 +81,8 @@ describe('MatchTable', () => {
   let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
+    // Polish before LanguageService is created (jsdom reports navigator.language = en-US).
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'pl');
     await TestBed.configureTestingModule({
       imports: [MatchTable],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -90,6 +93,7 @@ describe('MatchTable', () => {
 
   afterEach(() => {
     httpTesting.verify();
+    localStorage.clear();
   });
 
   async function render(): Promise<ComponentFixture<MatchTable>> {
@@ -197,4 +201,82 @@ describe('MatchTable', () => {
     );
     expect(link?.getAttribute('href')).toBe('/');
   });
+
+  it('renders in English when English is chosen', async () => {
+    TestBed.inject(LanguageService).setLanguage('en');
+
+    const element = await renderWithMatch(matchViewEn());
+
+    expect(text(element.querySelector('.turn'))).toBe('Turn 1 — your turn');
+    expect(element.querySelector('.opponent')?.getAttribute('aria-label')).toBe('Opponent');
+    expect(element.querySelector('.player')?.getAttribute('aria-label')).toBe('You');
+    expect(text(element.querySelector('.opponent h2'))).toBe('Opponent: Testers');
+    expect(text(element.querySelector('.player h2'))).toBe('You: Developers');
+    expect(text(element.querySelector('.opponent .stress dt'))).toBe('Stress');
+    expect(text(element.querySelector('.opponent .resource dt'))).toBe('Resource');
+    expect(text(element.querySelector('.opponent .hand-count dt'))).toBe('Cards in hand');
+    expect(text(element.querySelector('.opponent .deck-count dt'))).toBe('Cards in deck');
+    expect(text(element.querySelector('.player h3'))).toBe('Your hand');
+    const cards = Array.from(element.querySelectorAll('.player .card'));
+    expect(text(cards[0].querySelector('.card-cost'))).toBe('Cost: 1');
+    expect(text(cards[0].querySelector('.card-type'))).toBe('Character');
+    expect(text(cards[2].querySelector('.card-type'))).toBe('Event');
+    expect(text(element.querySelector('.card-neutral'))).toBe('Neutral');
+    expect(text(element.querySelector('a'))).toBe('Back to lobby');
+  });
+
+  it('refetches the current match once on a language change and renders it in English', async () => {
+    const fixture = await render();
+    httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' }).flush(matchView());
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(text(element.querySelector('.turn'))).toBe('Tura 1 — Twoja tura');
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await fixture.whenStable();
+    httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' }).flush(matchViewEn());
+    await fixture.whenStable();
+
+    expect(text(element.querySelector('.turn'))).toBe('Turn 1 — your turn');
+    expect(text(element.querySelector('.player h2'))).toBe('You: Developers');
+    const cards = Array.from(element.querySelectorAll('.player .card'));
+    expect(cards.length).toBe(5);
+    expect(text(cards[0].querySelector('.card-text'))).toBe('Writes code.');
+    expect(text(cards[0].querySelector('.card-type'))).toBe('Character');
+  });
+
+  it('shows a load error in English after switching from Polish', async () => {
+    const fixture = await render();
+    const element = fixture.nativeElement as HTMLElement;
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/matches/current' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+    expect(element.textContent).toContain('Nie udało się wczytać partii — spróbuj ponownie.');
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await fixture.whenStable();
+
+    expect(element.textContent).toContain('Could not load the match — please try again.');
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/matches/current' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+    expect(element.textContent).toContain('Could not load the match — please try again.');
+  });
 });
+
+function matchViewEn(): MatchView {
+  const match = matchView();
+  return {
+    ...match,
+    player: {
+      ...match.player,
+      faction: { id: 'developers', name: 'Developers' },
+      hand: match.player.hand.map((card, index) =>
+        index === 0 ? { ...card, text: 'Writes code.' } : card,
+      ),
+    },
+    opponent: { ...match.opponent, faction: { id: 'testers', name: 'Testers' } },
+  };
+}

@@ -2,13 +2,13 @@
   @if (player.avatarUrl !== null) {
     <img [src]="player.avatarUrl" alt="" referrerpolicy="no-referrer" width="48" height="48" />
   }
-  <p>Witaj, {{ player.displayName }}</p>
+  <p>{{ texts().lobby.welcome(player.displayName) }}</p>
 }
 
-<a routerLink="/new-match">Nowa partia</a>
+<a routerLink="/new-match">{{ texts().lobby.newMatch }}</a>
 
-<button type="button" [disabled]="loggingOut()" (click)="logout()">Wyloguj</button>
+<button type="button" [disabled]="loggingOut()" (click)="logout()">{{ texts().lobby.logout }}</button>
 
-@if (logoutError(); as text) {
-  <p class="message">{{ text }}</p>
+@if (logoutFailed()) {
+  <p class="message">{{ texts().lobby.logoutFailed }}</p>
 }

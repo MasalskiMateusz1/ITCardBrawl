@@ -321,25 +321,25 @@ Brak danych do migracji (partie w pamięci). Wdrożenie restartuje serwer, więc
 
 #### Automated
 
-- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — abae3b6
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — abae3b6
 
 #### Manual
 
-- [x] 2.3 Lokalnie: przełącznik PL | EN widoczny na `/sign-in` i w lobby; klik zmienia `<html lang>` i zaznaczenie, a wybór przeżywa odświeżenie strony i logowanie przez GitHub/Google
-- [x] 2.4 W DevTools żądania `/api/*` mają `Accept-Language` zgodny z wybranym językiem
+- [x] 2.3 Lokalnie: przełącznik PL | EN widoczny na `/sign-in` i w lobby; klik zmienia `<html lang>` i zaznaczenie, a wybór przeżywa odświeżenie strony i logowanie przez GitHub/Google — abae3b6
+- [x] 2.4 W DevTools żądania `/api/*` mają `Accept-Language` zgodny z wybranym językiem — abae3b6
 
 ### Phase 3: Tłumaczenie ekranów
 
 #### Automated
 
-- [ ] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 3.3 Testy backendu dalej zielone: `./mvnw -B verify`
+- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 3.3 Testy backendu dalej zielone: `./mvnw -B verify`
 
 #### Manual
 
-- [ ] 3.4 Pełny przepływ po angielsku: logowanie → lobby → `/new-match` → start → stół; wszystkie teksty interfejsu, frakcje i karty po angielsku
-- [ ] 3.5 Przełączenie na `/match` w trakcie partii zmienia etykiety i teksty kart bez zmiany ręki; przełączenie na `/new-match` zachowuje wybraną frakcję
-- [ ] 3.6 Pierwsza wizyta w czystym profilu przeglądarki z językiem polskim → polski, z angielskim → angielski
-- [ ] 3.7 Brak polskich tekstów interfejsu po wybraniu EN (poza nazwą marki i treścią kart celowo identyczną w obu językach)
+- [x] 3.4 Pełny przepływ po angielsku: logowanie → lobby → `/new-match` → start → stół; wszystkie teksty interfejsu, frakcje i karty po angielsku
+- [x] 3.5 Przełączenie na `/match` w trakcie partii zmienia etykiety i teksty kart bez zmiany ręki; przełączenie na `/new-match` zachowuje wybraną frakcję
+- [x] 3.6 Pierwsza wizyta w czystym profilu przeglądarki z językiem polskim → polski, z angielskim → angielski
+- [x] 3.7 Brak polskich tekstów interfejsu po wybraniu EN (poza nazwą marki i treścią kart celowo identyczną w obu językach)
