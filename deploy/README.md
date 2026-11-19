@@ -7,6 +7,7 @@ Ręczna, odtwarzalna instrukcja postawienia serwera produkcyjnego ItCardBrawl. A
 | `compose.yaml` | usługi `app` (bez publikowanych portów) i `caddy` (80/443) |
 | `Caddyfile` | `{$APP_DOMAIN}` → `reverse_proxy app:8080` |
 | `deploy.sh` | wdrożenie tagu z automatycznym powrotem do poprzedniej wersji; `rollback` |
+| `logrotate-docker` | rotacja logów kontenerów: codziennie, 30 dni (instalowany ręcznie w `/etc/logrotate.d/`) |
 
 Na serwerze leżą w `/opt/itcardbrawl` razem z plikami spoza repo: `app.env` (sekrety), `.env` (`APP_DOMAIN`, `APP_TAG`) i `.previous_tag` (stan `deploy.sh`). Te trzy są git-ignorowane i nigdy nie trafiają do repo.
 
@@ -43,6 +44,16 @@ Na serwerze leżą w `/opt/itcardbrawl` razem z plikami spoza repo: `app.env` (s
    apt update && apt -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
    docker compose version
    ```
+
+   Rotacja logów kontenerów — codziennie, trzymane 30 dni wstecz. Docker sam rotuje logi tylko po rozmiarze, więc robi to `logrotate` hosta (plik `logrotate-docker` z tego katalogu; `copytruncate`, bo Docker trzyma plik logu otwarty):
+
+   ```bash
+   # skopiuj deploy/logrotate-docker na serwer, potem jako root:
+   install -m 644 logrotate-docker /etc/logrotate.d/docker-containers
+   logrotate --debug /etc/logrotate.d/docker-containers   # sprawdzenie skladni (na sucho)
+   ```
+
+   `logrotate.timer` w Ubuntu uruchamia rotację raz dziennie.
 
 5. Użytkownik `deploy` (logowanie wyłącznie kluczem SSH, w grupie `docker`). Na swoim komputerze wygeneruj osobny klucz do wdrożeń (bez hasła — użyje go GitHub Actions):
 
@@ -174,6 +185,24 @@ Po skopiowaniu nowego `Caddyfile` przeładuj Caddy bez restartu kontenera:
 ```bash
 docker compose exec -w /etc/caddy caddy caddy reload
 ```
+
+CD (`.github/workflows/ci.yml`) robi ten reload po każdym udanym wdrożeniu.
+
+### Aktualizacja Caddy
+
+`deploy.sh` pobiera wyłącznie obraz `app`, więc Caddy (publiczny terminator TLS) aktualizujesz ręcznie. `compose.yaml` przypina linię minor (`caddy:2.11`):
+
+- **poprawki w tej samej linii** (np. 2.11.x) — co jakiś czas, np. raz w miesiącu albo po ogłoszeniu bezpieczeństwa (https://github.com/caddyserver/caddy/releases):
+
+  ```bash
+  cd /opt/itcardbrawl
+  docker compose pull caddy && docker compose up -d caddy
+  docker compose logs --tail 20 caddy
+  ```
+
+- **nowa linia minor** (np. 2.12) — zmień tag w `deploy/compose.yaml` w repo i zmerguj do `main`; CD skopiuje plik na serwer, a `docker compose up -d` w `deploy.sh` pobierze brakujący obraz i odtworzy kontener Caddy (krótka przerwa).
+
+Certyfikaty leżą w wolumenie `caddy_data`, więc odtworzenie kontenera ich nie traci.
 
 ## 7. Opcjonalnie: ochrona gałęzi `main`
 

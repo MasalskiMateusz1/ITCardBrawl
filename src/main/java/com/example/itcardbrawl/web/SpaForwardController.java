@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UrlPathHelper;
 
 /**
  * Fallback tras SPA: GET na trase Angulara (np. {@code /sign-in}) zwraca {@code index.html},
@@ -44,8 +45,10 @@ public class SpaForwardController {
 		return !BACKEND_PREFIXES.contains(firstSegment);
 	}
 
+	// Zdekodowana i znormalizowana sciezka (jak w routingu MVC), nie surowy URI:
+	// inaczej "/%61pi/me" omijalby regule bezpieczenstwa jako "trasa SPA".
 	public static String pathWithinApplication(HttpServletRequest request) {
-		return request.getRequestURI().substring(request.getContextPath().length());
+		return UrlPathHelper.defaultInstance.getPathWithinApplication(request);
 	}
 
 }
