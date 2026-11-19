@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth.service';
+import { LanguageService } from '../i18n/language.service';
 
 @Component({
   imports: [RouterLink],
@@ -14,12 +15,14 @@ export class Lobby {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
+  protected readonly texts = inject(LanguageService).texts;
   protected readonly user = this.authService.user;
-  protected readonly logoutError = signal<string | null>(null);
+  /** A flag, not text — the message is taken from the dictionary at render time. */
+  protected readonly logoutFailed = signal(false);
   protected readonly loggingOut = signal(false);
 
   protected logout(): void {
-    this.logoutError.set(null);
+    this.logoutFailed.set(false);
     this.loggingOut.set(true);
     this.authService
       .logout()
@@ -29,7 +32,7 @@ export class Lobby {
         error: (error: unknown) => {
           // A 401 is handled by authInterceptor, which redirects to /sign-in.
           if (!(error instanceof HttpErrorResponse && error.status === 401)) {
-            this.logoutError.set('Nie udało się wylogować — spróbuj ponownie.');
+            this.logoutFailed.set(true);
           }
         },
       });

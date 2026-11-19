@@ -1,57 +1,54 @@
 @if (match(); as m) {
-  <section class="zone opponent" aria-label="Przeciwnik">
-    <h2>Przeciwnik: {{ m.opponent.faction.name }}</h2>
+  <section class="zone opponent" [attr.aria-label]="texts().matchTable.opponentZone">
+    <h2>{{ texts().matchTable.opponentHeading(m.opponent.faction.name) }}</h2>
     <dl class="stats">
       <div class="stress">
-        <dt>Stres</dt>
+        <dt>{{ texts().matchTable.stress }}</dt>
         <dd>{{ m.opponent.stress }}/{{ m.opponent.stressLimit }}</dd>
       </div>
       <div class="resource">
-        <dt>Zasób</dt>
+        <dt>{{ texts().matchTable.resource }}</dt>
         <dd>{{ m.opponent.resource.current }}/{{ m.opponent.resource.max }}</dd>
       </div>
       <div class="hand-count">
-        <dt>Kart na ręce</dt>
+        <dt>{{ texts().matchTable.handCount }}</dt>
         <dd>{{ m.opponent.handCount }}</dd>
       </div>
       <div class="deck-count">
-        <dt>Kart w talii</dt>
+        <dt>{{ texts().matchTable.deckCount }}</dt>
         <dd>{{ m.opponent.deckCount }}</dd>
       </div>
     </dl>
   </section>
 
-  <p class="turn">
-    Tura {{ m.turn.number }} —
-    {{ m.turn.active === 'PLAYER' ? 'Twoja tura' : 'tura przeciwnika' }}
-  </p>
+  <p class="turn">{{ texts().matchTable.turn(m.turn.number, m.turn.active === 'PLAYER') }}</p>
 
-  <section class="zone player" aria-label="Ty">
-    <h2>Ty: {{ m.player.faction.name }}</h2>
+  <section class="zone player" [attr.aria-label]="texts().matchTable.playerZone">
+    <h2>{{ texts().matchTable.playerHeading(m.player.faction.name) }}</h2>
     <dl class="stats">
       <div class="stress">
-        <dt>Stres</dt>
+        <dt>{{ texts().matchTable.stress }}</dt>
         <dd>{{ m.player.stress }}/{{ m.player.stressLimit }}</dd>
       </div>
       <div class="resource">
-        <dt>Zasób</dt>
+        <dt>{{ texts().matchTable.resource }}</dt>
         <dd>{{ m.player.resource.current }}/{{ m.player.resource.max }}</dd>
       </div>
       <div class="deck-count">
-        <dt>Kart w talii</dt>
+        <dt>{{ texts().matchTable.deckCount }}</dt>
         <dd>{{ m.player.deckCount }}</dd>
       </div>
     </dl>
 
-    <h3>Twoja ręka</h3>
+    <h3>{{ texts().matchTable.yourHand }}</h3>
     <ul class="hand">
       @for (card of m.player.hand; track card.instanceId) {
         <li class="card">
           <strong class="card-name">{{ card.name }}</strong>
-          <span class="card-type">{{ cardTypeLabel(card.type) }}</span>
-          <span class="card-cost">Koszt: {{ card.cost }}</span>
+          <span class="card-type">{{ texts().cardType[card.type] }}</span>
+          <span class="card-cost">{{ texts().matchTable.cost(card.cost) }}</span>
           @if (card.neutral) {
-            <span class="card-neutral">Neutralna</span>
+            <span class="card-neutral">{{ texts().matchTable.neutral }}</span>
           }
           <p class="card-text">{{ card.text }}</p>
         </li>
@@ -60,8 +57,8 @@
   </section>
 }
 
-@if (error(); as text) {
-  <p class="message">{{ text }}</p>
+@if (error() === 'loadMatch') {
+  <p class="message">{{ texts().matchTable.loadFailed }}</p>
 }
 
-<a routerLink="/">Wróć do lobby</a>
+<a routerLink="/">{{ texts().matchTable.backToLobby }}</a>

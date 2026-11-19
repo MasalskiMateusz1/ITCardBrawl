@@ -1,7 +1,7 @@
-<h1>Nowa partia</h1>
+<h1>{{ texts().newMatch.title }}</h1>
 
 <fieldset>
-  <legend>Wybierz frakcję</legend>
+  <legend>{{ texts().newMatch.chooseFaction }}</legend>
   @for (faction of factions(); track faction.id) {
     <label>
       <input
@@ -18,11 +18,11 @@
 </fieldset>
 
 <button type="button" [disabled]="selectedFactionId() === null || starting()" (click)="start()">
-  Rozpocznij partię
+  {{ texts().newMatch.start }}
 </button>
 
-@if (error(); as text) {
+@if (errorText(); as text) {
   <p class="message">{{ text }}</p>
 }
 
-<a routerLink="/">Wróć do lobby</a>
+<a routerLink="/">{{ texts().newMatch.backToLobby }}</a>

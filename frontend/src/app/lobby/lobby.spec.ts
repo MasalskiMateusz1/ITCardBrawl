@@ -3,12 +3,15 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { AuthService, Player } from '../auth.service';
+import { LANGUAGE_STORAGE_KEY, LanguageService } from '../i18n/language.service';
 import { Lobby } from './lobby';
 
 describe('Lobby', () => {
   let httpTesting: HttpTestingController;
 
   beforeEach(async () => {
+    // Polish before LanguageService is created (jsdom reports navigator.language = en-US).
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'pl');
     await TestBed.configureTestingModule({
       imports: [Lobby],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
@@ -19,6 +22,7 @@ describe('Lobby', () => {
 
   afterEach(() => {
     httpTesting.verify();
+    localStorage.clear();
   });
 
   function signIn(player: Player): void {
@@ -115,5 +119,38 @@ describe('Lobby', () => {
       candidate.textContent?.includes('Nowa partia'),
     );
     expect(link?.getAttribute('href')).toBe('/new-match');
+  });
+
+  it('renders in English when English is chosen', async () => {
+    TestBed.inject(LanguageService).setLanguage('en');
+    signIn({ provider: 'github', displayName: 'Ada', avatarUrl: null });
+
+    const element = (await render()).nativeElement as HTMLElement;
+
+    expect(element.textContent).toContain('Welcome, Ada');
+    expect(element.querySelector('a')?.textContent).toContain('New match');
+    expect(element.querySelector('button')?.textContent).toContain('Sign out');
+  });
+
+  it('switches the texts and a shown logout error live when the language changes', async () => {
+    signIn({ provider: 'github', displayName: 'Ada', avatarUrl: null });
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const fixture = await render();
+    const element = fixture.nativeElement as HTMLElement;
+
+    clickLogout(fixture);
+    httpTesting
+      .expectOne({ method: 'POST', url: '/api/logout' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+    expect(element.textContent).toContain('Nie udało się wylogować — spróbuj ponownie.');
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await fixture.whenStable();
+
+    expect(element.textContent).toContain('Welcome, Ada');
+    expect(element.textContent).toContain('New match');
+    expect(element.textContent).toContain('Could not sign out — please try again.');
+    expect(element.textContent).not.toContain('Wyloguj');
   });
 });
