@@ -44,7 +44,7 @@ ItCardBrawl to przeglądarkowa gra karciana dla ludzi z IT na wieczór po pracy:
 | F-01 | spa-api-walking-skeleton    | (foundation) aplikacja w przeglądarce rozmawia z API przez jedno źródło              | —             | NFR (przeglądarki), Guardrails            | done |
 | F-02 | deploy-pipeline-skeleton    | (foundation) każdy merge do main jest automatycznie wdrażany na serwer               | F-01          | NFR (bez instalacji), Guardrails          | done |
 | S-01 | external-login-gate         | gracz loguje się zewnętrznym kontem; niezalogowany trafia na logowanie               | F-01          | FR-001, Access Control, NFR (dane konta)  | done |
-| S-02 | match-setup-table           | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron           | S-01          | FR-002, FR-003, FR-007, US-01             | in-progress |
+| S-02 | match-setup-table           | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron           | S-01          | FR-002, FR-003, FR-007, US-01             | done |
 | S-03 | first-full-match            | gracz rozgrywa pełną partię postaciami przeciw komputerowi aż do wyniku              | S-02          | FR-004, FR-006, FR-008, US-01             | blocked  |
 | S-04 | event-cards                 | gracz i komputer zagrywają karty wydarzeń o przewidywalnych efektach                 | S-03          | FR-005, US-01                             | proposed |
 | S-05 | sensible-computer-opponent  | gracz mierzy się z komputerem, który gra sensownie i pokazuje powód ruchu            | S-03          | FR-003, FR-006, US-01, Guardrails         | proposed |
@@ -130,7 +130,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Podstawowe zasady tury: ile kart na start ręki, ile dobiera się na turę, kto zaczyna, czy zagranie karty kosztuje jakiś zasób? (PRD §Business Logic tego nie określa.) — Owner: user. Block: yes.
 - **Risk:** Wydzielony z pętli gry, żeby model partii i stołu (stan widoczny cały czas — FR-007) powstał przed zasadami zagrań; bez zasad tury nie da się go zaplanować.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-03: Pełna partia postaciami (north star)
 
@@ -224,3 +224,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 - **F-01: (foundation) aplikacja przeglądarkowa uruchamia się lokalnie i wyświetla odpowiedź z API, przy czym przeglądarka widzi jedno źródło (wywołania API przechodzą przez proxy), zgodnie z kształtem zapisanym w tech-stack.md.** — Archived 2026-11-18 → `context/archive/2026-11-16-spa-api-walking-skeleton/`. Lesson: —.
 - **S-01: gracz loguje się zewnętrznym kontem i widzi lobby ze swoją nazwą; niezalogowany użytkownik wchodzący do gry jest kierowany do logowania.** — Archived 2026-11-18 → `context/archive/2026-11-18-external-login-gate/`. Lesson: —.
 - **F-02: (foundation) API i SPA są budowane w kontenerze i automatycznie wdrażane na serwer po każdym merge do main; wdrożona wersja otwiera się w przeglądarce.** — Archived 2026-11-19 → `context/archive/2026-11-19-deploy-pipeline-skeleton/`. Lesson: —.
+- **S-02: zalogowany gracz wybiera jedną z 2 frakcji, rozpoczyna partię przeciwko komputerowi i widzi stół: swoją rękę, liczbę kart w taliach oraz stres obu stron (0/30).** — Archived 2026-11-19 → `context/archive/2026-11-19-match-setup-table/`. Lesson: —.
