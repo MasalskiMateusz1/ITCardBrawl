@@ -1,0 +1,8 @@
+<div role="group" [attr.aria-label]="texts().shell.languageGroup">
+  <button type="button" lang="pl" [attr.aria-pressed]="language() === 'pl'" (click)="select('pl')">
+    {{ texts().shell.pl }}
+  </button>
+  <button type="button" lang="en" [attr.aria-pressed]="language() === 'en'" (click)="select('en')">
+    {{ texts().shell.en }}
+  </button>
+</div>

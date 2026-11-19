@@ -308,26 +308,26 @@ Brak danych do migracji (partie w pamięci). Wdrożenie restartuje serwer, więc
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 1.2 `CardCatalogTests` pokrywa brak/pustą wartość `pl` i `en` dla nazwy i opisu frakcji oraz nazwy i tekstu karty
-- [x] 1.3 `MatchControllerTests` pokrywa domyślny polski, `Accept-Language: en`, dopasowanie `de, en;q=0.9` → angielski i tę samą partię w obu językach
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 4c8a55a
+- [x] 1.2 `CardCatalogTests` pokrywa brak/pustą wartość `pl` i `en` dla nazwy i opisu frakcji oraz nazwy i tekstu karty — 4c8a55a
+- [x] 1.3 `MatchControllerTests` pokrywa domyślny polski, `Accept-Language: en`, dopasowanie `de, en;q=0.9` → angielski i tę samą partię w obu językach — 4c8a55a
 
 #### Manual
 
-- [x] 1.4 Przegląd angielskich placeholderów w `factions.json`: czytelne dla ludzi z IT, z zachowanym humorem
-- [x] 1.5 Lokalnie po zalogowaniu `GET /api/factions` w przeglądarce zwraca polskie nazwy; z nagłówkiem `Accept-Language: en` (np. DevTools / curl z ciasteczkiem sesji) — angielskie
+- [x] 1.4 Przegląd angielskich placeholderów w `factions.json`: czytelne dla ludzi z IT, z zachowanym humorem — 4c8a55a
+- [x] 1.5 Lokalnie po zalogowaniu `GET /api/factions` w przeglądarce zwraca polskie nazwy; z nagłówkiem `Accept-Language: en` (np. DevTools / curl z ciasteczkiem sesji) — angielskie — 4c8a55a
 
 ### Phase 2: Warstwa tłumaczeń i przełącznik języka
 
 #### Automated
 
-- [ ] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
 
 #### Manual
 
-- [ ] 2.3 Lokalnie: przełącznik PL | EN widoczny na `/sign-in` i w lobby; klik zmienia `<html lang>` i zaznaczenie, a wybór przeżywa odświeżenie strony i logowanie przez GitHub/Google
-- [ ] 2.4 W DevTools żądania `/api/*` mają `Accept-Language` zgodny z wybranym językiem
+- [x] 2.3 Lokalnie: przełącznik PL | EN widoczny na `/sign-in` i w lobby; klik zmienia `<html lang>` i zaznaczenie, a wybór przeżywa odświeżenie strony i logowanie przez GitHub/Google
+- [x] 2.4 W DevTools żądania `/api/*` mają `Accept-Language` zgodny z wybranym językiem
 
 ### Phase 3: Tłumaczenie ekranów
 
