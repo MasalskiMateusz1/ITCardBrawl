@@ -47,11 +47,13 @@ public class MatchFactory {
 	}
 
 	private List<CardInstance> shuffledDeck(Faction faction, int[] nextInstanceId) {
+		// Najpierw tasowanie, potem numeracja: instanceId zdradza tylko pozycję w talii, nie kartę.
+		List<Card> cards = new ArrayList<>(catalog.deck(faction.id()));
+		Collections.shuffle(cards, random);
 		List<CardInstance> deck = new ArrayList<>(MatchRules.DECK_SIZE);
-		for (Card card : catalog.deck(faction.id())) {
+		for (Card card : cards) {
 			deck.add(new CardInstance(nextInstanceId[0]++, card));
 		}
-		Collections.shuffle(deck, random);
 		return deck;
 	}
 

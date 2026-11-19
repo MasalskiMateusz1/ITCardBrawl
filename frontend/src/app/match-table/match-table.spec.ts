@@ -38,7 +38,7 @@ const HAND: HandCard[] = [
     cardId: 'neu-1',
     name: 'Kawa',
     type: 'EVENT',
-    cost: 0,
+    cost: 5,
     text: 'Dodaje energii.',
     neutral: true,
   },
