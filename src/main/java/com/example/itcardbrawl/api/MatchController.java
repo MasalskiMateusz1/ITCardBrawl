@@ -1,8 +1,10 @@
 package com.example.itcardbrawl.api;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.example.itcardbrawl.game.CardCatalog;
+import com.example.itcardbrawl.game.Language;
 import com.example.itcardbrawl.game.Match;
 import com.example.itcardbrawl.game.MatchFactory;
 import com.example.itcardbrawl.game.MatchStore;
@@ -36,15 +38,17 @@ public class MatchController {
 	}
 
 	@GetMapping("/factions")
-	public List<FactionSummary> factions() {
+	public List<FactionSummary> factions(Locale locale) {
+		Language language = Language.from(locale);
 		return catalog.playableFactions().stream()
-			.map(f -> new FactionSummary(f.id(), f.name(), f.description()))
+			.map(f -> new FactionSummary(f.id(), f.name().in(language), f.description().in(language)))
 			.toList();
 	}
 
 	@PostMapping(path = "/matches", consumes = MediaType.APPLICATION_JSON_VALUE)
 	@ResponseStatus(HttpStatus.CREATED)
-	public MatchView start(@RequestBody StartMatchRequest request, OAuth2AuthenticationToken authentication) {
+	public MatchView start(@RequestBody StartMatchRequest request, OAuth2AuthenticationToken authentication,
+			Locale locale) {
 		Match match;
 		try {
 			match = matchFactory.create(request.factionId());
@@ -53,13 +57,14 @@ public class MatchController {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nieznana lub niegrywalna frakcja", ex);
 		}
 		matchStore.save(playerKey(authentication), match);
-		return MatchView.of(match, catalog);
+		return MatchView.of(match, catalog, Language.from(locale));
 	}
 
 	@GetMapping("/matches/current")
-	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication) {
+	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication, Locale locale) {
+		Language language = Language.from(locale);
 		return matchStore.findCurrent(playerKey(authentication))
-			.map(match -> ResponseEntity.ok(MatchView.of(match, catalog)))
+			.map(match -> ResponseEntity.ok(MatchView.of(match, catalog, language)))
 			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
