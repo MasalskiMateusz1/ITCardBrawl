@@ -367,26 +367,26 @@ Push na `main` po zielonych testach buduje obraz, publikuje go w GHCR, wdraża n
 
 #### Automated
 
-- [ ] 3.1 Ostatnie uruchomienie `ci.yml` na `main` zakończone `success`
-- [ ] 3.2 Gałąź domyślna na GitHubie to `main`
+- [x] 3.1 Ostatnie uruchomienie `ci.yml` na `main` zakończone `success` — d571eeb
+- [x] 3.2 Gałąź domyślna na GitHubie to `main` — d571eeb
 
 #### Manual
 
-- [ ] 3.3 PR z zepsutym testem ma czerwony check `test`, po cofnięciu zielony
+- [x] 3.3 PR z zepsutym testem ma czerwony check `test`, po cofnięciu zielony — d571eeb
 
 ### Phase 4: Serwer i skrypt wdrożenia
 
 #### Automated
 
-- [ ] 4.1 `deploy.sh` przechodzi shellcheck
-- [ ] 4.2 `docker compose -f deploy/compose.yaml config` kończy się kodem 0
+- [x] 4.1 `deploy.sh` przechodzi shellcheck
+- [x] 4.2 `docker compose -f deploy/compose.yaml config` kończy się kodem 0
 
 #### Manual
 
-- [ ] 4.3 VPS, DNS i produkcyjne aplikacje OAuth skonfigurowane według runbooka
-- [ ] 4.4 Ręczny `./deploy.sh <tag>` działa, `https://<domena>/api/ping` odpowiada z ważnym certyfikatem
-- [ ] 4.5 Logowanie GitHubem i Google na produkcji prowadzi do lobby
-- [ ] 4.6 Nieudany deploy zostawia lub przywraca działającą wersję
+- [x] 4.3 VPS, DNS i produkcyjne aplikacje OAuth skonfigurowane według runbooka
+- [x] 4.4 Ręczny `./deploy.sh <tag>` działa, `https://<domena>/api/ping` odpowiada z ważnym certyfikatem
+- [x] 4.5 Logowanie GitHubem i Google na produkcji prowadzi do lobby
+- [x] 4.6 Nieudany deploy zostawia lub przywraca działającą wersję
 
 ### Phase 5: CD z main
 

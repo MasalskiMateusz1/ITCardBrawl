@@ -1,0 +1,5 @@
+# Domena z APP_DOMAIN (plik .env obok compose.yaml). Caddy sam pobiera i odnawia certyfikat
+# Let's Encrypt oraz ustawia X-Forwarded-Proto/Host/For - Spring (profil prod) buduje z nich adresy https://.
+{$APP_DOMAIN} {
+	reverse_proxy app:8080
+}
