@@ -5,6 +5,8 @@
   <p>Witaj, {{ player.displayName }}</p>
 }
 
+<a routerLink="/new-match">Nowa partia</a>
+
 <button type="button" [disabled]="loggingOut()" (click)="logout()">Wyloguj</button>
 
 @if (logoutError(); as text) {

@@ -1,11 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../auth.service';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   selector: 'app-lobby',
   styleUrl: './lobby.css',
   templateUrl: './lobby.html',

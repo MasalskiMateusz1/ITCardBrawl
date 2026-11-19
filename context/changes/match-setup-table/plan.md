@@ -323,24 +323,24 @@ Brak danych do migracji. Wdrożenie (F-02) restartuje kontener i kasuje trwając
 
 #### Automated
 
-- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 2.2 `MatchControllerTests` pokrywa 201/400/404/401/403, zastępowanie partii i izolację graczy
-- [x] 2.3 `BackendRoutesTests` dalej zielone (nowe endpointy tylko pod `/api`)
+- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 365780e
+- [x] 2.2 `MatchControllerTests` pokrywa 201/400/404/401/403, zastępowanie partii i izolację graczy — 365780e
+- [x] 2.3 `BackendRoutesTests` dalej zielone (nowe endpointy tylko pod `/api`) — 365780e
 
 #### Manual
 
-- [x] 2.4 Lokalnie po zalogowaniu `GET /api/factions` i `GET /api/matches/current` (404) w przeglądarce zwracają oczekiwany JSON
+- [x] 2.4 Lokalnie po zalogowaniu `GET /api/factions` i `GET /api/matches/current` (404) w przeglądarce zwracają oczekiwany JSON — 365780e
 
 ### Phase 3: Ekran wyboru frakcji
 
 #### Automated
 
-- [ ] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
 
 #### Manual
 
-- [ ] 3.3 Lokalnie: lobby → „Nowa partia” → widać Developerów i Testerów, start przenosi na `/match`
+- [x] 3.3 Lokalnie: lobby → „Nowa partia” → widać Developerów i Testerów, start przenosi na `/match`
 
 ### Phase 4: Stół partii
 
