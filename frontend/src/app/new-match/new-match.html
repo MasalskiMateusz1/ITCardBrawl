@@ -1,0 +1,28 @@
+<h1>Nowa partia</h1>
+
+<fieldset>
+  <legend>Wybierz frakcję</legend>
+  @for (faction of factions(); track faction.id) {
+    <label>
+      <input
+        type="radio"
+        name="faction"
+        [value]="faction.id"
+        [checked]="selectedFactionId() === faction.id"
+        (change)="select(faction.id)"
+      />
+      <strong>{{ faction.name }}</strong>
+      <span>{{ faction.description }}</span>
+    </label>
+  }
+</fieldset>
+
+<button type="button" [disabled]="selectedFactionId() === null || starting()" (click)="start()">
+  Rozpocznij partię
+</button>
+
+@if (error(); as text) {
+  <p class="message">{{ text }}</p>
+}
+
+<a routerLink="/">Wróć do lobby</a>

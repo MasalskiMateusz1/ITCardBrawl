@@ -105,4 +105,15 @@ describe('Lobby', () => {
     await fixture.whenStable();
     expect(button.disabled).toBe(false);
   });
+
+  it('links to the new match screen', async () => {
+    signIn({ provider: 'github', displayName: 'Ada', avatarUrl: null });
+
+    const element = (await render()).nativeElement as HTMLElement;
+
+    const link = Array.from(element.querySelectorAll('a')).find((candidate) =>
+      candidate.textContent?.includes('Nowa partia'),
+    );
+    expect(link?.getAttribute('href')).toBe('/new-match');
+  });
 });
