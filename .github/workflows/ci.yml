@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # PR: nowszy push anuluje starsze uruchomienie; main: kazde uruchomienie konczy sie
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Testy backendu
+        run: ./mvnw -B verify
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Wersja npm zgodna z "packageManager" w frontend/package.json (jak w Dockerfile)
+      - name: npm zgodny z packageManager
+        run: npm install -g npm@12.1.0
+
+      - name: Instalacja zaleznosci frontu
+        working-directory: frontend
+        run: npm ci
+
+      - name: Testy frontu
+        working-directory: frontend
+        run: npx ng test --watch=false
+
+      - name: Build produkcyjny SPA
+        working-directory: frontend
+        run: npm run build
