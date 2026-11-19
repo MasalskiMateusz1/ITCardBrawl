@@ -378,21 +378,21 @@ Push na `main` po zielonych testach buduje obraz, publikuje go w GHCR, wdraża n
 
 #### Automated
 
-- [x] 4.1 `deploy.sh` przechodzi shellcheck
-- [x] 4.2 `docker compose -f deploy/compose.yaml config` kończy się kodem 0
+- [x] 4.1 `deploy.sh` przechodzi shellcheck — d6299ae
+- [x] 4.2 `docker compose -f deploy/compose.yaml config` kończy się kodem 0 — d6299ae
 
 #### Manual
 
-- [x] 4.3 VPS, DNS i produkcyjne aplikacje OAuth skonfigurowane według runbooka
-- [x] 4.4 Ręczny `./deploy.sh <tag>` działa, `https://<domena>/api/ping` odpowiada z ważnym certyfikatem
-- [x] 4.5 Logowanie GitHubem i Google na produkcji prowadzi do lobby
-- [x] 4.6 Nieudany deploy zostawia lub przywraca działającą wersję
+- [x] 4.3 VPS, DNS i produkcyjne aplikacje OAuth skonfigurowane według runbooka — d6299ae
+- [x] 4.4 Ręczny `./deploy.sh <tag>` działa, `https://<domena>/api/ping` odpowiada z ważnym certyfikatem — d6299ae
+- [x] 4.5 Logowanie GitHubem i Google na produkcji prowadzi do lobby — d6299ae
+- [x] 4.6 Nieudany deploy zostawia lub przywraca działającą wersję — d6299ae
 
 ### Phase 5: CD z main
 
 #### Automated
 
-- [ ] 5.1 Workflow przechodzi actionlint
+- [x] 5.1 Workflow przechodzi actionlint
 - [ ] 5.2 Joby `test`, `image`, `deploy` zakończone `success` po merge do `main`
 - [ ] 5.3 Obraz `:<sha>` istnieje w GHCR
 
