@@ -1,7 +1,7 @@
 ---
 change_id: ui-in-english-and-polish
 title: Ui in english and polish
-status: implementing
+status: implemented
 created: 2026-11-19
 updated: 2026-11-19
 archived_at: null
