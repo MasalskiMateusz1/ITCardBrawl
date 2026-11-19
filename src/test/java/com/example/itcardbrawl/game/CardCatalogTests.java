@@ -195,6 +195,46 @@ class CardCatalogTests {
 	}
 
 	@Test
+	void factionWithoutNameIsRejected() {
+		factions.set(0, new Faction("alpha", " ", "opis", true));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("frakcja 'alpha' nie ma nazwy");
+	}
+
+	@Test
+	void cardWithoutTypeIsRejected() {
+		cards.set(0, new Card("alpha-1", "alpha", "Karta alpha-1", null, 1, "tekst"));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1' nie ma typu");
+	}
+
+	@Test
+	void emptyDeckEntryIsRejected() {
+		decks.get("alpha").set(0, null);
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("talia 'alpha' ma pustą pozycję");
+	}
+
+	@Test
+	void deckWithFactionlessCardFailsWithReadableError() {
+		cards.set(0, card("alpha-1", null, 1));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1' wskazuje nieistniejącą frakcję 'null'");
+	}
+
+	@Test
+	void hugeCopiesFailsWithReadableErrorWithoutExpanding() {
+		decks.get("alpha").set(0, new DeckEntry("alpha-1", Integer.MAX_VALUE));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("talia 'alpha': karta 'alpha-1' ma %d kopii".formatted(Integer.MAX_VALUE));
+	}
+
+	@Test
 	void zeroCopiesIsRejected() {
 		decks.get("alpha").set(10, new DeckEntry("neutral-1", 0));
 		decks.get("alpha").set(11, new DeckEntry("neutral-2", 2));

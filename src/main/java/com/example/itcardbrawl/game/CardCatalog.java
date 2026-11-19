@@ -164,16 +164,18 @@ public final class CardCatalog {
 				if (card == null) {
 					errors.add("talia '%s' wskazuje nieistniejącą kartę '%s'".formatted(factionId, entry.card()));
 				}
-				else if (!card.faction().equals(factionId) && !isNonPlayable(factions.get(card.faction()))) {
+				else if (!factionId.equals(card.faction()) && !isNonPlayable(factions.get(card.faction()))) {
 					errors.add("talia '%s' zawiera kartę '%s' obcej frakcji '%s'"
 						.formatted(factionId, card.id(), card.faction()));
 				}
-				if (entry.copies() < MIN_COPIES || entry.copies() > MAX_COPIES) {
+				boolean copiesInRange = entry.copies() >= MIN_COPIES && entry.copies() <= MAX_COPIES;
+				if (!copiesInRange) {
 					errors.add("talia '%s': karta '%s' ma %d kopii, dozwolone %d–%d"
 						.formatted(factionId, entry.card(), entry.copies(), MIN_COPIES, MAX_COPIES));
 				}
 				total += entry.copies();
-				if (card != null) {
+				// Rozwijamy tylko poprawne pozycje — literówka w copies nie może wyczerpać pamięci przed raportem błędów.
+				if (card != null && copiesInRange) {
 					for (int i = 0; i < entry.copies(); i++) {
 						deckCards.add(card);
 					}

@@ -16,17 +16,17 @@ const MATCH: MatchView = {
   player: {
     faction: { id: 'developers', name: 'Developerzy' },
     stress: 0,
-    stressLimit: 20,
+    stressLimit: 30,
     resource: { current: 1, max: 1 },
-    deckCount: 15,
+    deckCount: 25,
     hand: [],
   },
   opponent: {
     faction: { id: 'testers', name: 'Testerzy' },
     stress: 0,
-    stressLimit: 20,
+    stressLimit: 30,
     resource: { current: 0, max: 0 },
-    deckCount: 15,
+    deckCount: 25,
     handCount: 5,
   },
 };

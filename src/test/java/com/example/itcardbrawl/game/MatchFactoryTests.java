@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import java.util.List;
 import java.util.SplittableRandom;
 import java.util.random.RandomGenerator;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -136,6 +137,17 @@ class MatchFactoryTests {
 		List<Card> dealtOrder = allCards(match.player()).toList();
 		assertThat(dealtOrder).containsExactlyInAnyOrderElementsOf(CATALOG.deck("developers"));
 		assertThat(dealtOrder).isNotEqualTo(CATALOG.deck("developers"));
+	}
+
+	@Test
+	void instanceIdsFollowDealtOrderNotCatalogOrder() {
+		Match match = create("developers", 42, true);
+
+		List<Integer> playerIds = instances(match.player()).map(CardInstance::instanceId).toList();
+		List<Integer> opponentIds = instances(match.opponent()).map(CardInstance::instanceId).toList();
+		assertThat(playerIds).isEqualTo(IntStream.rangeClosed(1, MatchRules.DECK_SIZE).boxed().toList());
+		assertThat(opponentIds)
+			.isEqualTo(IntStream.rangeClosed(MatchRules.DECK_SIZE + 1, 2 * MatchRules.DECK_SIZE).boxed().toList());
 	}
 
 	private static Stream<CardInstance> instances(MatchSide side) {
