@@ -343,25 +343,25 @@ Push na `main` po zielonych testach buduje obraz, publikuje go w GHCR, wdraża n
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw verify`
-- [x] 1.2 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 1.1 Testy backendu przechodzą: `./mvnw verify` — cac0a06
+- [x] 1.2 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — cac0a06
 
 #### Manual
 
-- [x] 1.3 Lokalnie `http://localhost:8080/sign-in` ładuje SPA z jara, odświeżenie nie daje 401
+- [x] 1.3 Lokalnie `http://localhost:8080/sign-in` ładuje SPA z jara, odświeżenie nie daje 401 — cac0a06
 
 ### Phase 2: Obraz kontenera
 
 #### Automated
 
-- [ ] 2.1 Obraz się buduje: `docker build -t itcardbrawl:local .`
-- [ ] 2.2 W obrazie nie ma sekretów (`.env.properties`)
-- [ ] 2.3 Kontener startuje i jest `healthy`
-- [ ] 2.4 `/api/ping` zwraca `{"status":"ok"}`, a `/` zawiera `<app-root>`
+- [x] 2.1 Obraz się buduje: `docker build -t itcardbrawl:local .`
+- [x] 2.2 W obrazie nie ma sekretów (`.env.properties`)
+- [x] 2.3 Kontener startuje i jest `healthy`
+- [x] 2.4 `/api/ping` zwraca `{"status":"ok"}`, a `/` zawiera `<app-root>`
 
 #### Manual
 
-- [ ] 2.5 `http://localhost:8080/` przekierowuje na `/sign-in` z przyciskami logowania
+- [x] 2.5 `http://localhost:8080/` przekierowuje na `/sign-in` z przyciskami logowania
 
 ### Phase 3: CI — testy na PR i main
 
