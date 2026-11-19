@@ -4,6 +4,9 @@ import java.util.Locale;
 
 /**
  * Obsługiwane języki treści gry. Wszystko spoza angielskiego (także brak języka) daje polski.
+ * <p>
+ * Celowa asymetria z frontem: SPA dla przeglądarek spoza {@code pl*} wybiera angielski, ale zawsze wysyła
+ * {@code Accept-Language: pl|en} (interceptor), więc polski domyślny dotyczy tylko klientów bez tego nagłówka.
  */
 public enum Language {
 

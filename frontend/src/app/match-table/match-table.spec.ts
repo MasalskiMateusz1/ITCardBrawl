@@ -245,6 +245,47 @@ describe('MatchTable', () => {
     expect(text(cards[0].querySelector('.card-type'))).toBe('Character');
   });
 
+  it('cancels in-flight match requests on rapid language switches and renders only the last', async () => {
+    const fixture = await render();
+    const element = fixture.nativeElement as HTMLElement;
+    const language = TestBed.inject(LanguageService);
+
+    language.setLanguage('en');
+    await fixture.whenStable();
+    language.setLanguage('pl');
+    await fixture.whenStable();
+
+    const requests = httpTesting.match({ method: 'GET', url: '/api/matches/current' });
+    expect(requests.length).toBe(3);
+    expect(requests[0].cancelled).toBe(true);
+    expect(requests[1].cancelled).toBe(true);
+    expect(requests[2].cancelled).toBe(false);
+    requests[2].flush(matchView());
+    await fixture.whenStable();
+
+    expect(text(element.querySelector('.turn'))).toBe('Tura 1 — Twoja tura');
+    expect(text(element.querySelector('.player h2'))).toContain('Developerzy');
+  });
+
+  it('drops the Polish table when the refetch after switching to English fails', async () => {
+    const fixture = await render();
+    const element = fixture.nativeElement as HTMLElement;
+    httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' }).flush(matchView());
+    await fixture.whenStable();
+    expect(element.querySelectorAll('.player .card').length).toBe(5);
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await fixture.whenStable();
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/matches/current' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+
+    expect(element.querySelectorAll('.player .card').length).toBe(0);
+    expect(element.textContent).not.toContain('Developerzy');
+    expect(element.textContent).toContain('Could not load the match — please try again.');
+  });
+
   it('shows a load error in English after switching from Polish', async () => {
     const fixture = await render();
     const element = fixture.nativeElement as HTMLElement;

@@ -17,7 +17,7 @@
   }
 </fieldset>
 
-<button type="button" [disabled]="selectedFactionId() === null || starting()" (click)="start()">
+<button type="button" [disabled]="selectedFactionId() === null || factions().length === 0 || starting()" (click)="start()">
   {{ texts().newMatch.start }}
 </button>
 

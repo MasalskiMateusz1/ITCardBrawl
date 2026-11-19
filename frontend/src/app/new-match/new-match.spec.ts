@@ -204,6 +204,46 @@ describe('NewMatch', () => {
     expect(element.querySelector('button')!.disabled).toBe(false);
   });
 
+  it('cancels in-flight factions requests on rapid language switches and renders only the last', async () => {
+    const fixture = await render();
+    const element = fixture.nativeElement as HTMLElement;
+    const language = TestBed.inject(LanguageService);
+
+    language.setLanguage('en');
+    await fixture.whenStable();
+    language.setLanguage('pl');
+    await fixture.whenStable();
+
+    const requests = httpTesting.match({ method: 'GET', url: '/api/factions' });
+    expect(requests.length).toBe(3);
+    expect(requests[0].cancelled).toBe(true);
+    expect(requests[1].cancelled).toBe(true);
+    expect(requests[2].cancelled).toBe(false);
+    requests[2].flush(FACTIONS);
+    await fixture.whenStable();
+
+    expect(element.textContent).toContain('Developerzy');
+    expect(element.textContent).not.toContain('Developers');
+  });
+
+  it('drops the Polish factions and disables start when the refetch after switching fails', async () => {
+    const fixture = await renderWithFactions();
+    const element = fixture.nativeElement as HTMLElement;
+    await chooseFaction(fixture, 'testers');
+
+    TestBed.inject(LanguageService).setLanguage('en');
+    await fixture.whenStable();
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/factions' })
+      .flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+    await fixture.whenStable();
+
+    expect(element.querySelectorAll('input[type="radio"]').length).toBe(0);
+    expect(element.textContent).not.toContain('Testerzy');
+    expect(element.querySelector('button')!.disabled).toBe(true);
+    expect(element.textContent).toContain('Could not load factions — refresh the page.');
+  });
+
   it('shows a factions load error in English after switching from Polish', async () => {
     const fixture = await render();
     const element = fixture.nativeElement as HTMLElement;
