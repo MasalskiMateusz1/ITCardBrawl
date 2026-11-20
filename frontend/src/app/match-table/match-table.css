@@ -35,7 +35,9 @@
   border-radius: 8px;
 }
 
-.hand {
+.hand,
+.board,
+.events {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -44,7 +46,8 @@
   margin: 0;
 }
 
-.card {
+.card,
+.character {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -56,7 +59,10 @@
 
 .card-type,
 .card-cost,
-.card-neutral {
+.card-neutral,
+.card-stats,
+.card-duration,
+.event-turns {
   font-size: 0.875rem;
 }
 
@@ -67,8 +73,79 @@
   border-radius: 4px;
 }
 
-.card-text {
+.card-text,
+.ability {
   margin: 0;
+}
+
+.ability {
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.card button,
+.character button {
+  margin-block-start: auto;
+}
+
+.character.selected {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px #1a73e8;
+}
+
+.event {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed #999;
+  border-radius: 8px;
+}
+
+.zone h3 {
+  margin-block: 1rem 0.5rem;
+}
+
+.attack-stress {
+  margin-block-start: 0.75rem;
+}
+
+.turn-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.turn-bar .turn {
+  flex: 1;
+}
+
+.result {
+  padding: 1rem;
+  margin-block: 1rem;
+  border: 2px solid #c62828;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.result.win {
+  border-color: #2e7d32;
+}
+
+.result h2 {
+  margin-block: 0 0.5rem;
+}
+
+.log ol {
+  max-height: 12rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.5rem 0.5rem 0.5rem 2rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.log-entry.mine {
+  font-weight: bold;
 }
 
 a {

@@ -555,23 +555,23 @@ Partie trzymane są tylko w pamięci, więc stare partie znikają przy restarcie
 
 #### Automated
 
-- [x] 4.1 Testy API i logu przechodzą: `./mvnw -B test -Dtest="MatchControllerTests,MatchLogFormatterTests"`
-- [x] 4.2 Trasy backendu są pod `/api`: `./mvnw -B test -Dtest=BackendRoutesTests`
-- [x] 4.3 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 4.1 Testy API i logu przechodzą: `./mvnw -B test -Dtest="MatchControllerTests,MatchLogFormatterTests"` — d2b8aea
+- [x] 4.2 Trasy backendu są pod `/api`: `./mvnw -B test -Dtest=BackendRoutesTests` — d2b8aea
+- [x] 4.3 Pełny build backendu przechodzi: `./mvnw -B verify` — d2b8aea
 
 ### Phase 5: Pętla gry we froncie
 
 #### Automated
 
-- [ ] 5.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 5.2 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build`
-- [ ] 5.3 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 5.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 5.2 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build`
+- [x] 5.3 Pełny build backendu przechodzi: `./mvnw -B verify`
 
 #### Manual
 
-- [ ] 5.4 Pełna partia od wyboru frakcji do wyniku (`npm start` + `./mvnw spring-boot:run`): zagranie postaci, atak w postać i w stres, koniec tury, widoczne ruchy komputera w logu, wynik i „Zagraj ponownie” → `/new-match`
-- [ ] 5.5 Partia, w której zaczyna komputer, otwiera się z jego ruchami w logu i turą gracza
-- [ ] 5.6 Ochrona przeciwnika blokuje atak w stres; Szarża atakuje od razu; obrażenia znikają po turze
-- [ ] 5.7 Przełączenie PL/EN w trakcie partii zmienia język logu i etykiet bez utraty stanu
+- [x] 5.4 Pełna partia od wyboru frakcji do wyniku (`npm start` + `./mvnw spring-boot:run`): zagranie postaci, atak w postać i w stres, koniec tury, widoczne ruchy komputera w logu, wynik i „Zagraj ponownie” → `/new-match`
+- [x] 5.5 Partia, w której zaczyna komputer, otwiera się z jego ruchami w logu i turą gracza
+- [x] 5.6 Ochrona przeciwnika blokuje atak w stres; Szarża atakuje od razu; obrażenia znikają po turze
+- [x] 5.7 Przełączenie PL/EN w trakcie partii zmienia język logu i etykiet bez utraty stanu
 - [ ] 5.8 Podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury
-- [ ] 5.9 Partia mieści się mniej więcej w 15 minutach (NFR), z uwagą o balansie do S-06
+- [x] 5.9 Partia mieści się mniej więcej w 15 minutach (NFR), z uwagą o balansie do S-06
