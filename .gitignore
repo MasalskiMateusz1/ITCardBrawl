@@ -51,3 +51,6 @@ HELP.md
 deploy/app.env
 deploy/.env
 deploy/.previous_tag
+
+### Skille 10xDevs (licencjonowane, nie publikowac) ###
+.claude/skills/
