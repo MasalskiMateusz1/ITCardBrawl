@@ -20,6 +20,7 @@ Zasady postaci, wydarzeń i tury pochodzą z decyzji użytkownika zapisanych w `
 
 - Gracz w `/match` zagrywa karty (postacie na stół, maks. 5; wydarzenia za koszt, bez efektu), atakuje gotowymi postaciami i kończy turę. Komputer od razu rozgrywa swoją turę. Wszystko widać w logu po polsku albo po angielsku, zależnie od języka.
 - Partia kończy się wynikiem (wygrana/przegrana i przyczyna) i linkiem „Zagraj ponownie” do `/new-match`.
+- Tura komputera odtwarza się na stole ruch po ruchu (ok. 700 ms na krok) z etykietą „Ruch przeciwnika…”, a przyciski ruchów są w tym czasie nieaktywne (Faza 6).
 - Serwer jest jedynym źródłem prawdy: niepoprawny ruch dostaje 400, nieaktualne żądanie (inna partia albo inna tura) dostaje 409. Każdy ruch przechodzi przez atomowe `MatchStore.update`.
 - Weryfikacja: `./mvnw -B verify`, `cd frontend && npx ng test --watch=false`, `cd frontend && npm run build` oraz ręczne rozegranie pełnej partii.
 
@@ -36,7 +37,8 @@ Zasady postaci, wydarzeń i tury pochodzą z decyzji użytkownika zapisanych w `
 - Efekty wydarzeń. Wydarzenie płaci koszt, trafia na cmentarz albo wisi jako aktywne przez `duration` tur, ale niczego nie zmienia (S-04).
 - Sensowna strategia komputera i „powód ruchu” (S-05). Komputer wybiera losowo spośród poprawnych ruchów.
 - Docelowy balans i treść kart (S-06). Wartości z Fazy 1 są pierwszym szkicem.
-- Zapis partii poza pamięcią procesu, PvP, historia partii, animacje i odtwarzanie tury komputera krok po kroku.
+- Zapis partii poza pamięcią procesu, PvP, historia partii i animacje. (Odtwarzanie tury komputera krok po kroku weszło w zakres jako Faza 6.)
+- Pomijanie odtwarzania tury komputera i odtwarzanie własnych ruchów gracza.
 - Limit stresu jako sufit. Stres przechowuje rzeczywistą wartość (np. 33/30).
 - Zmiany roadmapy poza synchronizacją statusu S-03 (np. przeniesienie modelu wydarzeń z S-04).
 
@@ -484,6 +486,123 @@ Fikstury rozszerzone o nowe pola.
 
 ---
 
+## Phase 6: Odtwarzanie tury komputera krok po kroku
+
+### Overview
+
+Tura komputera przestaje być natychmiastowa. Backend zwraca obok stanu końcowego listę kroków (stan po każdym ruchu komputera), a stół odtwarza je z opóźnieniem ok. 700 ms. Przez cały czas odtwarzania przyciski ruchów są nieaktywne. Naprawia to nieudany test ręczny 5.8. Dziś tura komputera trwa kilka ms, a `finalize` w `move()` (`match-table.ts`) zdejmuje `pending` w chwili odpowiedzi. Przycisk „Zakończ turę” od razu wraca, więc drugie kliknięcie wysyła poprawne żądanie z nowym numerem tury i kończy kolejną turę gracza.
+
+### Changes Required:
+
+#### 1. Kroki tury komputera w domenie
+
+**File**: `game/RandomOpponent.java`, `game/MatchService.java`, nowe `game/MatchOutcome.java`
+
+**Intent**: Zachować stany pośrednie tury komputera bez zmiany zasad i bez zapisywania ich w magazynie. Atomowość zostaje, bo kroki powstają wewnątrz tej samej funkcji `update` i wracają tylko w odpowiedzi.
+
+**Contract**:
+- `RandomOpponent`:
+  - nowa `List<Match> playTurnSteps(Match)` zwraca stan po każdym ruchu komputera (zagranie, atak, `EndTurn`); ostatni element to stan końcowy;
+  - zwraca pustą listę, gdy nie jest tura komputera;
+  - `playTurn` zwraca ostatni krok (albo wejście) i zachowuje obecny kontrakt.
+- `MatchOutcome(Match match, List<Match> replay)` z `List.copyOf`.
+- `MatchService.start` zwraca `MatchOutcome`:
+  - gdy zaczyna komputer, `replay` = [stan startowy, ...kroki komputera];
+  - w przeciwnym razie `replay` jest pusty.
+- `MatchService.move` zwraca `Optional<MatchOutcome>`:
+  - po `EndTurn` w trwającej partii `replay` = [stan po końcu tury gracza, ...kroki komputera];
+  - dla zagrania, ataku i `EndTurn` kończącego partię `replay` jest pusty;
+  - `update` zwraca tylko `Match`, więc kroki trzeba wynieść z lambdy (np. przez lokalny holder).
+- `current` bez zmian.
+
+#### 2. Kroki w widoku
+
+**File**: `api/MatchView.java`, `api/MatchController.java`
+
+**Intent**: Wysłać kroki lekko. Log idzie raz, w stanie końcowym, a krok mówi tylko, ile wpisów logu było widocznych w tym momencie.
+
+**Contract**:
+- `MatchView` dostaje `replay: [ { turn: TurnView, status, result, player: PlayerView, opponent: OpponentView, logSize } ]`.
+- Widoki stron w krokach powstają tym samym kodem co dla stanu końcowego, więc ręka przeciwnika nadal nie wychodzi.
+- `logSize` to liczba wpisów logu w danym kroku. Log stanu końcowego jest jego przedłużeniem, więc `final.log.slice(0, logSize)` daje log kroku.
+- `POST /api/matches` i `POST .../end-turn` wypełniają `replay`. `play`, `attack` i `GET /current` zwracają `replay: []`.
+
+#### 3. Przekazanie startu i odtwarzanie we froncie
+
+**File**: `frontend/src/app/game/match.ts`, `game.service.ts`, `new-match/new-match.ts`, `match-table/match-table.ts`, `.html`, `.css`
+
+**Intent**: Pokazać ruchy komputera po kolei i zablokować przyciski do końca odtwarzania, także w partii, w której zaczyna komputer.
+
+**Contract**:
+- **Typy:** `ReplayStep` i pole `replay: ReplayStep[]` w `MatchView`.
+- **Przekazanie startu:** `GameService` dostaje jednorazowe przekazanie odpowiedzi startu (`setStartedMatch(view)` / `takeStartedMatch(): MatchView | null`):
+  - `new-match` zapisuje odpowiedź przed nawigacją;
+  - `match-table` przy wejściu bierze ją zamiast pierwszego `GET /current`;
+  - bez niej (np. po przeładowaniu) `match-table` ładuje `GET /current` jak dziś.
+- **Opóźnienie:** token DI `REPLAY_STEP_MS`, domyślnie 700, żeby specy mogły użyć fałszywych zegarów.
+- **Odtwarzanie (sygnał `replaying`):**
+  - odpowiedź z niepustym `replay` pokazuje krok 1 od razu, a kolejne co `REPLAY_STEP_MS`;
+  - na końcu ustawia stan końcowy i `replaying = false`;
+  - wyświetlany stan kroku to stan końcowy z polami kroku (`turn`, `status`, `result`, `player`, `opponent`) i `log.slice(0, logSize)`;
+  - pusty `replay` ustawia stan od razu, jak dziś.
+- **Przyciski:** każdy przycisk ruchu jest nieaktywny przy `pending() || replaying()`. Podczas odtwarzania pasek tury pokazuje etykietę „Ruch przeciwnika…” zamiast aktywnego „Zakończ turę”.
+- **Zmiana języka:** nie przerywa odtwarzania. Odświeżenie `GET /current` czeka do końca odtwarzania i wykonuje się raz.
+- **Zniszczenie komponentu:** kasuje zegary.
+- **Pomijanie:** nie ma przycisku pomijania (decyzja użytkownika).
+
+#### 4. Teksty UI
+
+**File**: `frontend/src/app/i18n/messages.ts`, `pl.ts`, `en.ts`
+
+**Intent**: Zasada repo: żadnego tekstu UI w kodzie.
+
+**Contract**: Nowy klucz `matchTable.opponentMoving`: „Ruch przeciwnika…” / „Opponent is moving…”.
+
+#### 5. Testy
+
+**File**: `src/test/java/.../game/RandomOpponentTests.java`, `MatchServiceTests.java`, `src/test/java/.../api/MatchControllerTests.java`, `frontend/src/app/match-table/match-table.spec.ts`, `frontend/src/app/new-match/new-match.spec.ts`
+
+**Intent**: Zablokować regresję podwójnego kliknięcia i kontrakt kroków.
+
+**Contract**:
+- **`RandomOpponent`:**
+  - ostatni krok `playTurnSteps` jest równy wynikowi `playTurn` dla tego samego ziarna;
+  - każdy krok poza ostatnim ma aktywnego `OPPONENT`.
+- **`MatchService`:**
+  - `EndTurn` daje `replay`, który zaczyna się stanem po końcu tury gracza i kończy stanem końcowym;
+  - zagranie daje pusty `replay`;
+  - start z zaczynającym komputerem daje niepusty `replay`.
+- **MockMvc:**
+  - `end-turn` zwraca `replay` z rosnącym `logSize` (ostatni ≤ długość `log`), bez ręki przeciwnika w krokach;
+  - `play` i `GET /current` zwracają `replay: []`.
+- **Vitest** (fałszywe zegary, `REPLAY_STEP_MS` z testu):
+  - **podwójny klik:** klik „Zakończ turę”, odpowiedź z `replay` i natychmiastowy drugi klik dają dokładnie jedno żądanie `end-turn` (`httpTesting.expectOne` + `verify()`);
+  - kroki pojawiają się po kolei (stres i log kroku 1, potem kroku 2), a po ostatnim kroku przyciski są znów aktywne;
+  - w trakcie odtwarzania widać „Ruch przeciwnika…”, a „Zagraj” i „Atakuj” są nieaktywne;
+  - zmiana języka w trakcie odtwarzania wysyła `GET /current` dopiero po ostatnim kroku;
+  - wejście z przekazaną odpowiedzią startu odtwarza ją bez `GET /current`;
+  - `new-match` zapisuje odpowiedź przed nawigacją.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Testy domeny i API przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchServiceTests,MatchControllerTests"`
+- Pełny build backendu przechodzi: `./mvnw -B verify`
+- Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
+- Build produkcyjny frontendu przechodzi: `cd frontend && npm run build`
+
+#### Manual Verification:
+
+- Po „Zakończ turę” ruchy komputera pojawiają się na stole i w logu po kolei, z etykietą „Ruch przeciwnika…”, a potem wraca tura gracza
+- Partia, w której zaczyna komputer, odtwarza jego pierwszą turę po wejściu na `/match`
+- Ponowne sprawdzenie 5.8: podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury
+- Przełączenie PL/EN w trakcie odtwarzania nie przerywa go, a po nim log i etykiety są w nowym języku
+
+**Implementation Note**: Po przejściu bramek automatycznych zatrzymaj się na ręczne potwierdzenie przed commitem. Po potwierdzeniu ponownego sprawdzenia 5.8 zaznacz także wiersz 5.8 w Progress.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests:
@@ -563,15 +682,31 @@ Partie trzymane są tylko w pamięci, więc stare partie znikają przy restarcie
 
 #### Automated
 
-- [x] 5.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 5.2 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build`
-- [x] 5.3 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 5.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 22a82cf
+- [x] 5.2 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build` — 22a82cf
+- [x] 5.3 Pełny build backendu przechodzi: `./mvnw -B verify` — 22a82cf
 
 #### Manual
 
-- [x] 5.4 Pełna partia od wyboru frakcji do wyniku (`npm start` + `./mvnw spring-boot:run`): zagranie postaci, atak w postać i w stres, koniec tury, widoczne ruchy komputera w logu, wynik i „Zagraj ponownie” → `/new-match`
-- [x] 5.5 Partia, w której zaczyna komputer, otwiera się z jego ruchami w logu i turą gracza
-- [x] 5.6 Ochrona przeciwnika blokuje atak w stres; Szarża atakuje od razu; obrażenia znikają po turze
-- [x] 5.7 Przełączenie PL/EN w trakcie partii zmienia język logu i etykiet bez utraty stanu
-- [ ] 5.8 Podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury
-- [x] 5.9 Partia mieści się mniej więcej w 15 minutach (NFR), z uwagą o balansie do S-06
+- [x] 5.4 Pełna partia od wyboru frakcji do wyniku (`npm start` + `./mvnw spring-boot:run`): zagranie postaci, atak w postać i w stres, koniec tury, widoczne ruchy komputera w logu, wynik i „Zagraj ponownie” → `/new-match` — 22a82cf
+- [x] 5.5 Partia, w której zaczyna komputer, otwiera się z jego ruchami w logu i turą gracza — 22a82cf
+- [x] 5.6 Ochrona przeciwnika blokuje atak w stres; Szarża atakuje od razu; obrażenia znikają po turze — 22a82cf
+- [x] 5.7 Przełączenie PL/EN w trakcie partii zmienia język logu i etykiet bez utraty stanu — 22a82cf
+- [x] 5.8 Podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury
+- [x] 5.9 Partia mieści się mniej więcej w 15 minutach (NFR), z uwagą o balansie do S-06 — 22a82cf
+
+### Phase 6: Odtwarzanie tury komputera krok po kroku
+
+#### Automated
+
+- [x] 6.1 Testy domeny i API przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchServiceTests,MatchControllerTests"`
+- [x] 6.2 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 6.3 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 6.4 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build`
+
+#### Manual
+
+- [x] 6.5 Po „Zakończ turę” ruchy komputera pojawiają się na stole i w logu po kolei, z etykietą „Ruch przeciwnika…”, a potem wraca tura gracza
+- [x] 6.6 Partia, w której zaczyna komputer, odtwarza jego pierwszą turę po wejściu na `/match`
+- [x] 6.7 Ponowne sprawdzenie 5.8: podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury
+- [x] 6.8 Przełączenie PL/EN w trakcie odtwarzania nie przerywa go, a po nim log i etykiety są w nowym języku

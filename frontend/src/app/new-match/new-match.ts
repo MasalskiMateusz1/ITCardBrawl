@@ -80,7 +80,11 @@ export class NewMatch {
       .startMatch(factionId)
       .pipe(finalize(() => this.starting.set(false)))
       .subscribe({
-        next: () => void this.router.navigateByUrl('/match'),
+        next: (match) => {
+          // The table takes this response instead of its first GET /current.
+          this.gameService.setStartedMatch(match);
+          void this.router.navigateByUrl('/match');
+        },
         error: (error: unknown) => {
           // A 401 is handled by authInterceptor, which redirects to /sign-in.
           if (!(error instanceof HttpErrorResponse && error.status === 401)) {

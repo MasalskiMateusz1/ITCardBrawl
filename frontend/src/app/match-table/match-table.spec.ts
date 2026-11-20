@@ -2,9 +2,20 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { BoardCharacter, EndReason, HandCard, MatchView, Side } from '../game/match';
+import { GameService } from '../game/game.service';
+import {
+  BoardCharacter,
+  EndReason,
+  HandCard,
+  LogEntry,
+  MatchView,
+  ReplayStep,
+  Side,
+} from '../game/match';
 import { LANGUAGE_STORAGE_KEY, LanguageService } from '../i18n/language.service';
-import { MatchTable } from './match-table';
+import { MatchTable, REPLAY_STEP_MS } from './match-table';
+
+const STEP_MS = 1000;
 
 const MATCH_ID = '00000000-0000-0000-0000-000000000001';
 
@@ -125,6 +136,7 @@ function matchView(active: Side = 'PLAYER'): MatchView {
     },
     result: null,
     log: [],
+    replay: [],
   };
 }
 
@@ -167,7 +179,12 @@ describe('MatchTable', () => {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, 'pl');
     await TestBed.configureTestingModule({
       imports: [MatchTable],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: REPLAY_STEP_MS, useValue: STEP_MS },
+      ],
     }).compileComponents();
 
     httpTesting = TestBed.inject(HttpTestingController);
@@ -175,6 +192,7 @@ describe('MatchTable', () => {
 
   afterEach(() => {
     httpTesting.verify();
+    vi.useRealTimers();
     localStorage.clear();
   });
 
@@ -683,6 +701,131 @@ describe('MatchTable', () => {
     expect(playButtons(element)[0].disabled).toBe(false);
   });
 
+  describe('playback of the computer turn', () => {
+    function advance(fixture: ComponentFixture<MatchTable>, ms: number): void {
+      vi.advanceTimersByTime(ms);
+      fixture.detectChanges();
+    }
+
+    function logTexts(element: HTMLElement): string[] {
+      return Array.from(element.querySelectorAll('.log .log-entry')).map(text);
+    }
+
+    function attackButton(element: HTMLElement): HTMLButtonElement {
+      return button(element, '.player .character button.attack');
+    }
+
+    /** Renders boardView() with real timers, then installs the fake clock for the playback. */
+    async function renderBoardThenFakeClock(): Promise<ComponentFixture<MatchTable>> {
+      const fixture = await renderFixture(boardView());
+      vi.useFakeTimers();
+      return fixture;
+    }
+
+    function flushEndTurn(): void {
+      httpTesting
+        .expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` })
+        .flush(endTurnResponse());
+    }
+
+    it('sends exactly one end-turn request on a quick double click', async () => {
+      const fixture = await renderBoardThenFakeClock();
+      const element = fixture.nativeElement as HTMLElement;
+
+      const endTurn = button(element, '.end-turn');
+      endTurn.click();
+      flushEndTurn();
+      // The second click lands before the disabled state is rendered.
+      endTurn.click();
+      fixture.detectChanges();
+      expect(element.querySelector('.end-turn')).toBeNull();
+
+      advance(fixture, STEP_MS * 2);
+      expect(button(element, '.end-turn').disabled).toBe(false);
+    });
+
+    it('shows the steps one by one and enables the buttons after the last one', async () => {
+      const fixture = await renderBoardThenFakeClock();
+      const element = fixture.nativeElement as HTMLElement;
+
+      button(element, '.end-turn').click();
+      flushEndTurn();
+      fixture.detectChanges();
+
+      expect(text(element.querySelector('.opponent-moving'))).toBe('Ruch przeciwnika…');
+      expect(element.querySelector('.end-turn')).toBeNull();
+      expect(text(element.querySelector('.turn'))).toBe('Tura 6 — tura przeciwnika');
+      expect(text(element.querySelector('.player .stress dd'))).toBe('0/30');
+      expect(logTexts(element)).toEqual(LOG.slice(0, 2).map((entry) => entry.text));
+      expect(playButtons(element).every((candidate) => candidate.disabled)).toBe(true);
+      expect(attackButton(element).disabled).toBe(true);
+
+      advance(fixture, STEP_MS - 1);
+      expect(logTexts(element).length).toBe(2);
+      advance(fixture, 1);
+      expect(text(element.querySelector('.player .stress dd'))).toBe('4/30');
+      expect(logTexts(element)).toEqual(LOG.slice(0, 3).map((entry) => entry.text));
+      expect(element.querySelectorAll('.opponent .board .character').length).toBe(3);
+      expect(text(element.querySelector('.opponent-moving'))).toBe('Ruch przeciwnika…');
+
+      advance(fixture, STEP_MS);
+      expect(element.querySelector('.opponent-moving')).toBeNull();
+      expect(text(element.querySelector('.turn'))).toBe('Tura 7 — Twoja tura');
+      expect(logTexts(element)).toEqual(LOG.map((entry) => entry.text));
+      expect(button(element, '.end-turn').disabled).toBe(false);
+      expect(playButtons(element)[0].disabled).toBe(false);
+      expect(attackButton(element).disabled).toBe(false);
+    });
+
+    it('refetches the match only after playback when the language changes during it', async () => {
+      const fixture = await renderBoardThenFakeClock();
+      const element = fixture.nativeElement as HTMLElement;
+
+      button(element, '.end-turn').click();
+      flushEndTurn();
+      fixture.detectChanges();
+
+      TestBed.inject(LanguageService).setLanguage('en');
+      fixture.detectChanges();
+      httpTesting.expectNone({ method: 'GET', url: '/api/matches/current' });
+      expect(text(element.querySelector('.opponent-moving'))).toBe('Opponent is moving…');
+
+      advance(fixture, STEP_MS);
+      httpTesting.expectNone({ method: 'GET', url: '/api/matches/current' });
+      expect(logTexts(element).length).toBe(3);
+
+      advance(fixture, STEP_MS);
+      httpTesting
+        .expectOne({ method: 'GET', url: '/api/matches/current' })
+        .flush({
+          ...endTurnResponse(),
+          replay: [],
+          log: [{ side: 'PLAYER', text: 'You end your turn' }],
+        });
+      fixture.detectChanges();
+
+      expect(text(element.querySelector('.turn'))).toBe('Turn 7 — your turn');
+      expect(logTexts(element)).toEqual(['You end your turn']);
+    });
+
+    it('plays back the start response handed over by new-match without GET /current', () => {
+      TestBed.inject(GameService).setStartedMatch(endTurnResponse());
+      vi.useFakeTimers();
+
+      const fixture = TestBed.createComponent(MatchTable);
+      fixture.detectChanges();
+      const element = fixture.nativeElement as HTMLElement;
+      httpTesting.expectNone({ method: 'GET', url: '/api/matches/current' });
+      expect(text(element.querySelector('.opponent-moving'))).toBe('Ruch przeciwnika…');
+      expect(logTexts(element).length).toBe(2);
+
+      advance(fixture, STEP_MS * 2);
+      expect(element.querySelector('.opponent-moving')).toBeNull();
+      expect(text(element.querySelector('.turn'))).toBe('Tura 7 — Twoja tura');
+      expect(TestBed.inject(GameService).takeStartedMatch()).toBeNull();
+    });
+  });
+
   it('shows the win with its reason and a link to /new-match, without move buttons', async () => {
     const element = await renderWithMatch(finishedView('PLAYER', 'STRESS_LIMIT'));
 
@@ -732,6 +875,49 @@ describe('MatchTable', () => {
     expect(text(element.querySelector('.log h2'))).toBe('Przebieg partii');
   });
 });
+
+const LOG: LogEntry[] = [
+  { side: 'PLAYER', text: 'Kończysz turę' },
+  { side: 'OPPONENT', text: 'Tura przeciwnika 6' },
+  { side: 'OPPONENT', text: 'Przeciwnik zagrywa: QA Senior' },
+  { side: 'OPPONENT', text: 'Przeciwnik kończy turę' },
+  { side: 'PLAYER', text: 'Twoja tura 7' },
+];
+
+/**
+ * End turn from boardView(): step 1 is the state after the player's end of turn, step 2 the
+ * opponent's play (+4 stress for the player), step 3 the final state after the opponent ends its turn.
+ */
+function endTurnResponse(): MatchView {
+  const before = boardView();
+  const opponentTurn = { number: 6, active: 'OPPONENT' } as const;
+  const opponent = {
+    ...before.opponent,
+    board: [...before.opponent.board, character(22, 'QA Senior', { canAttack: false })],
+  };
+  const player = { ...before.player, stress: 4 };
+  const step = (overrides: Partial<ReplayStep>): ReplayStep => ({
+    turn: opponentTurn,
+    status: 'IN_PROGRESS',
+    result: null,
+    player: before.player,
+    opponent: before.opponent,
+    logSize: 0,
+    ...overrides,
+  });
+  return {
+    ...before,
+    turn: { number: 7, active: 'PLAYER' },
+    player,
+    opponent,
+    log: LOG,
+    replay: [
+      step({ logSize: 2 }),
+      step({ player, opponent, logSize: 3 }),
+      step({ turn: { number: 7, active: 'PLAYER' }, player, opponent, logSize: 5 }),
+    ],
+  };
+}
 
 function matchViewEn(): MatchView {
   const match = matchView();

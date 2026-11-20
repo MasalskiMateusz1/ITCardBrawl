@@ -40,7 +40,7 @@
       <button
         type="button"
         class="attack-stress"
-        [disabled]="pending() || opponentGuarded()"
+        [disabled]="busy() || opponentGuarded()"
         (click)="attack(null)"
       >
         {{ texts().matchTable.attackStress }}
@@ -64,7 +64,7 @@
             <button
               type="button"
               class="target"
-              [disabled]="pending() || !canTarget(character)"
+              [disabled]="busy() || !canTarget(character)"
               (click)="attack(character.instanceId)"
             >
               {{ texts().matchTable.target }}
@@ -89,18 +89,17 @@
     <p class="turn">{{ texts().matchTable.turn(m.turn.number, m.turn.active === 'PLAYER') }}</p>
     @if (!finished()) {
       @if (selectedAttacker() !== null) {
-        <button type="button" class="cancel-attack" [disabled]="pending()" (click)="cancelAttack()">
+        <button type="button" class="cancel-attack" [disabled]="busy()" (click)="cancelAttack()">
           {{ texts().matchTable.cancelAttack }}
         </button>
       }
-      <button
-        type="button"
-        class="end-turn"
-        [disabled]="pending() || !myTurn()"
-        (click)="endTurn()"
-      >
-        {{ texts().matchTable.endTurn }}
-      </button>
+      @if (replaying()) {
+        <p class="opponent-moving" role="status">{{ texts().matchTable.opponentMoving }}</p>
+      } @else {
+        <button type="button" class="end-turn" [disabled]="busy() || !myTurn()" (click)="endTurn()">
+          {{ texts().matchTable.endTurn }}
+        </button>
+      }
     }
   </div>
 
@@ -146,7 +145,7 @@
             <button
               type="button"
               class="attack"
-              [disabled]="pending() || !myTurn()"
+              [disabled]="busy() || !myTurn()"
               (click)="selectAttacker(character)"
             >
               {{ texts().matchTable.attack }}

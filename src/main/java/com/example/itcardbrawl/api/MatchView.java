@@ -23,30 +23,43 @@ import com.example.itcardbrawl.game.MatchSide;
  * Widok stołu z perspektywy gracza. Przeciwnik jest widoczny przez stół, aktywne wydarzenia i liczniki —
  * jego ręka i kolejność talii nie opuszczają serwera. Teksty (nazwy frakcji, nazwy i treść kart, log) są
  * w języku żądania; identyfikatory partii i kart od języka nie zależą. {@code result} jest {@code null},
- * dopóki partia trwa.
+ * dopóki partia trwa. {@code replay} to kroki tury komputera do odtworzenia (pusty, gdy nie ma czego
+ * odtwarzać); log jest wysyłany raz, w stanie końcowym.
  */
 public record MatchView(UUID matchId, Match.Status status, TurnView turn, PlayerView player, OpponentView opponent,
-		ResultView result, List<LogEntryView> log) {
+		ResultView result, List<LogEntryView> log, List<ReplayStepView> replay) {
 
-	public static MatchView of(Match match, CardCatalog catalog, MatchLogFormatter formatter, Language language) {
-		MatchSide player = match.player();
-		MatchSide opponent = match.opponent();
-		return new MatchView(match.id(), match.status(),
-				new TurnView(match.turnNumber(), match.activeSide()),
-				new PlayerView(FactionRef.of(player.faction(), language), player.stress(), MatchRules.STRESS_LIMIT,
-						ResourceView.of(player), player.deck().size(),
-						player.hand().stream().map(card -> HandCardView.of(card, catalog, language)).toList(),
-						BoardCharacterView.listOf(player, language), ActiveEventView.listOf(player, language),
-						player.graveyard().size()),
-				new OpponentView(FactionRef.of(opponent.faction(), language), opponent.stress(), MatchRules.STRESS_LIMIT,
-						ResourceView.of(opponent), opponent.deck().size(), opponent.hand().size(),
-						BoardCharacterView.listOf(opponent, language), ActiveEventView.listOf(opponent, language),
-						opponent.graveyard().size()),
+	public static MatchView of(Match match, List<Match> replay, CardCatalog catalog, MatchLogFormatter formatter,
+			Language language) {
+		return new MatchView(match.id(), match.status(), TurnView.of(match),
+				PlayerView.of(match.player(), catalog, language), OpponentView.of(match.opponent(), language),
 				ResultView.of(match.result()),
-				match.log().stream().map(event -> LogEntryView.of(event, formatter, language)).toList());
+				match.log().stream().map(event -> LogEntryView.of(event, formatter, language)).toList(),
+				replay.stream().map(step -> ReplayStepView.of(step, catalog, language)).toList());
+	}
+
+	/**
+	 * Stan partii po jednym ruchu komputera. Strony powstają tym samym kodem co w stanie końcowym, więc ręka
+	 * przeciwnika nie wychodzi. {@code logSize} to liczba wpisów logu w tym kroku — log stanu końcowego jest
+	 * jego przedłużeniem.
+	 */
+	public record ReplayStepView(TurnView turn, Match.Status status, ResultView result, PlayerView player,
+			OpponentView opponent, int logSize) {
+
+		static ReplayStepView of(Match step, CardCatalog catalog, Language language) {
+			return new ReplayStepView(TurnView.of(step), step.status(), ResultView.of(step.result()),
+					PlayerView.of(step.player(), catalog, language), OpponentView.of(step.opponent(), language),
+					step.log().size());
+		}
+
 	}
 
 	public record TurnView(int number, Match.Side active) {
+
+		static TurnView of(Match match) {
+			return new TurnView(match.turnNumber(), match.activeSide());
+		}
+
 	}
 
 	public record FactionRef(String id, String name) {
@@ -68,10 +81,27 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 	public record PlayerView(FactionRef faction, int stress, int stressLimit, ResourceView resource, int deckCount,
 			List<HandCardView> hand, List<BoardCharacterView> board, List<ActiveEventView> activeEvents,
 			int graveyardCount) {
+
+		static PlayerView of(MatchSide player, CardCatalog catalog, Language language) {
+			return new PlayerView(FactionRef.of(player.faction(), language), player.stress(),
+					MatchRules.STRESS_LIMIT, ResourceView.of(player), player.deck().size(),
+					player.hand().stream().map(card -> HandCardView.of(card, catalog, language)).toList(),
+					BoardCharacterView.listOf(player, language), ActiveEventView.listOf(player, language),
+					player.graveyard().size());
+		}
+
 	}
 
 	public record OpponentView(FactionRef faction, int stress, int stressLimit, ResourceView resource, int deckCount,
 			int handCount, List<BoardCharacterView> board, List<ActiveEventView> activeEvents, int graveyardCount) {
+
+		static OpponentView of(MatchSide opponent, Language language) {
+			return new OpponentView(FactionRef.of(opponent.faction(), language), opponent.stress(),
+					MatchRules.STRESS_LIMIT, ResourceView.of(opponent), opponent.deck().size(),
+					opponent.hand().size(), BoardCharacterView.listOf(opponent, language),
+					ActiveEventView.listOf(opponent, language), opponent.graveyard().size());
+		}
+
 	}
 
 	/**

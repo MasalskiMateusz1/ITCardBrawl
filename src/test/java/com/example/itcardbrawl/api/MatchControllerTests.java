@@ -569,6 +569,47 @@ class MatchControllerTests {
 			.containsOnly("Przeciwnik dobiera kartę");
 	}
 
+	// Kroki tury komputera: lekkie stany bez logu, z rosnącą liczbą widocznych wpisów i bez ręki przeciwnika.
+	@Test
+	void endTurnReturnsReplayStepsWithGrowingLogSize() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext after = endTurn(player, start(player, "developers"));
+
+		List<Map<String, Object>> steps = after.read("$.replay");
+		List<?> log = after.read("$.log");
+		assertThat(steps).hasSizeGreaterThanOrEqualTo(2);
+		List<Integer> logSizes = after.read("$.replay[*].logSize");
+		assertThat(logSizes).isSorted();
+		assertThat(logSizes.getFirst()).isLessThan(logSizes.getLast());
+		assertThat(logSizes.getLast()).isLessThanOrEqualTo(log.size());
+		assertThat((String) after.read("$.replay[0].turn.active")).isEqualTo("OPPONENT");
+		for (Map<String, Object> step : steps) {
+			assertThat(step).containsKeys("turn", "status", "result", "player", "opponent", "logSize")
+				.doesNotContainKeys("log", "replay", "matchId");
+			@SuppressWarnings("unchecked")
+			Map<String, Object> opponent = (Map<String, Object>) step.get("opponent");
+			assertThat(opponent).containsKey("handCount").doesNotContainKeys("hand", "deck");
+		}
+	}
+
+	@Test
+	void playAndCurrentReturnEmptyReplay() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "developers");
+		while (handCard(match, true) == null) {
+			match = endTurn(player, match);
+		}
+		int instanceId = (Integer) handCard(match, true).get("instanceId");
+
+		DocumentContext played = move(player, match.read("$.matchId"), "play", playBody(match, instanceId));
+
+		assertThat((List<?>) played.read("$.replay")).isEmpty();
+		mockMvc.perform(get("/api/matches/current").with(player))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.replay").isArray())
+			.andExpect(jsonPath("$.replay", hasSize(0)));
+	}
+
 	@Test
 	void sameLogCanBeReadInBothLanguages() throws Exception {
 		RequestPostProcessor player = newPlayer();

@@ -49,6 +49,7 @@ export interface Messages {
     attackStress: string;
     endTurn: string;
     cancelAttack: string;
+    opponentMoving: string;
     board: string;
     activeEvents: string;
     graveyard: string;
