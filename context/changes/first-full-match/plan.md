@@ -692,21 +692,21 @@ Partie trzymane są tylko w pamięci, więc stare partie znikają przy restarcie
 - [x] 5.5 Partia, w której zaczyna komputer, otwiera się z jego ruchami w logu i turą gracza — 22a82cf
 - [x] 5.6 Ochrona przeciwnika blokuje atak w stres; Szarża atakuje od razu; obrażenia znikają po turze — 22a82cf
 - [x] 5.7 Przełączenie PL/EN w trakcie partii zmienia język logu i etykiet bez utraty stanu — 22a82cf
-- [x] 5.8 Podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury
+- [x] 5.8 Podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury — 329dda6
 - [x] 5.9 Partia mieści się mniej więcej w 15 minutach (NFR), z uwagą o balansie do S-06 — 22a82cf
 
 ### Phase 6: Odtwarzanie tury komputera krok po kroku
 
 #### Automated
 
-- [x] 6.1 Testy domeny i API przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchServiceTests,MatchControllerTests"`
-- [x] 6.2 Pełny build backendu przechodzi: `./mvnw -B verify`
-- [x] 6.3 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 6.4 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build`
+- [x] 6.1 Testy domeny i API przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchServiceTests,MatchControllerTests"` — 329dda6
+- [x] 6.2 Pełny build backendu przechodzi: `./mvnw -B verify` — 329dda6
+- [x] 6.3 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 329dda6
+- [x] 6.4 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build` — 329dda6
 
 #### Manual
 
-- [x] 6.5 Po „Zakończ turę” ruchy komputera pojawiają się na stole i w logu po kolei, z etykietą „Ruch przeciwnika…”, a potem wraca tura gracza
-- [x] 6.6 Partia, w której zaczyna komputer, odtwarza jego pierwszą turę po wejściu na `/match`
-- [x] 6.7 Ponowne sprawdzenie 5.8: podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury
-- [x] 6.8 Przełączenie PL/EN w trakcie odtwarzania nie przerywa go, a po nim log i etykiety są w nowym języku
+- [x] 6.5 Po „Zakończ turę” ruchy komputera pojawiają się na stole i w logu po kolei, z etykietą „Ruch przeciwnika…”, a potem wraca tura gracza — 329dda6
+- [x] 6.6 Partia, w której zaczyna komputer, odtwarza jego pierwszą turę po wejściu na `/match` — 329dda6
+- [x] 6.7 Ponowne sprawdzenie 5.8: podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury — 329dda6
+- [x] 6.8 Przełączenie PL/EN w trakcie odtwarzania nie przerywa go, a po nim log i etykiety są w nowym języku — 329dda6
