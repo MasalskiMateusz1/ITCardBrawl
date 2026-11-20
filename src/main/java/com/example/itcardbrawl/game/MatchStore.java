@@ -1,8 +1,10 @@
 package com.example.itcardbrawl.game;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.UnaryOperator;
 
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,18 @@ public class MatchStore {
 
 	public Optional<Match> findCurrent(String playerKey) {
 		return Optional.ofNullable(matches.get(playerKey));
+	}
+
+	/**
+	 * Atomowo zastępuje bieżącą partię gracza wynikiem {@code change}; równoległe aktualizacje tego samego
+	 * gracza wykonują się po kolei. Wyjątek z {@code change} zostawia poprzednią partię bez zmian i trafia do
+	 * wywołującego.
+	 *
+	 * @return nowy stan albo {@link Optional#empty()}, gdy gracz nie ma bieżącej partii
+	 */
+	public Optional<Match> update(String playerKey, UnaryOperator<Match> change) {
+		return Optional.ofNullable(matches.computeIfPresent(playerKey,
+				(key, match) -> Objects.requireNonNull(change.apply(match), "Zmiana partii zwróciła null")));
 	}
 
 }

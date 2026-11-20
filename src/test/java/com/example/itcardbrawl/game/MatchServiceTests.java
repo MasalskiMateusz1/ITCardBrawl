@@ -1,0 +1,136 @@
+package com.example.itcardbrawl.game;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.SplittableRandom;
+import java.util.UUID;
+import java.util.random.RandomGenerator;
+
+import com.example.itcardbrawl.game.Match.Side;
+import com.example.itcardbrawl.game.Match.Status;
+import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
+import com.example.itcardbrawl.game.MatchEvent.TurnStarted;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
+
+import tools.jackson.databind.json.JsonMapper;
+
+class MatchServiceTests {
+
+	private static final CardCatalog CATALOG = CardCatalogLoader.load(JsonMapper.builder().build(),
+			new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION));
+
+	private static final String KEY = "github:gracz";
+
+	private final MatchStore store = new MatchStore();
+
+	// Tasowanie z ziarna, a wybór zaczynającego (nextBoolean) ustalony przez test.
+	private static RandomGenerator random(long seed, boolean playerStarts) {
+		SplittableRandom delegate = new SplittableRandom(seed);
+		return new RandomGenerator() {
+			@Override
+			public long nextLong() {
+				return delegate.nextLong();
+			}
+
+			@Override
+			public boolean nextBoolean() {
+				return playerStarts;
+			}
+		};
+	}
+
+	private MatchService service(boolean playerStarts) {
+		MatchEngine engine = new MatchEngine();
+		return new MatchService(new MatchFactory(CATALOG, random(11, playerStarts)), engine,
+				new RandomOpponent(engine, new SplittableRandom(13)), store);
+	}
+
+	@Test
+	void startWithComputerFirstPlaysItsTurn() {
+		Match match = service(false).start(KEY, "developers");
+
+		assertThat(match.status()).isEqualTo(Status.IN_PROGRESS);
+		assertThat(match.activeSide()).isEqualTo(Side.PLAYER);
+		assertThat(match.turnNumber()).isEqualTo(2);
+		assertThat(match.log()).contains(new TurnEnded(Side.OPPONENT), new TurnStarted(Side.PLAYER, 2));
+		assertThat(store.findCurrent(KEY)).containsSame(match);
+	}
+
+	@Test
+	void startWithPlayerFirstLeavesTurnOne() {
+		Match match = service(true).start(KEY, "developers");
+
+		assertThat(match.activeSide()).isEqualTo(Side.PLAYER);
+		assertThat(match.turnNumber()).isEqualTo(1);
+		assertThat(store.findCurrent(KEY)).containsSame(match);
+	}
+
+	@Test
+	void staleTurnIsRejectedWithoutChangingState() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers");
+
+		assertThatThrownBy(() -> service.move(KEY, match.id(), match.turnNumber() + 1, new Move.EndTurn()))
+			.isInstanceOf(StaleMoveException.class);
+
+		assertThat(service.current(KEY)).containsSame(match);
+	}
+
+	@Test
+	void foreignMatchIdIsRejectedWithoutChangingState() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers");
+
+		assertThatThrownBy(() -> service.move(KEY, UUID.randomUUID(), match.turnNumber(), new Move.EndTurn()))
+			.isInstanceOf(StaleMoveException.class);
+
+		assertThat(service.current(KEY)).containsSame(match);
+	}
+
+	@Test
+	void illegalMoveIsRejectedWithoutChangingState() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers");
+
+		assertThatThrownBy(() -> service.move(KEY, match.id(), match.turnNumber(), new Move.PlayCard(-1)))
+			.isInstanceOf(IllegalMoveException.class);
+
+		assertThat(service.current(KEY)).containsSame(match);
+	}
+
+	@Test
+	void endTurnRunsComputerTurn() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers");
+
+		Match after = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow();
+
+		assertThat(after.status()).isEqualTo(Status.IN_PROGRESS);
+		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
+		assertThat(after.turnNumber()).isEqualTo(3);
+		assertThat(after.log()).contains(new TurnEnded(Side.PLAYER), new TurnStarted(Side.OPPONENT, 2),
+				new TurnEnded(Side.OPPONENT), new TurnStarted(Side.PLAYER, 3));
+		assertThat(service.current(KEY)).containsSame(after);
+	}
+
+	@Test
+	void doubleEndTurnWithSameTurnIsStaleTheSecondTime() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers");
+		Match afterFirst = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow();
+
+		assertThatThrownBy(() -> service.move(KEY, match.id(), 1, new Move.EndTurn()))
+			.isInstanceOf(StaleMoveException.class);
+
+		assertThat(service.current(KEY)).containsSame(afterFirst);
+	}
+
+	@Test
+	void moveWithoutMatchIsEmpty() {
+		assertThat(service(true).move(KEY, UUID.randomUUID(), 1, new Move.EndTurn())).isEmpty();
+	}
+
+}
