@@ -17,6 +17,18 @@ public final class CardCatalog {
 
 	static final int MAX_CARD_COST = MatchRules.RESOURCE_CAP;
 
+	static final int MIN_ATTACK = 1;
+
+	static final int MAX_ATTACK = 10;
+
+	static final int MIN_HEALTH = 1;
+
+	static final int MAX_HEALTH = 10;
+
+	static final int MIN_DURATION = 0;
+
+	static final int MAX_DURATION = 5;
+
 	static final int MIN_COPIES = 1;
 
 	static final int MAX_COPIES = 2;
@@ -119,8 +131,60 @@ public final class CardCatalog {
 				errors.add("karta '%s' ma koszt %d spoza zakresu %d–%d"
 					.formatted(card.id(), card.cost(), MIN_CARD_COST, MAX_CARD_COST));
 			}
+			if (card.type() == CardType.CHARACTER) {
+				validateCharacter(card, errors);
+			}
+			else if (card.type() == CardType.EVENT) {
+				validateEvent(card, errors);
+			}
 		}
 		return byId;
+	}
+
+	private static void validateCharacter(Card card, List<String> errors) {
+		requireInRange(card.id(), "attack", card.attack(), MIN_ATTACK, MAX_ATTACK, errors);
+		requireInRange(card.id(), "health", card.health(), MIN_HEALTH, MAX_HEALTH, errors);
+		if (card.duration() != null) {
+			errors.add("postać '%s' nie może mieć pola 'duration'".formatted(card.id()));
+		}
+		Ability ability = card.ability();
+		if (ability == null) {
+			return;
+		}
+		if (ability.keyword() == null) {
+			errors.add("postać '%s' ma zdolność bez słowa kluczowego".formatted(card.id()));
+		}
+		else if (!ability.keyword().acceptsAmount(ability.amount())) {
+			errors.add(ability.keyword().takesAmount()
+					? "postać '%s': zdolność %s ma wartość %d spoza zakresu %d–%d".formatted(card.id(),
+							ability.keyword(), ability.amount(), AbilityKeyword.MIN_AMOUNT, AbilityKeyword.MAX_AMOUNT)
+					: "postać '%s': zdolność %s nie przyjmuje wartości, jest %d".formatted(card.id(),
+							ability.keyword(), ability.amount()));
+		}
+	}
+
+	private static void validateEvent(Card card, List<String> errors) {
+		requireInRange(card.id(), "duration", card.duration(), MIN_DURATION, MAX_DURATION, errors);
+		if (card.attack() != null) {
+			errors.add("wydarzenie '%s' nie może mieć pola 'attack'".formatted(card.id()));
+		}
+		if (card.health() != null) {
+			errors.add("wydarzenie '%s' nie może mieć pola 'health'".formatted(card.id()));
+		}
+		if (card.ability() != null) {
+			errors.add("wydarzenie '%s' nie może mieć pola 'ability'".formatted(card.id()));
+		}
+	}
+
+	private static void requireInRange(String id, String field, Integer value, int min, int max,
+			List<String> errors) {
+		if (value == null) {
+			errors.add("karta '%s': brak pola '%s'".formatted(id, field));
+		}
+		else if (value < min || value > max) {
+			errors.add("karta '%s': pole '%s' ma wartość %d spoza zakresu %d–%d"
+				.formatted(id, field, value, min, max));
+		}
 	}
 
 	private static void validatePlayableFactions(Map<String, Faction> factions, Map<String, List<DeckEntry>> decks,
