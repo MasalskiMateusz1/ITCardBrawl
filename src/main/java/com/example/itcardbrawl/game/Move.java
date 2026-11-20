@@ -5,7 +5,12 @@ package com.example.itcardbrawl.game;
  */
 public sealed interface Move {
 
-	record PlayCard(int instanceId) implements Move {
+	record PlayCard(int instanceId, Target target) implements Move {
+
+		public PlayCard(int instanceId) {
+			this(instanceId, null);
+		}
+
 	}
 
 	/** Atak postaci; {@code targetId == null} oznacza atak w stres przeciwnika. */

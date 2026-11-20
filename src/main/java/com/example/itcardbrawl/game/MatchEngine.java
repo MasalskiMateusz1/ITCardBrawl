@@ -31,7 +31,7 @@ public class MatchEngine {
 		}
 		State state = new State(match);
 		switch (move) {
-			case Move.PlayCard play -> playCard(state, play.instanceId());
+			case Move.PlayCard play -> playCard(state, play.instanceId(), play.target());
 			case Move.Attack attack -> attack(state, attack.attackerId(), attack.targetId());
 			case Move.EndTurn endTurn -> endTurn(state);
 			case null -> throw new IllegalMoveException("Brak ruchu");
@@ -52,7 +52,15 @@ public class MatchEngine {
 		List<Move> moves = new ArrayList<>();
 		for (CardInstance card : own.hand()) {
 			if (canPlay(own, card)) {
-				moves.add(new Move.PlayCard(card.instanceId()));
+				if (!hasTargetEffect(card.card())) {
+					moves.add(new Move.PlayCard(card.instanceId(), null));
+				}
+				else {
+					List<Target> targets = eventTargets(match, side, card.card());
+					for (Target target : targets) {
+						moves.add(new Move.PlayCard(card.instanceId(), target));
+					}
+				}
 			}
 		}
 		List<BoardCharacter> targets = allowedTargets(enemy.board());
@@ -76,6 +84,186 @@ public class MatchEngine {
 				&& (card.card().type() != CardType.CHARACTER || side.board().size() < MatchRules.BOARD_LIMIT);
 	}
 
+	private static boolean hasTargetEffect(Card card) {
+		return card.type() == CardType.EVENT && card.effects().stream().anyMatch(e -> e.scope() == EffectScope.TARGET);
+	}
+
+	private static List<Target> eventTargets(Match match, Side actor, Card card) {
+		return eventTargets(match.side(actor), match.side(actor.opponent()), card);
+	}
+
+	private static List<Target> eventTargets(State state, Side actor, Card card) {
+		return eventTargets(state.side(actor).board, state.side(actor.opponent()).board, card);
+	}
+
+	private static List<Target> eventTargets(MatchSide own, MatchSide enemy, Card card) {
+		return eventTargets(own.board(), enemy.board(), card);
+	}
+
+	private static List<Target> eventTargets(List<BoardCharacter> ownBoard, List<BoardCharacter> enemyBoard, Card card) {
+		List<Effect> targeted = card.effects().stream().filter(e -> e.scope() == EffectScope.TARGET).toList();
+		if (targeted.isEmpty()) {
+			return List.of();
+		}
+		List<Target> result = new ArrayList<>();
+		for (BoardCharacter character : ownBoard) {
+			Target.Character target = new Target.Character(character.instance().instanceId());
+			if (targeted.stream().allMatch(effect -> supportsCharacter(effect.kind()))) {
+				result.add(target);
+			}
+		}
+		for (BoardCharacter character : enemyBoard) {
+			Target.Character target = new Target.Character(character.instance().instanceId());
+			if (targeted.stream().allMatch(effect -> supportsCharacter(effect.kind()))) {
+				result.add(target);
+			}
+		}
+		for (Side side : Side.values()) {
+			if (targeted.stream().allMatch(effect -> supportsPlayer(effect.kind()))) {
+				result.add(new Target.Player(side));
+			}
+		}
+		return List.copyOf(result);
+	}
+
+	private static boolean supportsCharacter(EffectKind kind) {
+		return kind != EffectKind.RESOURCE && kind != EffectKind.RESOURCE_MAX && kind != EffectKind.DRAW
+				&& kind != EffectKind.STRESS;
+	}
+
+	private static boolean supportsPlayer(EffectKind kind) {
+		return kind == EffectKind.DAMAGE || kind == EffectKind.HEAL;
+	}
+
+	private static void applyEffect(State state, CardInstance card, Effect effect, Target target) {
+		Side actor = state.activeSide;
+		CardInstance targetCharacter = target instanceof Target.Character character
+				? findCharacter(state, character.instanceId()) : null;
+		Side targetPlayer = target instanceof Target.Player player ? player.side() : null;
+		state.log(new MatchEvent.EffectApplied(actor, card, effect, targetCharacter, targetPlayer));
+		int amount = effect.amount();
+		switch (effect.kind()) {
+			case STRESS -> state.addStress(actor.opponent(), amount);
+			case DAMAGE -> applyDamage(state, actor, effect.scope(), amount, target);
+			case HEAL -> applyHeal(state, actor, effect.scope(), amount, target);
+			case DRAW -> {
+				for (int i = 0; i < amount && !state.finished(); i++) {
+					drawOne(state, actor);
+				}
+			}
+			case RESOURCE -> {
+				SideState own = state.side(actor);
+				own.resourceCurrent = Math.min(own.resourceCurrent + amount, MatchRules.RESOURCE_CAP);
+			}
+			case RESOURCE_MAX -> {
+				SideState own = state.side(actor);
+				own.resourceMax = Math.min(own.resourceMax + amount, MatchRules.RESOURCE_CAP);
+			}
+			case ATTACK, HEALTH, GUARD, RUSH, TRAP -> {
+				// Modyfikatory zaczynają działać w fazie efektów trwających.
+			}
+		}
+	}
+
+	private static CardInstance findCharacter(State state, int instanceId) {
+		for (Side side : Side.values()) {
+			Optional<Integer> index = indexOf(state.side(side).board, instanceId);
+			if (index.isPresent()) {
+				return state.side(side).board.get(index.get()).instance();
+			}
+		}
+		return null;
+	}
+
+	private static void applyDamage(State state, Side actor, EffectScope scope, int amount, Target target) {
+		if (scope == EffectScope.TARGET) {
+			if (target instanceof Target.Player player) {
+				state.addStress(player.side(), amount);
+			}
+			else if (target instanceof Target.Character character) {
+				addCharacterDamage(state, character.instanceId(), amount);
+			}
+			return;
+		}
+		if (scope == EffectScope.ENEMY_ALL) {
+			state.addStress(actor.opponent(), amount);
+		}
+		List<Side> affected = switch (scope) {
+			case ENEMY_BOARD, ENEMY_ALL -> List.of(actor.opponent());
+			case ALL_BOARDS -> List.of(actor.opponent(), actor);
+			default -> List.of();
+		};
+		for (Side side : affected) {
+			for (BoardCharacter character : List.copyOf(state.side(side).board)) {
+				addCharacterDamage(state, character.instance().instanceId(), amount);
+			}
+		}
+	}
+
+	private static void addCharacterDamage(State state, int instanceId, int amount) {
+		for (Side side : Side.values()) {
+			SideState player = state.side(side);
+			Optional<Integer> index = indexOf(player.board, instanceId);
+			if (index.isPresent()) {
+				BoardCharacter character = player.board.get(index.get());
+				player.board.set(index.get(), character.withDamage(character.damage() + amount));
+				return;
+			}
+		}
+	}
+
+	private static void applyHeal(State state, Side actor, EffectScope scope, int amount, Target target) {
+		if (scope == EffectScope.TARGET) {
+			if (target instanceof Target.Player player) {
+				SideState affected = state.side(player.side());
+				state.addStress(player.side(), -Math.min(amount, affected.stress));
+			}
+			else if (target instanceof Target.Character character) {
+				healCharacter(state, character.instanceId(), amount);
+			}
+			return;
+		}
+		if (scope == EffectScope.OWN_ALL) {
+			SideState own = state.side(actor);
+			state.addStress(actor, -Math.min(amount, own.stress));
+		}
+		List<Side> affected = switch (scope) {
+			case OWN_BOARD, OWN_ALL -> List.of(actor);
+			case ALL_BOARDS -> List.of(actor.opponent(), actor);
+			default -> List.of();
+		};
+		for (Side side : affected) {
+			for (BoardCharacter character : List.copyOf(state.side(side).board)) {
+				healCharacter(state, character.instance().instanceId(), amount);
+			}
+		}
+	}
+
+	private static void healCharacter(State state, int instanceId, int amount) {
+		for (Side side : Side.values()) {
+			SideState player = state.side(side);
+			Optional<Integer> index = indexOf(player.board, instanceId);
+			if (index.isPresent()) {
+				BoardCharacter character = player.board.get(index.get());
+				player.board.set(index.get(), character.withDamage(Math.max(0, character.damage() - amount)));
+				return;
+			}
+		}
+	}
+
+	private static void defeatCharacters(State state, Side actor) {
+		for (Side side : List.of(actor.opponent(), actor)) {
+			SideState owner = state.side(side);
+			for (BoardCharacter character : List.copyOf(owner.board)) {
+				if (character.isDefeated()) {
+					owner.board.remove(character);
+					owner.graveyard.add(character.instance());
+					state.log(new MatchEvent.CharacterDefeated(side, character.instance()));
+				}
+			}
+		}
+	}
+
 	private static boolean isGuarded(List<BoardCharacter> enemyBoard) {
 		return enemyBoard.stream().anyMatch(c -> c.has(AbilityKeyword.GUARD));
 	}
@@ -86,7 +274,7 @@ public class MatchEngine {
 				: enemyBoard;
 	}
 
-	private static void playCard(State state, int instanceId) {
+	private static void playCard(State state, int instanceId, Target target) {
 		Side actor = state.activeSide;
 		SideState own = state.active();
 		CardInstance card = own.hand.stream()
@@ -98,8 +286,17 @@ public class MatchEngine {
 			throw new IllegalMoveException("Za mało zasobu na zagranie karty");
 		}
 		boolean character = definition.type() == CardType.CHARACTER;
+		if (character && target != null) {
+			throw new IllegalMoveException("Postać nie przyjmuje celu");
+		}
 		if (character && own.board.size() >= MatchRules.BOARD_LIMIT) {
 			throw new IllegalMoveException("Stół jest pełny");
+		}
+		if (!character) {
+			List<Target> allowed = eventTargets(state, actor, definition);
+			if (hasTargetEffect(definition) != (target != null) || target != null && !allowed.contains(target)) {
+				throw new IllegalMoveException("Brak lub nieprawidłowy cel wydarzenia");
+			}
 		}
 
 		own.hand.remove(card);
@@ -107,7 +304,17 @@ public class MatchEngine {
 		state.log(new MatchEvent.CardPlayed(actor, card));
 
 		if (!character) {
-			// Wydarzenia nie mają jeszcze efektu (S-04): płacą koszt i zostają w grze przez duration tur.
+			for (Effect effect : definition.effects()) {
+				if (effect.scope() == EffectScope.TARGET && target instanceof Target.Character targeted
+						&& findCharacter(state, targeted.instanceId()) == null) {
+					continue;
+				}
+				applyEffect(state, card, effect, effect.scope() == EffectScope.TARGET ? target : null);
+				defeatCharacters(state, actor);
+				if (state.finished()) {
+					break;
+				}
+			}
 			if (definition.duration() == 0) {
 				own.graveyard.add(card);
 			}
@@ -174,16 +381,7 @@ public class MatchEngine {
 		state.log(new MatchEvent.Attacked(actor, attacker.instance(), target.instance(), attacker.attack(),
 				target.attack()));
 
-		if (hitTarget.isDefeated()) {
-			enemy.board.remove(targetIndex);
-			enemy.graveyard.add(target.instance());
-			state.log(new MatchEvent.CharacterDefeated(actor.opponent(), target.instance()));
-		}
-		if (hitAttacker.isDefeated()) {
-			own.board.remove(attackerIndex);
-			own.graveyard.add(attacker.instance());
-			state.log(new MatchEvent.CharacterDefeated(actor, attacker.instance()));
-		}
+		defeatCharacters(state, actor);
 	}
 
 	private static void endTurn(State state) {
@@ -233,23 +431,31 @@ public class MatchEngine {
 		own.activeEvents.addAll(remaining);
 
 		// Dobranie: pusta talia przegrywa partię, pełna ręka pali kartę.
-		if (own.deck.isEmpty()) {
-			state.finish(starting.opponent(), EndReason.EMPTY_DECK, starting);
+		drawOne(state, starting);
+		if (state.finished()) {
 			return;
-		}
-		CardInstance drawn = own.deck.removeFirst();
-		if (own.hand.size() >= MatchRules.HAND_LIMIT) {
-			own.graveyard.add(drawn);
-			state.log(new MatchEvent.CardBurned(starting, drawn));
-		}
-		else {
-			own.hand.add(drawn);
-			state.log(new MatchEvent.CardDrawn(starting, drawn));
 		}
 
 		own.resourceMax = Math.min(own.resourceMax + 1, MatchRules.RESOURCE_CAP);
 		own.resourceCurrent = own.resourceMax;
 		own.board.replaceAll(c -> c.withCanAttack(true));
+	}
+
+	private static void drawOne(State state, Side drawing) {
+		SideState own = state.side(drawing);
+		if (own.deck.isEmpty()) {
+			state.finish(drawing.opponent(), EndReason.EMPTY_DECK, drawing);
+			return;
+		}
+		CardInstance drawn = own.deck.removeFirst();
+		if (own.hand.size() >= MatchRules.HAND_LIMIT) {
+			own.graveyard.add(drawn);
+			state.log(new MatchEvent.CardBurned(drawing, drawn));
+		}
+		else {
+			own.hand.add(drawn);
+			state.log(new MatchEvent.CardDrawn(drawing, drawn));
+		}
 	}
 
 	private static Optional<Integer> indexOf(List<BoardCharacter> board, int instanceId) {

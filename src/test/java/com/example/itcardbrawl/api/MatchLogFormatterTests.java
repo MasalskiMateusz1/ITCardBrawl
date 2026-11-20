@@ -39,6 +39,9 @@ class MatchLogFormatterTests {
 			events.add(new MatchEvent.CardDrawn(side, TECH_LEAD));
 			events.add(new MatchEvent.CardBurned(side, TECH_LEAD));
 			events.add(new MatchEvent.CardPlayed(side, TECH_LEAD));
+			events.add(new MatchEvent.EffectApplied(side, TECH_LEAD,
+					new com.example.itcardbrawl.game.Effect(com.example.itcardbrawl.game.EffectKind.DAMAGE,
+							com.example.itcardbrawl.game.EffectScope.TARGET, 3), MANUAL_TESTER, null));
 			for (AbilityKeyword keyword : AbilityKeyword.values()) {
 				events.add(new MatchEvent.AbilityTriggered(side, TECH_LEAD, keyword, keyword.takesAmount() ? 4 : 0));
 			}
