@@ -1,4 +1,16 @@
 @if (match(); as m) {
+  @if (m.result; as result) {
+    <section class="result" [class.win]="result.winner === 'PLAYER'">
+      <h2>
+        {{
+          result.winner === 'PLAYER' ? texts().matchTable.resultWin : texts().matchTable.resultLose
+        }}
+      </h2>
+      <p class="result-reason">{{ texts().matchTable.reason[result.reason] }}</p>
+      <a class="play-again" routerLink="/new-match">{{ texts().matchTable.playAgain }}</a>
+    </section>
+  }
+
   <section class="zone opponent" [attr.aria-label]="texts().matchTable.opponentZone">
     <h2>{{ texts().matchTable.opponentHeading(m.opponent.faction.name) }}</h2>
     <dl class="stats">
@@ -18,10 +30,83 @@
         <dt>{{ texts().matchTable.deckCount }}</dt>
         <dd>{{ m.opponent.deckCount }}</dd>
       </div>
+      <div class="graveyard">
+        <dt>{{ texts().matchTable.graveyard }}</dt>
+        <dd>{{ m.opponent.graveyardCount }}</dd>
+      </div>
     </dl>
+
+    @if (!finished() && selectedAttacker() !== null) {
+      <button
+        type="button"
+        class="attack-stress"
+        [disabled]="pending() || opponentGuarded()"
+        (click)="attack(null)"
+      >
+        {{ texts().matchTable.attackStress }}
+      </button>
+    }
+
+    <h3 class="board-heading">{{ texts().matchTable.board }}</h3>
+    <ul class="board">
+      @for (character of m.opponent.board; track character.instanceId) {
+        <li class="character">
+          <strong class="character-name">{{ character.name }}</strong>
+          <span class="character-stats">
+            {{
+              texts().matchTable.attackHealth(character.attack, character.health - character.damage)
+            }}
+          </span>
+          @if (character.ability; as ability) {
+            <p class="ability">{{ ability.text }}</p>
+          }
+          @if (!finished() && selectedAttacker() !== null) {
+            <button
+              type="button"
+              class="target"
+              [disabled]="pending() || !canTarget(character)"
+              (click)="attack(character.instanceId)"
+            >
+              {{ texts().matchTable.target }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+
+    <h3 class="events-heading">{{ texts().matchTable.activeEvents }}</h3>
+    <ul class="events">
+      @for (event of m.opponent.activeEvents; track event.instanceId) {
+        <li class="event">
+          <strong class="event-name">{{ event.name }}</strong>
+          <span class="event-turns">{{ texts().matchTable.turnsLeft(event.turnsLeft) }}</span>
+        </li>
+      }
+    </ul>
   </section>
 
-  <p class="turn">{{ texts().matchTable.turn(m.turn.number, m.turn.active === 'PLAYER') }}</p>
+  <div class="turn-bar">
+    <p class="turn">{{ texts().matchTable.turn(m.turn.number, m.turn.active === 'PLAYER') }}</p>
+    @if (!finished()) {
+      @if (selectedAttacker() !== null) {
+        <button type="button" class="cancel-attack" [disabled]="pending()" (click)="cancelAttack()">
+          {{ texts().matchTable.cancelAttack }}
+        </button>
+      }
+      <button
+        type="button"
+        class="end-turn"
+        [disabled]="pending() || !myTurn()"
+        (click)="endTurn()"
+      >
+        {{ texts().matchTable.endTurn }}
+      </button>
+    }
+  </div>
+
+  @if (errorText(); as message) {
+    <p class="message">{{ message }}</p>
+  }
 
   <section class="zone player" [attr.aria-label]="texts().matchTable.playerZone">
     <h2>{{ texts().matchTable.playerHeading(m.player.faction.name) }}</h2>
@@ -38,9 +123,50 @@
         <dt>{{ texts().matchTable.deckCount }}</dt>
         <dd>{{ m.player.deckCount }}</dd>
       </div>
+      <div class="graveyard">
+        <dt>{{ texts().matchTable.graveyard }}</dt>
+        <dd>{{ m.player.graveyardCount }}</dd>
+      </div>
     </dl>
 
-    <h3>{{ texts().matchTable.yourHand }}</h3>
+    <h3 class="board-heading">{{ texts().matchTable.board }}</h3>
+    <ul class="board">
+      @for (character of m.player.board; track character.instanceId) {
+        <li class="character" [class.selected]="selectedAttacker() === character.instanceId">
+          <strong class="character-name">{{ character.name }}</strong>
+          <span class="character-stats">
+            {{
+              texts().matchTable.attackHealth(character.attack, character.health - character.damage)
+            }}
+          </span>
+          @if (character.ability; as ability) {
+            <p class="ability">{{ ability.text }}</p>
+          }
+          @if (!finished() && character.canAttack) {
+            <button
+              type="button"
+              class="attack"
+              [disabled]="pending() || !myTurn()"
+              (click)="selectAttacker(character)"
+            >
+              {{ texts().matchTable.attack }}
+            </button>
+          }
+        </li>
+      }
+    </ul>
+
+    <h3 class="events-heading">{{ texts().matchTable.activeEvents }}</h3>
+    <ul class="events">
+      @for (event of m.player.activeEvents; track event.instanceId) {
+        <li class="event">
+          <strong class="event-name">{{ event.name }}</strong>
+          <span class="event-turns">{{ texts().matchTable.turnsLeft(event.turnsLeft) }}</span>
+        </li>
+      }
+    </ul>
+
+    <h3 class="hand-heading">{{ texts().matchTable.yourHand }}</h3>
     <ul class="hand">
       @for (card of m.player.hand; track card.instanceId) {
         <li class="card">
@@ -50,15 +176,38 @@
           @if (card.neutral) {
             <span class="card-neutral">{{ texts().matchTable.neutral }}</span>
           }
+          @if (card.attack !== null && card.health !== null) {
+            <span class="card-stats">{{
+              texts().matchTable.attackHealth(card.attack, card.health)
+            }}</span>
+          }
+          @if (card.duration !== null) {
+            <span class="card-duration">{{ texts().matchTable.duration(card.duration) }}</span>
+          }
           <p class="card-text">{{ card.text }}</p>
+          @if (card.ability; as ability) {
+            <p class="ability">{{ ability.text }}</p>
+          }
+          @if (!finished()) {
+            <button type="button" class="play" [disabled]="!canPlay(card)" (click)="play(card)">
+              {{ texts().matchTable.play }}
+            </button>
+          }
         </li>
       }
     </ul>
   </section>
-}
 
-@if (error() === 'loadMatch') {
-  <p class="message">{{ texts().matchTable.loadFailed }}</p>
+  <section class="log" [attr.aria-label]="texts().matchTable.log">
+    <h2>{{ texts().matchTable.log }}</h2>
+    <ol class="log-entries">
+      @for (entry of m.log; track $index) {
+        <li class="log-entry" [class.mine]="entry.side === 'PLAYER'">{{ entry.text }}</li>
+      }
+    </ol>
+  </section>
+} @else if (errorText(); as message) {
+  <p class="message">{{ message }}</p>
 }
 
 <a routerLink="/">{{ texts().matchTable.backToLobby }}</a>

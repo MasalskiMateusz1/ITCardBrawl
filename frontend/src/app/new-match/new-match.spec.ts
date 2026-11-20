@@ -18,6 +18,7 @@ const FACTIONS_EN: FactionSummary[] = [
 
 const MATCH: MatchView = {
   matchId: '00000000-0000-0000-0000-000000000001',
+  status: 'IN_PROGRESS',
   turn: { number: 1, active: 'PLAYER' },
   player: {
     faction: { id: 'developers', name: 'Developerzy' },
@@ -26,6 +27,9 @@ const MATCH: MatchView = {
     resource: { current: 1, max: 1 },
     deckCount: 25,
     hand: [],
+    board: [],
+    activeEvents: [],
+    graveyardCount: 0,
   },
   opponent: {
     faction: { id: 'testers', name: 'Testerzy' },
@@ -34,7 +38,12 @@ const MATCH: MatchView = {
     resource: { current: 0, max: 0 },
     deckCount: 25,
     handCount: 5,
+    board: [],
+    activeEvents: [],
+    graveyardCount: 0,
   },
+  result: null,
+  log: [],
 };
 
 describe('NewMatch', () => {
