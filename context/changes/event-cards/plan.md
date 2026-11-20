@@ -459,16 +459,16 @@ Partie trzymane w pamięci (`MatchStore`) nie przeżywają restartu, więc zmian
 
 #### Automated
 
-- [x] 3.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki
+- [x] 3.1 Testy backendu przechodzą: `./mvnw -B verify` — c1dffa7
+- [x] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki — c1dffa7
 
 ### Phase 4: API — cele, efekty i legalność w widoku
 
 #### Automated
 
-- [ ] 4.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [ ] 4.2 `MatchControllerTests` pokrywa zagranie z celem postaci i gracza, błędy celu (400) oraz `targets`/`playable`/`attackTargets` w odpowiedzi
-- [ ] 4.3 `MatchViewTests` pokrywa statystyki efektywne, `trapped`, `lastEvent` (także w kroku odtwarzania) i opisy efektów w pl i en
+- [x] 4.1 Testy backendu przechodzą: `./mvnw -B verify`
+- [x] 4.2 `MatchControllerTests` pokrywa zagranie z celem postaci i gracza, błędy celu (400) oraz `targets`/`playable`/`attackTargets` w odpowiedzi
+- [x] 4.3 `MatchViewTests` pokrywa statystyki efektywne, `trapped`, `lastEvent` (także w kroku odtwarzania) i opisy efektów w pl i en
 
 #### Manual
 
