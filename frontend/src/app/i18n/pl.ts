@@ -48,6 +48,7 @@ export const pl: Messages = {
     attackStress: 'Atakuj stres',
     endTurn: 'Zakończ turę',
     cancelAttack: 'Anuluj atak',
+    opponentMoving: 'Ruch przeciwnika…',
     board: 'Stół',
     activeEvents: 'Aktywne wydarzenia',
     graveyard: 'Cmentarz',

@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { GameService } from '../game/game.service';
 import { FactionSummary, MatchView } from '../game/match';
 import { LANGUAGE_STORAGE_KEY, LanguageService } from '../i18n/language.service';
 import { NewMatch } from './new-match';
@@ -44,6 +45,7 @@ const MATCH: MatchView = {
   },
   result: null,
   log: [],
+  replay: [],
 };
 
 describe('NewMatch', () => {
@@ -121,6 +123,24 @@ describe('NewMatch', () => {
     request.flush(MATCH, { status: 201, statusText: 'Created' });
 
     expect(navigateByUrl).toHaveBeenCalledWith('/match');
+  });
+
+  it('hands the start response to the table before navigating', async () => {
+    const navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const setStartedMatch = vi.spyOn(TestBed.inject(GameService), 'setStartedMatch');
+    const fixture = await renderWithFactions();
+
+    await chooseFaction(fixture, 'developers');
+    startButton(fixture).click();
+    httpTesting
+      .expectOne({ method: 'POST', url: '/api/matches' })
+      .flush(MATCH, { status: 201, statusText: 'Created' });
+
+    expect(setStartedMatch).toHaveBeenCalledWith(MATCH);
+    expect(setStartedMatch.mock.invocationCallOrder[0]).toBeLessThan(
+      navigateByUrl.mock.invocationCallOrder[0],
+    );
+    expect(TestBed.inject(GameService).takeStartedMatch()).toEqual(MATCH);
   });
 
   it('disables the start button while the request is in flight', async () => {

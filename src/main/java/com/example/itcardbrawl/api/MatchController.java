@@ -7,7 +7,7 @@ import java.util.UUID;
 import com.example.itcardbrawl.game.CardCatalog;
 import com.example.itcardbrawl.game.IllegalMoveException;
 import com.example.itcardbrawl.game.Language;
-import com.example.itcardbrawl.game.Match;
+import com.example.itcardbrawl.game.MatchOutcome;
 import com.example.itcardbrawl.game.MatchService;
 import com.example.itcardbrawl.game.Move;
 import com.example.itcardbrawl.game.StaleMoveException;
@@ -54,19 +54,22 @@ public class MatchController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public MatchView start(@RequestBody StartMatchRequest request, OAuth2AuthenticationToken authentication,
 			Locale locale) {
-		Match match;
+		MatchOutcome outcome;
 		try {
-			match = matchService.start(playerKey(authentication), request.factionId());
+			outcome = matchService.start(playerKey(authentication), request.factionId());
 		}
 		catch (IllegalArgumentException ex) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nieznana lub niegrywalna frakcja", ex);
 		}
-		return view(match, locale);
+		return view(outcome, locale);
 	}
 
 	@GetMapping("/matches/current")
 	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication, Locale locale) {
-		return respond(matchService.current(playerKey(authentication)).orElse(null), locale);
+		// Bieżący stan nie ma kroków do odtworzenia.
+		return respond(matchService.current(playerKey(authentication))
+			.map(match -> new MatchOutcome(match, List.of()))
+			.orElse(null), locale);
 	}
 
 	@PostMapping(path = "/matches/{matchId}/play", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -105,12 +108,12 @@ public class MatchController {
 	}
 
 	// Brak bieżącej partii gracza daje 404.
-	private ResponseEntity<MatchView> respond(Match match, Locale locale) {
-		return match == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(view(match, locale));
+	private ResponseEntity<MatchView> respond(MatchOutcome outcome, Locale locale) {
+		return outcome == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(view(outcome, locale));
 	}
 
-	private MatchView view(Match match, Locale locale) {
-		return MatchView.of(match, catalog, logFormatter, Language.from(locale));
+	private MatchView view(MatchOutcome outcome, Locale locale) {
+		return MatchView.of(outcome.match(), outcome.replay(), catalog, logFormatter, Language.from(locale));
 	}
 
 	// Rejestracja + nazwa principala jednoznacznie identyfikują gracza między dostawcami.

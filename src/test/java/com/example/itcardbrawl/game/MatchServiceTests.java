@@ -50,7 +50,7 @@ class MatchServiceTests {
 
 	@Test
 	void startWithComputerFirstPlaysItsTurn() {
-		Match match = service(false).start(KEY, "developers");
+		Match match = service(false).start(KEY, "developers").match();
 
 		assertThat(match.status()).isEqualTo(Status.IN_PROGRESS);
 		assertThat(match.activeSide()).isEqualTo(Side.PLAYER);
@@ -61,7 +61,7 @@ class MatchServiceTests {
 
 	@Test
 	void startWithPlayerFirstLeavesTurnOne() {
-		Match match = service(true).start(KEY, "developers");
+		Match match = service(true).start(KEY, "developers").match();
 
 		assertThat(match.activeSide()).isEqualTo(Side.PLAYER);
 		assertThat(match.turnNumber()).isEqualTo(1);
@@ -71,7 +71,7 @@ class MatchServiceTests {
 	@Test
 	void staleTurnIsRejectedWithoutChangingState() {
 		MatchService service = service(true);
-		Match match = service.start(KEY, "developers");
+		Match match = service.start(KEY, "developers").match();
 
 		assertThatThrownBy(() -> service.move(KEY, match.id(), match.turnNumber() + 1, new Move.EndTurn()))
 			.isInstanceOf(StaleMoveException.class);
@@ -82,7 +82,7 @@ class MatchServiceTests {
 	@Test
 	void foreignMatchIdIsRejectedWithoutChangingState() {
 		MatchService service = service(true);
-		Match match = service.start(KEY, "developers");
+		Match match = service.start(KEY, "developers").match();
 
 		assertThatThrownBy(() -> service.move(KEY, UUID.randomUUID(), match.turnNumber(), new Move.EndTurn()))
 			.isInstanceOf(StaleMoveException.class);
@@ -93,7 +93,7 @@ class MatchServiceTests {
 	@Test
 	void illegalMoveIsRejectedWithoutChangingState() {
 		MatchService service = service(true);
-		Match match = service.start(KEY, "developers");
+		Match match = service.start(KEY, "developers").match();
 
 		assertThatThrownBy(() -> service.move(KEY, match.id(), match.turnNumber(), new Move.PlayCard(-1)))
 			.isInstanceOf(IllegalMoveException.class);
@@ -104,9 +104,9 @@ class MatchServiceTests {
 	@Test
 	void endTurnRunsComputerTurn() {
 		MatchService service = service(true);
-		Match match = service.start(KEY, "developers");
+		Match match = service.start(KEY, "developers").match();
 
-		Match after = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow();
+		Match after = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow().match();
 
 		assertThat(after.status()).isEqualTo(Status.IN_PROGRESS);
 		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
@@ -119,13 +119,72 @@ class MatchServiceTests {
 	@Test
 	void doubleEndTurnWithSameTurnIsStaleTheSecondTime() {
 		MatchService service = service(true);
-		Match match = service.start(KEY, "developers");
-		Match afterFirst = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow();
+		Match match = service.start(KEY, "developers").match();
+		Match afterFirst = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow().match();
 
 		assertThatThrownBy(() -> service.move(KEY, match.id(), 1, new Move.EndTurn()))
 			.isInstanceOf(StaleMoveException.class);
 
 		assertThat(service.current(KEY)).containsSame(afterFirst);
+	}
+
+	@Test
+	void startWithComputerFirstReturnsReplayFromStartingState() {
+		MatchOutcome outcome = service(false).start(KEY, "developers");
+
+		assertThat(outcome.replay()).hasSizeGreaterThanOrEqualTo(2);
+		Match first = outcome.replay().getFirst();
+		assertThat(first.turnNumber()).isEqualTo(1);
+		assertThat(first.activeSide()).isEqualTo(Side.OPPONENT);
+		assertThat(outcome.replay().getLast()).isSameAs(outcome.match());
+	}
+
+	@Test
+	void startWithPlayerFirstHasEmptyReplay() {
+		assertThat(service(true).start(KEY, "developers").replay()).isEmpty();
+	}
+
+	@Test
+	void endTurnReplayStartsAfterPlayerEndsTurnAndEndsWithFinalState() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+
+		MatchOutcome outcome = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow();
+
+		assertThat(outcome.replay()).hasSizeGreaterThanOrEqualTo(2);
+		Match first = outcome.replay().getFirst();
+		assertThat(first.activeSide()).isEqualTo(Side.OPPONENT);
+		assertThat(first.turnNumber()).isEqualTo(2);
+		assertThat(first.log()).contains(new TurnEnded(Side.PLAYER), new TurnStarted(Side.OPPONENT, 2))
+			.doesNotContain(new TurnEnded(Side.OPPONENT));
+		assertThat(outcome.replay().getLast()).isSameAs(outcome.match());
+		assertThat(service.current(KEY)).containsSame(outcome.match());
+	}
+
+	@Test
+	void playCardHasEmptyReplay() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		// Zasób rośnie co turę - kończymy tury, aż gracz będzie mógł zagrać kartę.
+		while (playCard(match) == null) {
+			assertThat(match.status()).isEqualTo(Status.IN_PROGRESS);
+			match = service.move(KEY, match.id(), match.turnNumber(), new Move.EndTurn()).orElseThrow().match();
+		}
+		Move.PlayCard play = playCard(match);
+
+		MatchOutcome outcome = service.move(KEY, match.id(), match.turnNumber(), play).orElseThrow();
+
+		assertThat(outcome.replay()).isEmpty();
+		assertThat(outcome.match().player().hand()).extracting(CardInstance::instanceId)
+			.doesNotContain(play.instanceId());
+	}
+
+	private static Move.PlayCard playCard(Match match) {
+		return new MatchEngine().legalMoves(match, Side.PLAYER).stream()
+			.filter(Move.PlayCard.class::isInstance)
+			.map(Move.PlayCard.class::cast)
+			.findFirst()
+			.orElse(null);
 	}
 
 	@Test

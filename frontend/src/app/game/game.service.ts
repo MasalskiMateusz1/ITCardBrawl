@@ -7,6 +7,20 @@ import { FactionSummary, MatchView } from './match';
 @Injectable({ providedIn: 'root' })
 export class GameService {
   private readonly http = inject(HttpClient);
+  /** The start response, handed from new-match to the table once; not kept on the server. */
+  private startedMatch: MatchView | null = null;
+
+  /** Stores the start response so the table can play back the computer's first turn. */
+  setStartedMatch(match: MatchView): void {
+    this.startedMatch = match;
+  }
+
+  /** Returns the stored start response once, then forgets it. */
+  takeStartedMatch(): MatchView | null {
+    const match = this.startedMatch;
+    this.startedMatch = null;
+    return match;
+  }
 
   factions(): Observable<FactionSummary[]> {
     return this.http.get<FactionSummary[]>('/api/factions');

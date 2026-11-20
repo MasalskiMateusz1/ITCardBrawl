@@ -101,12 +101,29 @@ export type LogEntry = {
   text: string;
 };
 
+export type TurnView = { number: number; active: Side };
+
+/**
+ * The table after one computer move. The log is sent once, in the final state:
+ * the step's log is `final.log.slice(0, logSize)`.
+ */
+export type ReplayStep = {
+  turn: TurnView;
+  status: MatchStatus;
+  result: MatchResult | null;
+  player: PlayerView;
+  opponent: OpponentView;
+  logSize: number;
+};
+
+/** `replay` lists the computer's moves to play back before the final state; usually empty. */
 export type MatchView = {
   matchId: string;
   status: MatchStatus;
-  turn: { number: number; active: Side };
+  turn: TurnView;
   player: PlayerView;
   opponent: OpponentView;
   result: MatchResult | null;
   log: LogEntry[];
+  replay: ReplayStep[];
 };

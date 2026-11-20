@@ -48,6 +48,7 @@ export const en: Messages = {
     attackStress: 'Attack stress',
     endTurn: 'End turn',
     cancelAttack: 'Cancel attack',
+    opponentMoving: 'Opponent is moving…',
     board: 'Board',
     activeEvents: 'Active events',
     graveyard: 'Graveyard',

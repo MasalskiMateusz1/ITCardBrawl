@@ -92,6 +92,50 @@ class RandomOpponentTests {
 		assertThat(new RandomOpponent(ENGINE, new SplittableRandom(7)).playTurn(playerTurn)).isSameAs(playerTurn);
 	}
 
+	@Test
+	void lastStepEqualsPlayTurnForSameSeed() {
+		for (long seed = 0; seed < 20; seed++) {
+			Match match = computerStarts(seed);
+
+			List<Match> steps = new RandomOpponent(ENGINE, new SplittableRandom(seed + 1_000)).playTurnSteps(match);
+			Match played = new RandomOpponent(ENGINE, new SplittableRandom(seed + 1_000)).playTurn(match);
+
+			assertThat(steps).as("kroki z ziarnem %d", seed).isNotEmpty();
+			assertThat(steps.getLast()).isEqualTo(played);
+		}
+	}
+
+	@Test
+	void everyStepButTheLastHasOpponentActive() {
+		for (long seed = 0; seed < 20; seed++) {
+			List<Match> steps = new RandomOpponent(ENGINE, new SplittableRandom(seed + 1_000))
+				.playTurnSteps(computerStarts(seed));
+
+			assertThat(steps.subList(0, steps.size() - 1)).as("kroki z ziarnem %d", seed)
+				.allSatisfy(step -> {
+					assertThat(step.status()).isEqualTo(Status.IN_PROGRESS);
+					assertThat(step.activeSide()).isEqualTo(Side.OPPONENT);
+				});
+			Match last = steps.getLast();
+			assertThat(last.status() == Status.FINISHED || last.activeSide() == Side.PLAYER).isTrue();
+		}
+	}
+
+	@Test
+	void playTurnStepsIsEmptyOutsideOwnTurn() {
+		Match opponentTurn = opponentTurn(side(List.of(), List.of(), 0), side(List.of(character(1, 1)), List.of(), 1));
+		Match playerTurn = new Match(opponentTurn.id(), 1, Side.PLAYER, opponentTurn.player(), opponentTurn.opponent(),
+				Status.IN_PROGRESS, null, List.of(new TurnStarted(Side.PLAYER, 1)));
+
+		assertThat(new RandomOpponent(ENGINE, new SplittableRandom(7)).playTurnSteps(playerTurn)).isEmpty();
+	}
+
+	// Partia z katalogu, w której zaczyna komputer (gdy fabryka wylosuje gracza, gracz kończy turę 1).
+	private static Match computerStarts(long seed) {
+		Match match = new MatchFactory(CATALOG, new SplittableRandom(seed)).create("developers");
+		return match.activeSide() == Side.OPPONENT ? match : ENGINE.apply(match, Side.PLAYER, new Move.EndTurn());
+	}
+
 	// Gracz w teście gra tak samo jak komputer: losowe poprawne ruchy, potem koniec tury.
 	private static Match playRandomPlayerTurn(Match match, RandomGenerator random) {
 		Match current = match;

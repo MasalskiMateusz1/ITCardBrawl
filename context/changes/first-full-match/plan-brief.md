@@ -34,6 +34,12 @@ W `/match` gracz zagrywa karty, atakuje i kończy turę. Komputer od razu rozgry
 | Log | Cała partia; zdania pl/en składane w backendzie | Decyzja użytkownika. | Research + Plan |
 | Nieaktualne żądanie | Ruch niesie `matchId` + `turn`; niezgodność → 409 | Podwójny klik nie kończy następnej tury gracza. | Plan |
 | Zagraj ponownie | Powrót do `/new-match` | Decyzja użytkownika. | Research |
+| Odtwarzanie tury komputera | Krok na każdy ruch komputera, co ~700 ms; przyciski nieaktywne do końca (Faza 6) | Natychmiastowa tura pozwalała podwójnemu klikowi zakończyć kolejną turę gracza (nieudane 5.8). | Plan (Faza 6) |
+| Kształt kroku | `replay: [{turn, status, result, player, opponent, logSize}]`; log tylko raz, w stanie końcowym | Mała odpowiedź, a `GET /current` zachowuje kontrakt z `replay: []`. | Plan (Faza 6) |
+| Pomijanie odtwarzania | Brak przycisku „Pomiń” | Decyzja użytkownika. | Plan (Faza 6) |
+| Zmiana języka w trakcie odtwarzania | Odtwarzanie trwa, odświeżenie czeka do końca | Decyzja użytkownika. | Plan (Faza 6) |
+| Odtwarzanie pierwszej tury komputera | Jednorazowe przekazanie odpowiedzi startu przez `GameService` | Bez stanu na serwerze; po przeładowaniu widać tylko stan końcowy. | Plan (Faza 6) |
+| Wskaźnik | Etykieta „Ruch przeciwnika…” w pasku tury | Nieaktywne przyciski bez powodu wyglądają na zawieszenie. | Plan (Faza 6) |
 
 ## Scope
 
@@ -43,12 +49,13 @@ W `/match` gracz zagrywa karty, atakuje i kończy turę. Komputer od razu rozgry
 - Losowy komputer, atomowy `MatchStore.update` (F3), `MatchService`.
 - 3 endpointy ruchów, rozszerzony `MatchView`, log pl/en.
 - Grywalny stół, log i wynik we froncie.
+- Odtwarzanie tury komputera krok po kroku (Faza 6).
 
 **Out of scope:**
 - Efekty wydarzeń (S-04).
 - Strategia komputera i powód ruchu (S-05).
 - Docelowy balans i treść kart (S-06).
-- Trwały zapis partii, animacje, odtwarzanie tury krok po kroku, sufit stresu.
+- Trwały zapis partii, animacje, pomijanie odtwarzania, sufit stresu.
 
 ## Architecture / Approach
 
@@ -63,9 +70,10 @@ W `/match` gracz zagrywa karty, atakuje i kończy turę. Komputer od razu rozgry
 | 3. Komputer i atomowy magazyn | Losowy przeciwnik, `update` (F3), `MatchService` | Pętla komputera bez końca (bezpiecznik 100 ruchów) |
 | 4. API ruchów i widok | 3 endpointy, 400/404/409, log pl/en | Testy MockMvc zależne od losowej ręki |
 | 5. Pętla gry we froncie | Grywalny stół, log, wynik | Dużo nowych stanów UI (wybór atakującego, Ochrona, pending) |
+| 6. Odtwarzanie tury komputera | Kroki tury komputera z backendu, odtwarzane co ~700 ms; naprawa podwójnego kliku | Zegary i odświeżanie przy zmianie języka w komponencie stołu |
 
 **Prerequisites:** S-02 zarchiwizowany (spełnione); działające logowanie OAuth lokalnie do testu ręcznego (`.env.properties`).
-**Estimated effort:** ~4–5 sesji, 5 faz (Fazy 2 i 5 największe).
+**Estimated effort:** ~5–6 sesji, 6 faz (Fazy 2 i 5 największe; Faza 6 ~1 sesja).
 
 ## Open Risks & Assumptions
 
@@ -73,6 +81,7 @@ W `/match` gracz zagrywa karty, atakuje i kończy turę. Komputer od razu rozgry
 - Losowy komputer może wyglądać słabo, ale to świadome założenie do S-05.
 - Wydarzenia bez efektu mogą mylić graczy. Log i opis karty pokazują tylko koszt i czas trwania.
 - Log całej partii rośnie w każdej odpowiedzi, co jest akceptowalne w skali `small`.
+- Bez pomijania tura komputera trwa kilka sekund (~700 ms × liczba ruchów). To może wydłużyć partię względem celu 15 min; obserwujemy to przy teście ręcznym.
 
 ## Success Criteria (Summary)
 
