@@ -415,12 +415,13 @@ class MatchEngineTests {
 
 	private static CardInstance character(int instanceId, int cost, int attack, int health, Ability ability) {
 		return new CardInstance(instanceId, new Card("char-" + instanceId, FACTION.id(), text("Postać"),
-				CardType.CHARACTER, cost, text("Opis"), attack, health, ability, null));
+				CardType.CHARACTER, cost, text("Opis"), attack, health, ability, null, null));
 	}
 
 	private static CardInstance event(int instanceId, int cost, int duration) {
 		return new CardInstance(instanceId, new Card("event-" + instanceId, FACTION.id(), text("Wydarzenie"),
-				CardType.EVENT, cost, text("Opis"), null, null, null, duration));
+				CardType.EVENT, cost, text("Opis"), null, null, null, duration, List.of(new Effect(EffectKind.DRAW,
+					EffectScope.SELF, 1))));
 	}
 
 	private static CardInstance[] filler(int firstId, int count) {

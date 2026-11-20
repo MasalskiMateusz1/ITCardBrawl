@@ -66,12 +66,13 @@ class CardCatalogTests {
 	private static Card character(String id, String faction, int cost, Integer attack, Integer health,
 			Ability ability) {
 		return new Card(id, faction, text("Karta " + id), CardType.CHARACTER, cost, text("tekst"), attack, health,
-				ability, null);
+				ability, null, null);
 	}
 
 	private static Card event(String id, String faction, int cost, Integer duration) {
 		return new Card(id, faction, text("Karta " + id), CardType.EVENT, cost, text("tekst"), null, null, null,
-				duration);
+				duration, List.of(new Effect(duration != null && duration > 0 ? EffectKind.ATTACK : EffectKind.DRAW,
+					duration != null && duration > 0 ? EffectScope.OWN_BOARD : EffectScope.SELF, 1)));
 	}
 
 	private CardCatalog build() {
@@ -96,6 +97,56 @@ class CardCatalogTests {
 			assertThat(deck).anyMatch(c -> c.faction().equals(faction.id()));
 			assertThat(deck).extracting(Card::type).contains(CardType.CHARACTER, CardType.EVENT);
 		}
+		assertThat(catalog.playableFactions()).allSatisfy(faction -> assertThat(catalog.deck(faction.id()))
+				.filteredOn(card -> card.type() == CardType.EVENT).hasSize(15));
+		assertThat(catalog.card("neu-requirements-change")).get().satisfies(card -> {
+			assertThat(card.effects()).containsExactly(new Effect(EffectKind.ATTACK, EffectScope.ENEMY_BOARD, -2),
+					new Effect(EffectKind.GUARD, EffectScope.OWN_BOARD, 0));
+		});
+		assertThat(catalog.card("neu-daily-standup")).isPresent();
+		assertThat(catalog.playableFactions()).allSatisfy(faction -> assertThat(catalog.deck(faction.id()))
+				.extracting(Card::id).doesNotContain("neu-daily-standup"));
+	}
+
+	@Test
+	void everyEventHasEffects() {
+		CardCatalog catalog = CardCatalogLoader.load(JsonMapper.builder().build(),
+				new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION));
+		List<String> eventIds = List.of("dev-stackoverflow", "dev-works-on-my-machine", "dev-friday-hotfix",
+				"dev-force-push", "dev-legacy-refactor", "tst-vague-bug-report", "tst-edge-case", "tst-regression",
+				"tst-flaky-test", "tst-production-bug", "neu-coffee", "neu-daily-standup", "neu-sprint-planning",
+				"neu-meeting", "neu-deadline", "neu-requirements-change");
+		for (String id : eventIds) {
+			assertThat(catalog.card(id)).as("wydarzenie %s", id).get()
+					.satisfies(card -> {
+						assertThat(card.type()).isEqualTo(CardType.EVENT);
+						assertThat(card.effects()).isNotEmpty();
+					});
+		}
+	}
+
+	@Test
+	void everyEffectKindHasPolishAndEnglishDescription() {
+		for (EffectKind kind : EffectKind.values()) {
+			EffectScope scope = java.util.Arrays.stream(EffectScope.values()).filter(kind::acceptsScope).findFirst()
+					.orElseThrow();
+			int amount = kind.minAmount() == kind.maxAmount() ? kind.minAmount()
+					: kind.minAmount() > 0 ? kind.minAmount() : 1;
+			LocalizedText description = new Effect(kind, scope, amount).describe();
+			assertThat(description.pl()).as("%s po polsku", kind).isNotBlank();
+			assertThat(description.en()).as("%s po angielsku", kind).isNotBlank();
+			assertThat(description.en()).isNotEqualTo(description.pl());
+		}
+	}
+
+	@Test
+	void polishDamageDescriptionUsesCorrectNumberForms() {
+		assertThat(new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 1).describe().pl())
+				.isEqualTo("Zadaj 1 obrażenie wybranej postaci lub graczowi");
+		assertThat(new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 3).describe().pl())
+				.isEqualTo("Zadaj 3 obrażenia wybranej postaci lub graczowi");
+		assertThat(new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 5).describe().pl())
+				.isEqualTo("Zadaj 5 obrażeń wybranej postaci lub graczowi");
 	}
 
 	@Test
@@ -281,7 +332,7 @@ class CardCatalogTests {
 	@Test
 	void cardNameMissingInPolishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", new LocalizedText(null, "Card"), CardType.CHARACTER, 1,
-				text("tekst"), 1, 1, null, null));
+				text("tekst"), 1, 1, null, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'name' w języku PL");
@@ -290,7 +341,7 @@ class CardCatalogTests {
 	@Test
 	void cardNameBlankInEnglishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", new LocalizedText("Karta", "  "), CardType.CHARACTER, 1,
-				text("tekst"), 1, 1, null, null));
+				text("tekst"), 1, 1, null, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'name' w języku EN");
@@ -299,7 +350,7 @@ class CardCatalogTests {
 	@Test
 	void cardTextBlankInPolishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1,
-				new LocalizedText(" ", "text"), 1, 1, null, null));
+				new LocalizedText(" ", "text"), 1, 1, null, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'text' w języku PL");
@@ -308,7 +359,7 @@ class CardCatalogTests {
 	@Test
 	void cardTextMissingInEnglishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1,
-				new LocalizedText("tekst", null), 1, 1, null, null));
+				new LocalizedText("tekst", null), 1, 1, null, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'text' w języku EN");
@@ -334,7 +385,7 @@ class CardCatalogTests {
 	@Test
 	void cardWithoutTypeIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", text("Karta alpha-1"), null, 1, text("tekst"), null, null,
-				null, null));
+				null, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1' nie ma typu");
@@ -375,7 +426,7 @@ class CardCatalogTests {
 	@Test
 	void characterWithDurationIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1, text("tekst"), 1, 1, null,
-				2));
+				2, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("postać 'alpha-1' nie może mieć pola 'duration'");
@@ -399,10 +450,92 @@ class CardCatalogTests {
 
 	@Test
 	void eventWithAttackIsRejected() {
-		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), 3, null, null, 0));
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), 3, null, null,
+				0, List.of(new Effect(EffectKind.DRAW, EffectScope.SELF, 1))));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("wydarzenie 'alpha-2' nie może mieć pola 'attack'");
+	}
+
+	@Test
+	void eventWithoutEffectsIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 0, null));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("wydarzenie 'alpha-2' musi mieć co najmniej jeden efekt");
+	}
+
+	@Test
+	void eventWithEmptyEffectsIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 0, List.of()));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("wydarzenie 'alpha-2' musi mieć co najmniej jeden efekt");
+	}
+
+	@Test
+	void eventEffectWithoutKindIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 0, java.util.Arrays.asList(new Effect(null, EffectScope.SELF, 1))));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("wydarzenie 'alpha-2' ma efekt bez rodzaju");
+	}
+
+	@Test
+	void eventEffectWithDisallowedScopeIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 0, List.of(new Effect(EffectKind.DRAW, EffectScope.OPPONENT, 1))));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("efekt DRAW ma niedozwolony zasięg OPPONENT");
+	}
+
+	@Test
+	void eventEffectOutsideAmountRangeIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 0, List.of(new Effect(EffectKind.DRAW, EffectScope.SELF, 6))));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("efekt DRAW ma wartość 6 spoza zakresu 1–5");
+	}
+
+	@Test
+	void zeroAttackModifierIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 0, List.of(new Effect(EffectKind.ATTACK, EffectScope.OWN_BOARD, 0))));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("efekt ATTACK ma wartość 0 spoza zakresu -10–10");
+	}
+
+	@Test
+	void modifierOnZeroDurationEventIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 0, List.of(new Effect(EffectKind.ATTACK, EffectScope.OWN_BOARD, 1))));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("o czasie trwania 0 nie może mieć modyfikatorów");
+	}
+
+	@Test
+	void positiveDurationWithoutModifierIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), null, null,
+				null, 2, List.of(new Effect(EffectKind.DRAW, EffectScope.SELF, 1))));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("o dodatnim czasie trwania musi mieć modyfikator");
+	}
+
+	@Test
+	void characterWithEffectsIsRejected() {
+		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1, text("tekst"), 1, 1,
+				null, null, List.of(new Effect(EffectKind.DRAW, EffectScope.SELF, 1))));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("postać 'alpha-1' nie może mieć pola 'effects'");
 	}
 
 	@Test
@@ -429,6 +562,14 @@ class CardCatalogTests {
 			.withMessageContaining("karta 'x' wskazuje nieistniejącą frakcję 'f'")
 			.withMessageNotContaining("postać 'x'")
 			.withMessageNotContaining("karta 'x':");
+	}
+
+	@Test
+	void effectWithoutAmountDefaultsToZero() throws Exception {
+		Effect effect = JsonMapper.builder().build().readValue("{\"kind\":\"GUARD\",\"scope\":\"TARGET\"}",
+				Effect.class);
+
+		assertThat(effect.amount()).isZero();
 	}
 
 	@Test
