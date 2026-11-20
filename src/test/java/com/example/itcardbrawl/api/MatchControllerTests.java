@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -14,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
@@ -64,13 +66,17 @@ class MatchControllerTests {
 	// Token CSRF jak w SPA (cookie XSRF-TOKEN -> naglowek X-XSRF-TOKEN). Celowo bez post-procesora csrf():
 	// podmienia on repozytorium tokenow we wspoldzielonym kontekscie (zob. SecurityFlowTests).
 	private MockHttpServletRequestBuilder postMatches() throws Exception {
+		return csrfPost("/api/matches");
+	}
+
+	private MockHttpServletRequestBuilder csrfPost(String url) throws Exception {
 		Cookie xsrf = mockMvc.perform(get("/api/factions").with(newPlayer()))
 			.andExpect(status().isOk())
 			.andReturn()
 			.getResponse()
 			.getCookie("XSRF-TOKEN");
 		assertThat(xsrf).isNotNull();
-		return post("/api/matches").cookie(xsrf).header("X-XSRF-TOKEN", xsrf.getValue())
+		return post(url).cookie(xsrf).header("X-XSRF-TOKEN", xsrf.getValue())
 			.contentType(MediaType.APPLICATION_JSON);
 	}
 
@@ -194,18 +200,30 @@ class MatchControllerTests {
 			.andExpect(status().isCreated())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 			.andExpect(jsonPath("$.matchId").isNotEmpty())
-			.andExpect(jsonPath("$.turn.number").value(1))
+			.andExpect(jsonPath("$.status").value("IN_PROGRESS"))
+			.andExpect(jsonPath("$.result").value(nullValue()))
+			.andExpect(jsonPath("$.turn.number").isNumber())
 			.andExpect(jsonPath("$.player.faction.id").value("developers"))
 			.andExpect(jsonPath("$.player.faction.name").value("Developerzy"))
 			.andExpect(jsonPath("$.opponent.faction.id").value("testers"))
-			.andExpect(jsonPath("$.player.hand", hasSize(5)))
-			.andExpect(jsonPath("$.player.deckCount").value(25))
+			.andExpect(jsonPath("$.player.hand").isArray())
+			.andExpect(jsonPath("$.player.deckCount").isNumber())
 			.andExpect(jsonPath("$.opponent.deckCount").value(25))
-			.andExpect(jsonPath("$.opponent.handCount").value(5))
-			.andExpect(jsonPath("$.player.stress").value(0))
+			.andExpect(jsonPath("$.opponent.handCount").isNumber())
+			// Stres gracza może już rosnąć, jeśli zaczął komputer (zdolność On play).
+			.andExpect(jsonPath("$.player.stress").isNumber())
 			.andExpect(jsonPath("$.player.stressLimit").value(30))
 			.andExpect(jsonPath("$.opponent.stress").value(0))
 			.andExpect(jsonPath("$.opponent.stressLimit").value(30))
+			.andExpect(jsonPath("$.player.board").isArray())
+			.andExpect(jsonPath("$.player.activeEvents").isArray())
+			.andExpect(jsonPath("$.player.graveyardCount").isNumber())
+			.andExpect(jsonPath("$.opponent.board").isArray())
+			.andExpect(jsonPath("$.opponent.activeEvents").isArray())
+			.andExpect(jsonPath("$.opponent.graveyardCount").isNumber())
+			.andExpect(jsonPath("$.log").isNotEmpty())
+			.andExpect(jsonPath("$.log[0].side").isNotEmpty())
+			.andExpect(jsonPath("$.log[0].text").isNotEmpty())
 			.andExpect(jsonPath("$.player.hand[0].instanceId").isNumber())
 			.andExpect(jsonPath("$.player.hand[0].cardId").isNotEmpty())
 			.andExpect(jsonPath("$.player.hand[0].name").isNotEmpty())
@@ -215,20 +233,27 @@ class MatchControllerTests {
 			.andExpect(jsonPath("$.player.hand[0].neutral").isBoolean());
 	}
 
-	// Kto zaczyna, jest losowe - test sprawdza relację, nie konkretną stronę.
+	// Kto zaczyna, jest losowe. Gdy zaczyna komputer, start rozgrywa od razu jego turę 1 — gracz zawsze
+	// dostaje stół w swojej turze: tura 1 z ręką 5 albo tura 2 po dobraniu szóstej karty.
 	@Test
-	void activeSideHasOneResourceAndOtherSideZero() throws Exception {
+	void startAlwaysHandsTurnToPlayer() throws Exception {
 		DocumentContext match = start(newPlayer(), "testers");
 
-		String active = match.read("$.turn.active");
-		assertThat(active).isIn("PLAYER", "OPPONENT");
-		String activeKey = active.equals("PLAYER") ? "player" : "opponent";
-		String otherKey = active.equals("PLAYER") ? "opponent" : "player";
-
-		assertThat((Integer) match.read("$." + activeKey + ".resource.current")).isEqualTo(1);
-		assertThat((Integer) match.read("$." + activeKey + ".resource.max")).isEqualTo(1);
-		assertThat((Integer) match.read("$." + otherKey + ".resource.current")).isEqualTo(0);
-		assertThat((Integer) match.read("$." + otherKey + ".resource.max")).isEqualTo(0);
+		assertThat((String) match.read("$.turn.active")).isEqualTo("PLAYER");
+		assertThat((Integer) match.read("$.player.resource.current")).isEqualTo(1);
+		assertThat((Integer) match.read("$.player.resource.max")).isEqualTo(1);
+		int turn = match.read("$.turn.number");
+		assertThat(turn).isIn(1, 2);
+		if (turn == 1) {
+			assertThat((Integer) match.read("$.opponent.resource.max")).isZero();
+			assertThat((List<?>) match.read("$.player.hand")).hasSize(5);
+			assertThat((Integer) match.read("$.player.deckCount")).isEqualTo(25);
+		}
+		else {
+			assertThat((Integer) match.read("$.opponent.resource.max")).isEqualTo(1);
+			assertThat((List<?>) match.read("$.player.hand")).hasSize(6);
+			assertThat((Integer) match.read("$.player.deckCount")).isEqualTo(24);
+		}
 	}
 
 	@Test
@@ -357,6 +382,212 @@ class MatchControllerTests {
 			.andExpect(status().isForbidden());
 		mockMvc.perform(get("/api/matches/current").with(player))
 			.andExpect(status().isNotFound());
+	}
+
+	// --- Ruchy ---
+
+	private MockHttpServletRequestBuilder movePost(String matchId, String move, String body) throws Exception {
+		return csrfPost("/api/matches/" + matchId + "/" + move).content(body);
+	}
+
+	private DocumentContext move(RequestPostProcessor player, String matchId, String move, String body)
+			throws Exception {
+		String json = mockMvc.perform(movePost(matchId, move, body).with(player))
+			.andExpect(status().isOk())
+			.andReturn().getResponse().getContentAsString();
+		return JsonPath.parse(json);
+	}
+
+	private DocumentContext endTurn(RequestPostProcessor player, DocumentContext match) throws Exception {
+		return move(player, match.read("$.matchId"), "end-turn", "{\"turn\":" + match.read("$.turn.number") + "}");
+	}
+
+	private static String playBody(DocumentContext match, int instanceId) {
+		return "{\"turn\":" + match.read("$.turn.number") + ",\"instanceId\":" + instanceId + "}";
+	}
+
+	// Pierwsza karta z ręki, która jest (albo nie jest) do opłacenia bieżącym zasobem gracza; null, gdy brak.
+	private static Map<String, Object> handCard(DocumentContext match, boolean affordable) {
+		int resource = match.read("$.player.resource.current");
+		List<Map<String, Object>> hand = match.read("$.player.hand");
+		return hand.stream()
+			.filter(card -> ((Integer) card.get("cost") <= resource) == affordable)
+			.findFirst()
+			.orElse(null);
+	}
+
+	@Test
+	void playAffordableCardMovesItFromHandToTable() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "developers");
+		// Zasób rośnie co turę - kończymy tury, aż na ręce pojawi się karta do zagrania.
+		while (handCard(match, true) == null) {
+			assertThat((String) match.read("$.status")).isEqualTo("IN_PROGRESS");
+			match = endTurn(player, match);
+		}
+		Map<String, Object> card = handCard(match, true);
+		int instanceId = (Integer) card.get("instanceId");
+		int graveyardBefore = match.read("$.player.graveyardCount");
+
+		DocumentContext after = move(player, match.read("$.matchId"), "play", playBody(match, instanceId));
+
+		List<Integer> hand = after.read("$.player.hand[*].instanceId");
+		assertThat(hand).doesNotContain(instanceId);
+		List<Integer> board = after.read("$.player.board[*].instanceId");
+		List<Integer> events = after.read("$.player.activeEvents[*].instanceId");
+		int graveyardAfter = after.read("$.player.graveyardCount");
+		if ("CHARACTER".equals(card.get("type"))) {
+			assertThat(board).contains(instanceId);
+			List<String> names = after.read("$.player.board[?(@.instanceId == " + instanceId + ")].name");
+			assertThat(names).containsExactly((String) card.get("name"));
+		}
+		else {
+			assertThat(events.contains(instanceId) || graveyardAfter == graveyardBefore + 1).isTrue();
+		}
+		List<String> log = after.read("$.log[*].text");
+		assertThat(log).contains("Zagrywasz: " + card.get("name"));
+	}
+
+	@Test
+	void unaffordableCardReturns400AndLeavesStateUnchanged() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "developers");
+		// Na starcie zasób to 1, a talia ma najwyżej 3 karty za 1 - na ręce zawsze jest karta za droga.
+		Map<String, Object> card = handCard(match, false);
+		assertThat(card).isNotNull();
+		int instanceId = (Integer) card.get("instanceId");
+
+		mockMvc.perform(movePost(match.read("$.matchId"), "play", playBody(match, instanceId)).with(player))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").isNotEmpty());
+
+		List<Integer> hand = current(player, "pl").read("$.player.hand[*].instanceId");
+		assertThat(hand).contains(instanceId);
+	}
+
+	@Test
+	void attackWithUnknownCharacterReturns400() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "testers");
+		String body = "{\"turn\":" + match.read("$.turn.number") + ",\"attackerId\":-1,\"targetId\":null}";
+
+		mockMvc.perform(movePost(match.read("$.matchId"), "attack", body).with(player))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").isNotEmpty());
+	}
+
+	@Test
+	void wrongTurnReturns409AndLeavesStateUnchanged() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "developers");
+		int turn = match.read("$.turn.number");
+
+		mockMvc.perform(movePost(match.read("$.matchId"), "end-turn", "{\"turn\":" + (turn + 1) + "}").with(player))
+			.andExpect(status().isConflict());
+
+		DocumentContext after = current(player, "pl");
+		assertThat((Integer) after.read("$.turn.number")).isEqualTo(turn);
+		assertThat((String) after.read("$.turn.active")).isEqualTo("PLAYER");
+	}
+
+	@Test
+	void foreignMatchIdReturns409() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "developers");
+		String body = "{\"turn\":" + match.read("$.turn.number") + "}";
+
+		mockMvc.perform(movePost(UUID.randomUUID().toString(), "end-turn", body).with(player))
+			.andExpect(status().isConflict());
+	}
+
+	@Test
+	void moveWithoutMatchReturns404() throws Exception {
+		mockMvc.perform(movePost(UUID.randomUUID().toString(), "end-turn", "{\"turn\":1}").with(newPlayer()))
+			.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void moveWithoutCsrfReturns403() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "developers");
+		int turn = match.read("$.turn.number");
+
+		mockMvc.perform(post("/api/matches/" + match.read("$.matchId") + "/end-turn").with(player)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"turn\":" + turn + "}"))
+			.andExpect(status().isForbidden());
+		assertThat((Integer) current(player, "pl").read("$.turn.number")).isEqualTo(turn);
+	}
+
+	@Test
+	void missingOrMalformedMoveBodyReturns400() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		String matchId = start(player, "developers").read("$.matchId");
+
+		mockMvc.perform(csrfPost("/api/matches/" + matchId + "/end-turn").with(player))
+			.andExpect(status().isBadRequest());
+		mockMvc.perform(movePost(matchId, "play", "{}").with(player))
+			.andExpect(status().isBadRequest());
+		mockMvc.perform(movePost(matchId, "attack", "{\"turn\":\"abc\"}").with(player))
+			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void endTurnPlaysOpponentTurnAndReturnsToPlayer() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = start(player, "developers");
+		int turn = match.read("$.turn.number");
+
+		DocumentContext after = endTurn(player, match);
+
+		List<String> sides = after.read("$.log[*].side");
+		List<String> texts = after.read("$.log[*].text");
+		assertThat(texts).contains("Kończysz turę");
+		assertThat(sides).contains("OPPONENT");
+		if ("FINISHED".equals(after.read("$.status"))) {
+			assertThat((String) after.read("$.result.winner")).isIn("PLAYER", "OPPONENT");
+			return;
+		}
+		assertThat((String) after.read("$.turn.active")).isEqualTo("PLAYER");
+		assertThat((Integer) after.read("$.turn.number")).isEqualTo(turn + 2);
+		assertThat(texts).contains("Tura przeciwnika " + (turn + 1), "Przeciwnik dobiera kartę",
+				"Przeciwnik kończy turę", "Twoja tura " + (turn + 2));
+		assertThat((Object) after.read("$.result")).isNull();
+	}
+
+	// Przeciwnik dobiera w swojej turze - log mówi tylko, że dobrał, a widok nie ma jego ręki ani talii.
+	@Test
+	void viewDoesNotRevealOpponentHandOrDraws() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext after = endTurn(player, start(player, "developers"));
+
+		Map<String, Object> opponent = after.read("$.opponent");
+		assertThat(opponent).doesNotContainKeys("hand", "deck");
+		List<String> opponentTexts = after.read("$.log[?(@.side == 'OPPONENT')].text");
+		assertThat(opponentTexts).noneMatch(text -> text.startsWith("Dobierasz"));
+		assertThat(opponentTexts).filteredOn(text -> text.contains("dobiera"))
+			.containsOnly("Przeciwnik dobiera kartę");
+	}
+
+	@Test
+	void sameLogCanBeReadInBothLanguages() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		endTurn(player, start(player, "developers"));
+
+		DocumentContext polish = current(player, "pl");
+		DocumentContext english = current(player, "en");
+
+		List<String> polishSides = polish.read("$.log[*].side");
+		List<String> englishSides = english.read("$.log[*].side");
+		List<String> polishTexts = polish.read("$.log[*].text");
+		List<String> englishTexts = english.read("$.log[*].text");
+		assertThat(englishSides).isEqualTo(polishSides);
+		assertThat(englishTexts).hasSameSizeAs(polishTexts);
+		for (int i = 0; i < polishTexts.size(); i++) {
+			assertThat(englishTexts.get(i)).isNotBlank().isNotEqualTo(polishTexts.get(i));
+		}
+		assertThat(polishTexts).contains("Kończysz turę");
+		assertThat(englishTexts).contains("You end your turn");
 	}
 
 }

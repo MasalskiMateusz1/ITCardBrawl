@@ -548,16 +548,16 @@ Partie trzymane są tylko w pamięci, więc stare partie znikają przy restarcie
 
 #### Automated
 
-- [x] 3.1 Testy komputera, magazynu i serwisu przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchStoreTests,MatchServiceTests"`
-- [x] 3.2 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 3.1 Testy komputera, magazynu i serwisu przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchStoreTests,MatchServiceTests"` — 83a8e55
+- [x] 3.2 Pełny build backendu przechodzi: `./mvnw -B verify` — 83a8e55
 
 ### Phase 4: API ruchów i rozszerzony widok
 
 #### Automated
 
-- [ ] 4.1 Testy API i logu przechodzą: `./mvnw -B test -Dtest="MatchControllerTests,MatchLogFormatterTests"`
-- [ ] 4.2 Trasy backendu są pod `/api`: `./mvnw -B test -Dtest=BackendRoutesTests`
-- [ ] 4.3 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 4.1 Testy API i logu przechodzą: `./mvnw -B test -Dtest="MatchControllerTests,MatchLogFormatterTests"`
+- [x] 4.2 Trasy backendu są pod `/api`: `./mvnw -B test -Dtest=BackendRoutesTests`
+- [x] 4.3 Pełny build backendu przechodzi: `./mvnw -B verify`
 
 ### Phase 5: Pętla gry we froncie
 

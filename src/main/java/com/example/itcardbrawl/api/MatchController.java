@@ -2,18 +2,23 @@ package com.example.itcardbrawl.api;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 import com.example.itcardbrawl.game.CardCatalog;
+import com.example.itcardbrawl.game.IllegalMoveException;
 import com.example.itcardbrawl.game.Language;
 import com.example.itcardbrawl.game.Match;
-import com.example.itcardbrawl.game.MatchFactory;
-import com.example.itcardbrawl.game.MatchStore;
+import com.example.itcardbrawl.game.MatchService;
+import com.example.itcardbrawl.game.Move;
+import com.example.itcardbrawl.game.StaleMoveException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,14 +32,14 @@ public class MatchController {
 
 	private final CardCatalog catalog;
 
-	private final MatchFactory matchFactory;
+	private final MatchService matchService;
 
-	private final MatchStore matchStore;
+	private final MatchLogFormatter logFormatter;
 
-	public MatchController(CardCatalog catalog, MatchFactory matchFactory, MatchStore matchStore) {
+	public MatchController(CardCatalog catalog, MatchService matchService, MatchLogFormatter logFormatter) {
 		this.catalog = catalog;
-		this.matchFactory = matchFactory;
-		this.matchStore = matchStore;
+		this.matchService = matchService;
+		this.logFormatter = logFormatter;
 	}
 
 	@GetMapping("/factions")
@@ -51,21 +56,61 @@ public class MatchController {
 			Locale locale) {
 		Match match;
 		try {
-			match = matchFactory.create(request.factionId());
+			match = matchService.start(playerKey(authentication), request.factionId());
 		}
 		catch (IllegalArgumentException ex) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nieznana lub niegrywalna frakcja", ex);
 		}
-		matchStore.save(playerKey(authentication), match);
-		return MatchView.of(match, catalog, Language.from(locale));
+		return view(match, locale);
 	}
 
 	@GetMapping("/matches/current")
 	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication, Locale locale) {
-		Language language = Language.from(locale);
-		return matchStore.findCurrent(playerKey(authentication))
-			.map(match -> ResponseEntity.ok(MatchView.of(match, catalog, language)))
-			.orElseGet(() -> ResponseEntity.notFound().build());
+		return respond(matchService.current(playerKey(authentication)).orElse(null), locale);
+	}
+
+	@PostMapping(path = "/matches/{matchId}/play", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<MatchView> play(@PathVariable UUID matchId, @RequestBody PlayRequest request,
+			OAuth2AuthenticationToken authentication, Locale locale) {
+		return move(authentication, matchId, request.turn(), new Move.PlayCard(request.instanceId()), locale);
+	}
+
+	@PostMapping(path = "/matches/{matchId}/attack", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<MatchView> attack(@PathVariable UUID matchId, @RequestBody AttackRequest request,
+			OAuth2AuthenticationToken authentication, Locale locale) {
+		return move(authentication, matchId, request.turn(), new Move.Attack(request.attackerId(), request.targetId()),
+				locale);
+	}
+
+	@PostMapping(path = "/matches/{matchId}/end-turn", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<MatchView> endTurn(@PathVariable UUID matchId, @RequestBody EndTurnRequest request,
+			OAuth2AuthenticationToken authentication, Locale locale) {
+		return move(authentication, matchId, request.turn(), new Move.EndTurn(), locale);
+	}
+
+	// Ruch nieaktualny (inna partia albo tura) — stan bez zmian, SPA powinno odświeżyć widok.
+	@ExceptionHandler(StaleMoveException.class)
+	public ResponseEntity<ErrorView> staleMove(StaleMoveException ex) {
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorView(ex.getMessage()));
+	}
+
+	@ExceptionHandler(IllegalMoveException.class)
+	public ResponseEntity<ErrorView> illegalMove(IllegalMoveException ex) {
+		return ResponseEntity.badRequest().body(new ErrorView(ex.getMessage()));
+	}
+
+	private ResponseEntity<MatchView> move(OAuth2AuthenticationToken authentication, UUID matchId, int turn, Move move,
+			Locale locale) {
+		return respond(matchService.move(playerKey(authentication), matchId, turn, move).orElse(null), locale);
+	}
+
+	// Brak bieżącej partii gracza daje 404.
+	private ResponseEntity<MatchView> respond(Match match, Locale locale) {
+		return match == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(view(match, locale));
+	}
+
+	private MatchView view(Match match, Locale locale) {
+		return MatchView.of(match, catalog, logFormatter, Language.from(locale));
 	}
 
 	// Rejestracja + nazwa principala jednoznacznie identyfikują gracza między dostawcami.
@@ -77,6 +122,19 @@ public class MatchController {
 	}
 
 	public record StartMatchRequest(String factionId) {
+	}
+
+	public record PlayRequest(int turn, int instanceId) {
+	}
+
+	/** {@code targetId == null} oznacza atak w stres przeciwnika. */
+	public record AttackRequest(int turn, int attackerId, Integer targetId) {
+	}
+
+	public record EndTurnRequest(int turn) {
+	}
+
+	public record ErrorView(String message) {
 	}
 
 }
