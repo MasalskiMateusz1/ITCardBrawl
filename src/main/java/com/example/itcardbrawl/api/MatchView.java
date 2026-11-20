@@ -24,32 +24,40 @@ import com.example.itcardbrawl.game.MatchSide;
  * jego ręka i kolejność talii nie opuszczają serwera. Teksty (nazwy frakcji, nazwy i treść kart, log) są
  * w języku żądania; identyfikatory partii i kart od języka nie zależą. {@code result} jest {@code null},
  * dopóki partia trwa. {@code replay} to kroki tury komputera do odtworzenia (pusty, gdy nie ma czego
- * odtwarzać); log jest wysyłany raz, w stanie końcowym.
+ * odtwarzać); log jest wysyłany raz, w stanie końcowym, i obejmuje tylko ostatnie {@link #LOG_LIMIT} wpisów
+ * (domena trzyma całą partię).
  */
 public record MatchView(UUID matchId, Match.Status status, TurnView turn, PlayerView player, OpponentView opponent,
 		ResultView result, List<LogEntryView> log, List<ReplayStepView> replay) {
 
+	/** Tyle ostatnich wpisów logu trafia do odpowiedzi; ogranicza rozmiar odpowiedzi pod koniec partii. */
+	static final int LOG_LIMIT = 100;
+
 	public static MatchView of(Match match, List<Match> replay, CardCatalog catalog, MatchLogFormatter formatter,
 			Language language) {
+		List<MatchEvent> fullLog = match.log();
+		int dropped = Math.max(0, fullLog.size() - LOG_LIMIT);
 		return new MatchView(match.id(), match.status(), TurnView.of(match),
 				PlayerView.of(match.player(), catalog, language), OpponentView.of(match.opponent(), language),
 				ResultView.of(match.result()),
-				match.log().stream().map(event -> LogEntryView.of(event, formatter, language)).toList(),
-				replay.stream().map(step -> ReplayStepView.of(step, catalog, language)).toList());
+				fullLog.subList(dropped, fullLog.size()).stream()
+					.map(event -> LogEntryView.of(event, formatter, language))
+					.toList(),
+				replay.stream().map(step -> ReplayStepView.of(step, dropped, catalog, language)).toList());
 	}
 
 	/**
 	 * Stan partii po jednym ruchu komputera. Strony powstają tym samym kodem co w stanie końcowym, więc ręka
-	 * przeciwnika nie wychodzi. {@code logSize} to liczba wpisów logu w tym kroku — log stanu końcowego jest
-	 * jego przedłużeniem.
+	 * przeciwnika nie wychodzi. {@code logSize} to liczba wpisów wysłanego logu widocznych w tym kroku — log
+	 * stanu końcowego jest jego przedłużeniem, a wpisy pominięte przez {@link #LOG_LIMIT} są odjęte.
 	 */
 	public record ReplayStepView(TurnView turn, Match.Status status, ResultView result, PlayerView player,
 			OpponentView opponent, int logSize) {
 
-		static ReplayStepView of(Match step, CardCatalog catalog, Language language) {
+		static ReplayStepView of(Match step, int droppedLog, CardCatalog catalog, Language language) {
 			return new ReplayStepView(TurnView.of(step), step.status(), ResultView.of(step.result()),
 					PlayerView.of(step.player(), catalog, language), OpponentView.of(step.opponent(), language),
-					step.log().size());
+					Math.max(0, step.log().size() - droppedLog));
 		}
 
 	}

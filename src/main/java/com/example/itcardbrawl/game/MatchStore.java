@@ -27,15 +27,25 @@ public class MatchStore {
 	}
 
 	/**
-	 * Atomowo zastępuje bieżącą partię gracza wynikiem {@code change}; równoległe aktualizacje tego samego
-	 * gracza wykonują się po kolei. Wyjątek z {@code change} zostawia poprzednią partię bez zmian i trafia do
-	 * wywołującego.
+	 * Atomowo zastępuje bieżącą partię gracza wynikiem {@code change}. {@code change} liczy się poza blokadą
+	 * mapy (tura komputera nie blokuje innych graczy); zapis udaje się tylko wtedy, gdy partia w międzyczasie
+	 * się nie zmieniła — inaczej {@code change} jest wywoływane ponownie na nowym stanie. {@code change} musi
+	 * więc być bez trwałych skutków ubocznych poza wynikiem. Wyjątek z {@code change} zostawia poprzednią
+	 * partię bez zmian i trafia do wywołującego.
 	 *
 	 * @return nowy stan albo {@link Optional#empty()}, gdy gracz nie ma bieżącej partii
 	 */
 	public Optional<Match> update(String playerKey, UnaryOperator<Match> change) {
-		return Optional.ofNullable(matches.computeIfPresent(playerKey,
-				(key, match) -> Objects.requireNonNull(change.apply(match), "Zmiana partii zwróciła null")));
+		while (true) {
+			Match current = matches.get(playerKey);
+			if (current == null) {
+				return Optional.empty();
+			}
+			Match next = Objects.requireNonNull(change.apply(current), "Zmiana partii zwróciła null");
+			if (matches.replace(playerKey, current, next)) {
+				return Optional.of(next);
+			}
+		}
 	}
 
 }

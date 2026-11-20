@@ -191,9 +191,10 @@ describe('MatchTable', () => {
   });
 
   afterEach(() => {
-    httpTesting.verify();
+    // Restore shared state first, so a failing verify() cannot leak fake timers or the locale.
     vi.useRealTimers();
     localStorage.clear();
+    httpTesting.verify();
   });
 
   async function render(): Promise<ComponentFixture<MatchTable>> {
@@ -650,6 +651,27 @@ describe('MatchTable', () => {
     expect(element.querySelector('.message')).toBeNull();
   });
 
+  it('sends the player to /new-match when a move gets 404 (match gone)', async () => {
+    const fixture = await renderFixture(matchView());
+    const element = fixture.nativeElement as HTMLElement;
+    const navigateByUrl = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    button(element, '.end-turn').click();
+    await fixture.whenStable();
+    httpTesting
+      .expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` })
+      .flush(null, { status: 404, statusText: 'Not Found' });
+    await fixture.whenStable();
+
+    httpTesting
+      .expectOne({ method: 'GET', url: '/api/matches/current' })
+      .flush(null, { status: 404, statusText: 'Not Found' });
+    await fixture.whenStable();
+
+    expect(navigateByUrl).toHaveBeenCalledWith('/new-match');
+    expect(element.querySelector('.message')).toBeNull();
+  });
+
   it('shows "moveRejected" on 400 and keeps the table', async () => {
     const fixture = await renderFixture(matchView());
     const element = fixture.nativeElement as HTMLElement;
@@ -795,13 +817,11 @@ describe('MatchTable', () => {
       expect(logTexts(element).length).toBe(3);
 
       advance(fixture, STEP_MS);
-      httpTesting
-        .expectOne({ method: 'GET', url: '/api/matches/current' })
-        .flush({
-          ...endTurnResponse(),
-          replay: [],
-          log: [{ side: 'PLAYER', text: 'You end your turn' }],
-        });
+      httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' }).flush({
+        ...endTurnResponse(),
+        replay: [],
+        log: [{ side: 'PLAYER', text: 'You end your turn' }],
+      });
       fixture.detectChanges();
 
       expect(text(element.querySelector('.turn'))).toBe('Turn 7 — your turn');

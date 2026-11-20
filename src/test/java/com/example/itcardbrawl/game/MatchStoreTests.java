@@ -9,6 +9,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.Match.Status;
@@ -73,6 +74,27 @@ class MatchStoreTests {
 		Match updated = store.update(KEY, MatchStoreTests::nextTurn).orElseThrow();
 
 		assertThat(updated.turnNumber()).isEqualTo(2);
+		assertThat(store.findCurrent(KEY)).containsSame(updated);
+	}
+
+	@Test
+	void changeIsRetriedOnTheNewStateWhenAnotherWriteWins() {
+		MatchStore store = new MatchStore();
+		store.save(KEY, match(1));
+		Match concurrent = match(10);
+		AtomicInteger calls = new AtomicInteger();
+
+		Match updated = store.update(KEY, m -> {
+			if (calls.incrementAndGet() == 1) {
+				// Inny zapis wygrywa wyścig, gdy pierwsza próba jeszcze liczy.
+				store.save(KEY, concurrent);
+			}
+			return nextTurn(m);
+		}).orElseThrow();
+
+		assertThat(calls).hasValue(2);
+		assertThat(updated.id()).isEqualTo(concurrent.id());
+		assertThat(updated.turnNumber()).isEqualTo(11);
 		assertThat(store.findCurrent(KEY)).containsSame(updated);
 	}
 
