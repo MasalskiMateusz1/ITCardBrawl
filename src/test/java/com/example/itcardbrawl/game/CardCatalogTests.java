@@ -58,9 +58,20 @@ class CardCatalogTests {
 		return new Faction(id, text("Frakcja " + id), text("opis"), playable);
 	}
 
+	// Parzysty koszt = wydarzenie (czas trwania 0), nieparzysty = postać 1/1 bez zdolności.
 	private static Card card(String id, String faction, int cost) {
-		return new Card(id, faction, text("Karta " + id), cost % 2 == 0 ? CardType.EVENT : CardType.CHARACTER, cost,
-				text("tekst"));
+		return cost % 2 == 0 ? event(id, faction, cost, 0) : character(id, faction, cost, 1, 1, null);
+	}
+
+	private static Card character(String id, String faction, int cost, Integer attack, Integer health,
+			Ability ability) {
+		return new Card(id, faction, text("Karta " + id), CardType.CHARACTER, cost, text("tekst"), attack, health,
+				ability, null);
+	}
+
+	private static Card event(String id, String faction, int cost, Integer duration) {
+		return new Card(id, faction, text("Karta " + id), CardType.EVENT, cost, text("tekst"), null, null, null,
+				duration);
 	}
 
 	private CardCatalog build() {
@@ -85,6 +96,26 @@ class CardCatalogTests {
 			assertThat(deck).anyMatch(c -> c.faction().equals(faction.id()));
 			assertThat(deck).extracting(Card::type).contains(CardType.CHARACTER, CardType.EVENT);
 		}
+	}
+
+	@Test
+	void realCatalogHasCardStats() {
+		CardCatalog catalog = CardCatalogLoader.load(JsonMapper.builder().build(),
+				new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION));
+
+		Card backend = catalog.card("dev-backend").orElseThrow();
+		assertThat(backend.attack()).isEqualTo(4);
+		assertThat(backend.health()).isEqualTo(6);
+		assertThat(backend.ability()).isEqualTo(new Ability(AbilityKeyword.GUARD, 0));
+		assertThat(backend.duration()).isNull();
+		assertThat(catalog.card("dev-senior")).get().extracting(Card::ability)
+			.isEqualTo(new Ability(AbilityKeyword.HEAL, 3));
+		assertThat(catalog.card("dev-fullstack")).get().extracting(Card::ability).isNull();
+		Card flaky = catalog.card("tst-flaky-test").orElseThrow();
+		assertThat(flaky.duration()).isEqualTo(3);
+		assertThat(flaky.attack()).isNull();
+		assertThat(flaky.health()).isNull();
+		assertThat(flaky.ability()).isNull();
 	}
 
 	@Test
@@ -250,7 +281,7 @@ class CardCatalogTests {
 	@Test
 	void cardNameMissingInPolishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", new LocalizedText(null, "Card"), CardType.CHARACTER, 1,
-				text("tekst")));
+				text("tekst"), 1, 1, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'name' w języku PL");
@@ -259,7 +290,7 @@ class CardCatalogTests {
 	@Test
 	void cardNameBlankInEnglishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", new LocalizedText("Karta", "  "), CardType.CHARACTER, 1,
-				text("tekst")));
+				text("tekst"), 1, 1, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'name' w języku EN");
@@ -268,7 +299,7 @@ class CardCatalogTests {
 	@Test
 	void cardTextBlankInPolishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1,
-				new LocalizedText(" ", "text")));
+				new LocalizedText(" ", "text"), 1, 1, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'text' w języku PL");
@@ -277,7 +308,7 @@ class CardCatalogTests {
 	@Test
 	void cardTextMissingInEnglishIsRejected() {
 		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1,
-				new LocalizedText("tekst", null)));
+				new LocalizedText("tekst", null), 1, 1, null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1': brak tekstu 'text' w języku EN");
@@ -302,10 +333,114 @@ class CardCatalogTests {
 
 	@Test
 	void cardWithoutTypeIsRejected() {
-		cards.set(0, new Card("alpha-1", "alpha", text("Karta alpha-1"), null, 1, text("tekst")));
+		cards.set(0, new Card("alpha-1", "alpha", text("Karta alpha-1"), null, 1, text("tekst"), null, null,
+				null, null));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
 			.withMessageContaining("karta 'alpha-1' nie ma typu");
+	}
+
+	@Test
+	void characterWithoutAttackIsRejected() {
+		cards.set(0, character("alpha-1", "alpha", 1, null, 1, null));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': brak pola 'attack'");
+	}
+
+	@Test
+	void characterWithoutHealthIsRejected() {
+		cards.set(0, character("alpha-1", "alpha", 1, 1, null, null));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': brak pola 'health'");
+	}
+
+	@Test
+	void characterAttackAboveRangeIsRejected() {
+		cards.set(0, character("alpha-1", "alpha", 1, 11, 1, null));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': pole 'attack' ma wartość 11 spoza zakresu 1–10");
+	}
+
+	@Test
+	void characterHealthBelowRangeIsRejected() {
+		cards.set(0, character("alpha-1", "alpha", 1, 1, 0, null));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-1': pole 'health' ma wartość 0 spoza zakresu 1–10");
+	}
+
+	@Test
+	void characterWithDurationIsRejected() {
+		cards.set(0, new Card("alpha-1", "alpha", text("Karta"), CardType.CHARACTER, 1, text("tekst"), 1, 1, null,
+				2));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("postać 'alpha-1' nie może mieć pola 'duration'");
+	}
+
+	@Test
+	void eventWithoutDurationIsRejected() {
+		cards.set(1, event("alpha-2", "alpha", 2, null));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-2': brak pola 'duration'");
+	}
+
+	@Test
+	void eventDurationAboveRangeIsRejected() {
+		cards.set(1, event("alpha-2", "alpha", 2, 6));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("karta 'alpha-2': pole 'duration' ma wartość 6 spoza zakresu 0–5");
+	}
+
+	@Test
+	void eventWithAttackIsRejected() {
+		cards.set(1, new Card("alpha-2", "alpha", text("Karta"), CardType.EVENT, 2, text("tekst"), 3, null, null, 0));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("wydarzenie 'alpha-2' nie może mieć pola 'attack'");
+	}
+
+	@Test
+	void onPlayStressWithZeroAmountIsRejected() {
+		cards.set(0, character("alpha-1", "alpha", 1, 1, 1, new Ability(AbilityKeyword.ON_PLAY_STRESS, 0)));
+
+		assertThatIllegalStateException().isThrownBy(this::build)
+			.withMessageContaining("postać 'alpha-1': zdolność ON_PLAY_STRESS ma wartość 0 spoza zakresu 1–10");
+	}
+
+	@Test
+	void abilityWithoutAmountIsReadFromJson() {
+		String json = """
+				{ "factions": [], "cards": [
+				  { "id": "x", "faction": "f", "name": { "pl": "Nazwa", "en": "Name" }, "type": "CHARACTER", "cost": 1,
+				    "text": { "pl": "Tekst", "en": "Text" }, "attack": 2, "health": 3, "ability": { "keyword": "GUARD" } }
+				] }
+				""";
+		var resource = new ByteArrayResource(json.getBytes(StandardCharsets.UTF_8), "katalog ze zdolnością");
+
+		// Katalog jest niepoprawny (brak frakcji), ale GUARD bez amount musi przejść walidację karty.
+		assertThatIllegalStateException()
+			.isThrownBy(() -> CardCatalogLoader.load(JsonMapper.builder().build(), resource))
+			.withMessageContaining("karta 'x' wskazuje nieistniejącą frakcję 'f'")
+			.withMessageNotContaining("postać 'x'")
+			.withMessageNotContaining("karta 'x':");
+	}
+
+	@Test
+	void everyAbilityKeywordIsDescribedInEveryLanguage() {
+		for (AbilityKeyword keyword : AbilityKeyword.values()) {
+			LocalizedText description = keyword.describe(2);
+			for (Language language : Language.values()) {
+				assertThat(description.in(language)).as("%s w języku %s", keyword, language).isNotBlank();
+			}
+		}
+		assertThat(AbilityKeyword.ON_PLAY_STRESS.describe(4).pl()).isEqualTo("Po zagraniu: +4 stresu przeciwnika");
+		assertThat(AbilityKeyword.HEAL.describe(3).en()).isEqualTo("On play: −3 own stress");
 	}
 
 	@Test
