@@ -1,5 +1,7 @@
 package com.example.itcardbrawl.game;
 
+import java.util.List;
+
 /**
  * Karta z katalogu; {@code faction} to id frakcji, do której należy.
  * <p>
@@ -7,5 +9,5 @@ package com.example.itcardbrawl.game;
  * (liczba tur działania, 0 = natychmiastowe). Pola nieużywane przez dany typ są {@code null}.
  */
 public record Card(String id, String faction, LocalizedText name, CardType type, int cost, LocalizedText text,
-		Integer attack, Integer health, Ability ability, Integer duration) {
+		Integer attack, Integer health, Ability ability, Integer duration, List<Effect> effects) {
 }

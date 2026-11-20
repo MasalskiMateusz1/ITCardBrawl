@@ -147,6 +147,9 @@ public final class CardCatalog {
 		if (card.duration() != null) {
 			errors.add("postać '%s' nie może mieć pola 'duration'".formatted(card.id()));
 		}
+		if (card.effects() != null) {
+			errors.add("postać '%s' nie może mieć pola 'effects'".formatted(card.id()));
+		}
 		Ability ability = card.ability();
 		if (ability == null) {
 			return;
@@ -173,6 +176,39 @@ public final class CardCatalog {
 		}
 		if (card.ability() != null) {
 			errors.add("wydarzenie '%s' nie może mieć pola 'ability'".formatted(card.id()));
+		}
+		List<Effect> effects = card.effects();
+		if (effects == null || effects.isEmpty()) {
+			errors.add("wydarzenie '%s' musi mieć co najmniej jeden efekt".formatted(card.id()));
+			return;
+		}
+		boolean hasModifier = false;
+		for (int i = 0; i < effects.size(); i++) {
+			Effect effect = effects.get(i);
+			if (effect == null) {
+				errors.add("wydarzenie '%s' ma pusty efekt na pozycji %d".formatted(card.id(), i + 1));
+				continue;
+			}
+			if (effect.kind() == null) {
+				errors.add("wydarzenie '%s' ma efekt bez rodzaju".formatted(card.id()));
+				continue;
+			}
+			EffectKind kind = effect.kind();
+			if (!kind.acceptsScope(effect.scope())) {
+				errors.add("wydarzenie '%s': efekt %s ma niedozwolony zasięg %s".formatted(card.id(), kind,
+						effect.scope()));
+			}
+			if (!kind.acceptsAmount(effect.amount())) {
+				errors.add("wydarzenie '%s': efekt %s ma wartość %d spoza zakresu %d–%d".formatted(card.id(), kind,
+						effect.amount(), kind.minAmount(), kind.maxAmount()));
+			}
+			hasModifier |= kind.modifier();
+		}
+		if (card.duration() != null && card.duration() == 0 && hasModifier) {
+			errors.add("wydarzenie '%s' o czasie trwania 0 nie może mieć modyfikatorów".formatted(card.id()));
+		}
+		if (card.duration() != null && card.duration() > 0 && !hasModifier) {
+			errors.add("wydarzenie '%s' o dodatnim czasie trwania musi mieć modyfikator".formatted(card.id()));
 		}
 	}
 

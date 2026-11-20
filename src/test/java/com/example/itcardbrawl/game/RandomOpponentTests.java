@@ -159,7 +159,7 @@ class RandomOpponentTests {
 
 	private static CardInstance character(int instanceId, int cost) {
 		return new CardInstance(instanceId, new Card("char-" + instanceId, FACTION.id(), text("Postać"),
-				CardType.CHARACTER, cost, text("Opis"), 1, 1, null, null));
+				CardType.CHARACTER, cost, text("Opis"), 1, 1, null, null, null));
 	}
 
 	private static CardInstance[] filler(int firstId) {

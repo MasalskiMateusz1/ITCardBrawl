@@ -46,7 +46,7 @@ ItCardBrawl to przeglądarkowa gra karciana dla ludzi z IT na wieczór po pracy:
 | S-01 | external-login-gate         | gracz loguje się zewnętrznym kontem; niezalogowany trafia na logowanie               | F-01          | FR-001, Access Control, NFR (dane konta)  | done |
 | S-02 | match-setup-table           | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron           | S-01          | FR-002, FR-003, FR-007, US-01             | done |
 | S-03 | first-full-match            | gracz rozgrywa pełną partię postaciami przeciw komputerowi aż do wyniku              | S-02          | FR-004, FR-006, FR-008, US-01             | done |
-| S-04 | event-cards                 | gracz i komputer zagrywają karty wydarzeń o przewidywalnych efektach                 | S-03          | FR-005, US-01                             | proposed |
+| S-04 | event-cards                 | gracz i komputer zagrywają karty wydarzeń o przewidywalnych efektach                 | S-03          | FR-005, US-01                             | in-progress |
 | S-05 | sensible-computer-opponent  | gracz mierzy się z komputerem, który gra sensownie i pokazuje powód ruchu            | S-03          | FR-003, FR-006, US-01, Guardrails         | proposed |
 | S-06 | full-faction-decks-balance  | gracz gra jedną z 2 pełnych, zbalansowanych talii po 30 kart z humorem IT            | S-04, S-05    | FR-002, US-01, NFR (≤ 15 min), Guardrails | proposed |
 
@@ -156,7 +156,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Katalog efektów wydarzeń (jakie rodzaje efektów istnieją w v1 — np. stres, dobieranie, wpływ na postacie)? — Owner: user. Block: no.
 - **Risk:** Wydarzenia rozszerzają zasady z S-03, więc idą po nim; ryzyko to efekty zbyt losowe — PRD wymaga przewidywalności.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-05: Sensowny przeciwnik komputerowy
 
