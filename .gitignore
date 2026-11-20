@@ -53,4 +53,6 @@ deploy/.env
 deploy/.previous_tag
 
 ### Skille 10xDevs (licencjonowane, nie publikowac) ###
-.claude/skills/
+**/.claude/skills/
+**/.agents/skills/
+**/.codex/skills/
