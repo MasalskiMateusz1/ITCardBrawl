@@ -1,11 +1,20 @@
 package com.example.itcardbrawl.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -15,7 +24,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
@@ -23,6 +34,11 @@ import jakarta.servlet.http.Cookie;
 import com.example.itcardbrawl.game.Card;
 import com.example.itcardbrawl.game.CardCatalog;
 import com.example.itcardbrawl.game.Language;
+import com.example.itcardbrawl.game.Match;
+import com.example.itcardbrawl.game.MatchEngine;
+import com.example.itcardbrawl.game.MatchService;
+import com.example.itcardbrawl.game.Move;
+import com.example.itcardbrawl.game.Target;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -34,9 +50,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
+import org.mockito.ArgumentCaptor;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -50,6 +68,12 @@ class MatchControllerTests {
 
 	@Autowired
 	private CardCatalog catalog;
+
+	@Autowired
+	private MatchLogFormatter logFormatter;
+
+	@Autowired
+	private MatchEngine engine;
 
 	// Magazyn partii jest współdzielony w kontekście Springa - każdy test używa własnego gracza.
 	// oauth2Login() bierze nazwę principala z atrybutu "sub".
@@ -448,6 +472,48 @@ class MatchControllerTests {
 		assertThat(log).contains("Zagrywasz: " + card.get("name"));
 	}
 
+	@Test
+	void playRequestMapsCharacterAndPlayerTargetsToEngineMoves() {
+		MatchService service = mock(MatchService.class);
+		OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
+		when(authentication.getAuthorizedClientRegistrationId()).thenReturn("github");
+		when(authentication.getName()).thenReturn("target-test");
+		when(service.move(anyString(), any(UUID.class), anyInt(), any(Move.class))).thenReturn(Optional.empty());
+		MatchController controller = new MatchController(catalog, service, logFormatter, engine);
+		UUID matchId = UUID.randomUUID();
+
+		controller.play(matchId, new MatchController.PlayRequest(2, 12,
+				new MatchController.TargetRequest("CHARACTER", 7, null)), authentication, Locale.forLanguageTag("pl"));
+		ArgumentCaptor<Move> move = ArgumentCaptor.forClass(Move.class);
+		verify(service).move(eq("github:target-test"), eq(matchId), eq(2), move.capture());
+		assertThat(move.getValue()).isEqualTo(new Move.PlayCard(12, new Target.Character(7)));
+
+		reset(service);
+		when(service.move(anyString(), any(UUID.class), anyInt(), any(Move.class))).thenReturn(Optional.empty());
+		controller.play(matchId, new MatchController.PlayRequest(2, 13,
+				new MatchController.TargetRequest("PLAYER", null, Match.Side.OPPONENT)), authentication,
+				Locale.forLanguageTag("pl"));
+		verify(service).move(eq("github:target-test"), eq(matchId), eq(2), move.capture());
+		assertThat(move.getValue()).isEqualTo(new Move.PlayCard(13, new Target.Player(Match.Side.OPPONENT)));
+	}
+
+	@Test
+	void playRequestRejectsInvalidTargetShapesAsBadRequest() throws Exception {
+		MatchService service = mock(MatchService.class);
+		OAuth2AuthenticationToken authentication = mock(OAuth2AuthenticationToken.class);
+		MatchController controller = new MatchController(catalog, service, logFormatter, engine);
+		UUID matchId = UUID.randomUUID();
+
+		assertThatThrownBy(() -> controller.play(matchId,
+				new MatchController.PlayRequest(1, 1, new MatchController.TargetRequest("PLAYER", 7, null)),
+				authentication, Locale.forLanguageTag("pl")))
+				.isInstanceOf(com.example.itcardbrawl.game.IllegalMoveException.class);
+		assertThatThrownBy(() -> controller.play(matchId,
+				new MatchController.PlayRequest(1, 1, new MatchController.TargetRequest("CHARACTER", null, null)),
+				authentication, Locale.forLanguageTag("pl")))
+				.isInstanceOf(com.example.itcardbrawl.game.IllegalMoveException.class);
+	}
+
 	private static Map<String, Object> affordableCharacter(DocumentContext match) {
 		int resource = match.read("$.player.resource.current");
 		List<Map<String, Object>> hand = match.read("$.player.hand");
@@ -536,6 +602,9 @@ class MatchControllerTests {
 		mockMvc.perform(csrfPost("/api/matches/" + matchId + "/end-turn").with(player))
 			.andExpect(status().isBadRequest());
 		mockMvc.perform(movePost(matchId, "play", "{}").with(player))
+			.andExpect(status().isBadRequest());
+		mockMvc.perform(movePost(matchId, "play", "{\"turn\":1,\"instanceId\":1,"
+				+ "\"target\":{\"kind\":\"CHARACTER\",\"side\":\"PLAYER\"}}").with(player))
 			.andExpect(status().isBadRequest());
 		mockMvc.perform(movePost(matchId, "attack", "{\"turn\":\"abc\"}").with(player))
 			.andExpect(status().isBadRequest());

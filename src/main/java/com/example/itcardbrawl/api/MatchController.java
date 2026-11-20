@@ -8,9 +8,12 @@ import com.example.itcardbrawl.game.CardCatalog;
 import com.example.itcardbrawl.game.IllegalMoveException;
 import com.example.itcardbrawl.game.Language;
 import com.example.itcardbrawl.game.MatchOutcome;
+import com.example.itcardbrawl.game.Match;
+import com.example.itcardbrawl.game.MatchEngine;
 import com.example.itcardbrawl.game.MatchService;
 import com.example.itcardbrawl.game.Move;
 import com.example.itcardbrawl.game.StaleMoveException;
+import com.example.itcardbrawl.game.Target;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,10 +39,14 @@ public class MatchController {
 
 	private final MatchLogFormatter logFormatter;
 
-	public MatchController(CardCatalog catalog, MatchService matchService, MatchLogFormatter logFormatter) {
+	private final MatchEngine engine;
+
+	public MatchController(CardCatalog catalog, MatchService matchService, MatchLogFormatter logFormatter,
+			MatchEngine engine) {
 		this.catalog = catalog;
 		this.matchService = matchService;
 		this.logFormatter = logFormatter;
+		this.engine = engine;
 	}
 
 	@GetMapping("/factions")
@@ -75,7 +82,8 @@ public class MatchController {
 	@PostMapping(path = "/matches/{matchId}/play", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<MatchView> play(@PathVariable UUID matchId, @RequestBody PlayRequest request,
 			OAuth2AuthenticationToken authentication, Locale locale) {
-		return move(authentication, matchId, request.turn(), new Move.PlayCard(request.instanceId()), locale);
+		return move(authentication, matchId, request.turn(),
+				new Move.PlayCard(request.instanceId(), target(request.target())), locale);
 	}
 
 	@PostMapping(path = "/matches/{matchId}/attack", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -113,7 +121,8 @@ public class MatchController {
 	}
 
 	private MatchView view(MatchOutcome outcome, Locale locale) {
-		return MatchView.of(outcome.match(), outcome.replay(), catalog, logFormatter, Language.from(locale));
+		return MatchView.of(outcome.match(), outcome.replay(), catalog, logFormatter, Language.from(locale),
+				engine.legalMoves(outcome.match(), Match.Side.PLAYER));
 	}
 
 	// Rejestracja + nazwa principala jednoznacznie identyfikują gracza między dostawcami.
@@ -127,7 +136,23 @@ public class MatchController {
 	public record StartMatchRequest(String factionId) {
 	}
 
-	public record PlayRequest(int turn, int instanceId) {
+	public record PlayRequest(int turn, int instanceId, TargetRequest target) {
+	}
+
+	public record TargetRequest(String kind, Integer instanceId, Match.Side side) {
+	}
+
+	private static Target target(TargetRequest request) {
+		if (request == null) {
+			return null;
+		}
+		if ("CHARACTER".equals(request.kind()) && request.instanceId() != null && request.side() == null) {
+			return new Target.Character(request.instanceId());
+		}
+		if ("PLAYER".equals(request.kind()) && request.instanceId() == null && request.side() != null) {
+			return new Target.Player(request.side());
+		}
+		throw new IllegalMoveException("Nieprawidłowy cel wydarzenia");
 	}
 
 	/** {@code targetId == null} oznacza atak w stres przeciwnika. */
