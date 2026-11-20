@@ -540,16 +540,16 @@ Partie trzymane są tylko w pamięci, więc stare partie znikają przy restarcie
 
 #### Automated
 
-- [x] 2.1 Testy silnika przechodzą: `./mvnw -B test -Dtest=MatchEngineTests`
-- [x] 2.2 Testy fabryki nadal przechodzą: `./mvnw -B test -Dtest=MatchFactoryTests`
-- [x] 2.3 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 2.1 Testy silnika przechodzą: `./mvnw -B test -Dtest=MatchEngineTests` — 0e6830f
+- [x] 2.2 Testy fabryki nadal przechodzą: `./mvnw -B test -Dtest=MatchFactoryTests` — 0e6830f
+- [x] 2.3 Pełny build backendu przechodzi: `./mvnw -B verify` — 0e6830f
 
 ### Phase 3: Komputer i atomowy magazyn partii
 
 #### Automated
 
-- [ ] 3.1 Testy komputera, magazynu i serwisu przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchStoreTests,MatchServiceTests"`
-- [ ] 3.2 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 3.1 Testy komputera, magazynu i serwisu przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchStoreTests,MatchServiceTests"`
+- [x] 3.2 Pełny build backendu przechodzi: `./mvnw -B verify`
 
 ### Phase 4: API ruchów i rozszerzony widok
 
