@@ -61,9 +61,11 @@ public class MatchService {
 	 */
 	public Optional<MatchOutcome> move(String playerKey, UUID matchId, int turn, Move move) {
 		// Kroki powstają w tej samej atomowej aktualizacji, a magazyn przyjmuje tylko stan końcowy —
-		// wynosimy je z lambdy przez lokalny holder.
+		// wynosimy je z lambdy przez lokalny holder. Magazyn może wywołać lambdę ponownie (konflikt zapisu),
+		// więc każda próba zaczyna od pustych kroków.
 		AtomicReference<List<Match>> replay = new AtomicReference<>(List.of());
 		return store.update(playerKey, current -> {
+			replay.set(List.of());
 			if (!current.id().equals(matchId)) {
 				throw new StaleMoveException("Ruch dotyczy innej partii niż bieżąca");
 			}

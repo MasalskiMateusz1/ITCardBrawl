@@ -172,8 +172,9 @@ export class MatchTable {
         this.selectedAttacker.set(null);
         if (!(error instanceof HttpErrorResponse)) {
           this.error.set('moveFailed');
-        } else if (error.status === 409) {
-          // The view was stale (another turn or match) — refresh it silently.
+        } else if (error.status === 409 || error.status === 404) {
+          // 409: the view was stale (another turn or match) — refresh it silently.
+          // 404: the match is gone (e.g. backend restart) — loadMatch sends the player to /new-match.
           this.loadMatch();
         } else if (error.status === 400) {
           this.error.set('moveRejected');
