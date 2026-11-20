@@ -451,16 +451,16 @@ Partie trzymane w pamięci (`MatchStore`) nie przeżywają restartu, więc zmian
 
 #### Automated
 
-- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu
-- [x] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu
+- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 6658abf
+- [x] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu — 6658abf
+- [x] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu — 6658abf
 
 ### Phase 3: Efekty trwające
 
 #### Automated
 
-- [ ] 3.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [ ] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki
+- [x] 3.1 Testy backendu przechodzą: `./mvnw -B verify`
+- [x] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki
 
 ### Phase 4: API — cele, efekty i legalność w widoku
 
