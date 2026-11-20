@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.SplittableRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.UUID;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
@@ -84,6 +85,24 @@ class RandomOpponentTests {
 	}
 
 	@Test
+	void choosesActionBeforeChoosingOneOfItsTargets() {
+		CardInstance targeted = new CardInstance(1, new Card("event", FACTION.id(), text("Wydarzenie"),
+				CardType.EVENT, 1, text("Opis"), null, null, null, 0,
+				List.of(new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 1))));
+		CardInstance playerCharacter = character(2, 1);
+		CardInstance opponentCharacter = character(3, 1);
+		MatchSide opponent = new MatchSide(FACTION, List.of(), List.of(targeted), 0, 1, 1,
+				List.of(new BoardCharacter(opponentCharacter, 0, true)), List.of(), List.of());
+		Match match = opponentTurn(side(List.of(), List.of(playerCharacter), 0), opponent);
+
+		List<Match> steps = new RandomOpponent(ENGINE, new SequenceRandom(1, 0)).playTurnSteps(match);
+
+		assertThat(steps).isNotEmpty();
+		assertThat(steps.getFirst().log()).anyMatch(com.example.itcardbrawl.game.MatchEvent.Attacked.class::isInstance)
+				.noneMatch(com.example.itcardbrawl.game.MatchEvent.EffectApplied.class::isInstance);
+	}
+
+	@Test
 	void leavesMatchUntouchedOutsideOwnTurn() {
 		Match opponentTurn = opponentTurn(side(List.of(), List.of(), 0), side(List.of(character(1, 1)), List.of(), 1));
 		Match playerTurn = new Match(opponentTurn.id(), 1, Side.PLAYER, opponentTurn.player(), opponentTurn.opponent(),
@@ -155,6 +174,27 @@ class RandomOpponentTests {
 
 	private static MatchSide side(List<CardInstance> hand, List<CardInstance> deck, int resource) {
 		return new MatchSide(FACTION, deck, hand, 0, resource, resource, List.of(), List.of(), List.of());
+	}
+
+	private static final class SequenceRandom implements RandomGenerator {
+
+		private final int[] values;
+
+		private final AtomicInteger index = new AtomicInteger();
+
+		SequenceRandom(int... values) {
+			this.values = values;
+		}
+
+		@Override
+		public long nextLong() {
+			return 0;
+		}
+
+		@Override
+		public int nextInt(int bound) {
+			return Math.floorMod(values[Math.min(index.getAndIncrement(), values.length - 1)], bound);
+		}
 	}
 
 	private static CardInstance character(int instanceId, int cost) {

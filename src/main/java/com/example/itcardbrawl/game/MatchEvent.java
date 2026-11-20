@@ -22,6 +22,10 @@ public sealed interface MatchEvent {
 	record CardPlayed(Match.Side side, CardInstance card) implements MatchEvent {
 	}
 
+	record EffectApplied(Match.Side side, CardInstance card, Effect effect, CardInstance targetCharacter,
+			Match.Side targetPlayer) implements MatchEvent {
+	}
+
 	record AbilityTriggered(Match.Side side, CardInstance card, AbilityKeyword keyword, int amount)
 			implements MatchEvent {
 	}

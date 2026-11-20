@@ -47,13 +47,35 @@ public class RandomOpponent {
 		int moves = 0;
 		while (current.status() == Status.IN_PROGRESS && current.activeSide() == Side.OPPONENT) {
 			List<Move> legal = engine.legalMoves(current, Side.OPPONENT);
-			Move move = legal.isEmpty() || moves >= MAX_MOVES_PER_TURN ? new Move.EndTurn()
-					: legal.get(random.nextInt(legal.size()));
+			Move move = legal.isEmpty() || moves >= MAX_MOVES_PER_TURN ? new Move.EndTurn() : chooseMove(legal);
 			current = engine.apply(current, Side.OPPONENT, move);
 			steps.add(current);
 			moves++;
 		}
 		return List.copyOf(steps);
+	}
+
+	private Move chooseMove(List<Move> legal) {
+		List<List<Move>> actions = new ArrayList<>();
+		for (Move move : legal) {
+			List<Move> action = actions.stream().filter(group -> sameAction(group.getFirst(), move))
+				.findFirst().orElse(null);
+			if (action == null) {
+				action = new ArrayList<>();
+				actions.add(action);
+			}
+			action.add(move);
+		}
+		List<Move> selected = actions.get(random.nextInt(actions.size()));
+		return selected.get(random.nextInt(selected.size()));
+	}
+
+	private static boolean sameAction(Move existing, Move candidate) {
+		return switch (candidate) {
+			case Move.PlayCard play -> existing instanceof Move.PlayCard other && other.instanceId() == play.instanceId();
+			case Move.Attack attack -> existing instanceof Move.Attack other && other.attackerId() == attack.attackerId();
+			case Move.EndTurn ignored -> existing instanceof Move.EndTurn;
+		};
 	}
 
 }

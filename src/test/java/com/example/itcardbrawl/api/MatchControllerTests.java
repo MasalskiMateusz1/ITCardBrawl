@@ -420,12 +420,12 @@ class MatchControllerTests {
 	void playAffordableCardMovesItFromHandToTable() throws Exception {
 		RequestPostProcessor player = newPlayer();
 		DocumentContext match = start(player, "developers");
-		// Zasób rośnie co turę - kończymy tury, aż na ręce pojawi się karta do zagrania.
-		while (handCard(match, true) == null) {
+		// Ten test sprawdza ruch bez celu; wydarzenia celowane dostaną osobny test w fazie API.
+		while (affordableCharacter(match) == null) {
 			assertThat((String) match.read("$.status")).isEqualTo("IN_PROGRESS");
 			match = endTurn(player, match);
 		}
-		Map<String, Object> card = handCard(match, true);
+		Map<String, Object> card = affordableCharacter(match);
 		int instanceId = (Integer) card.get("instanceId");
 		int graveyardBefore = match.read("$.player.graveyardCount");
 
@@ -446,6 +446,15 @@ class MatchControllerTests {
 		}
 		List<String> log = after.read("$.log[*].text");
 		assertThat(log).contains("Zagrywasz: " + card.get("name"));
+	}
+
+	private static Map<String, Object> affordableCharacter(DocumentContext match) {
+		int resource = match.read("$.player.resource.current");
+		List<Map<String, Object>> hand = match.read("$.player.hand");
+		return hand.stream()
+			.filter(card -> "CHARACTER".equals(card.get("type")) && (Integer) card.get("cost") <= resource)
+			.findFirst()
+			.orElse(null);
 	}
 
 	@Test
@@ -596,10 +605,10 @@ class MatchControllerTests {
 	void playAndCurrentReturnEmptyReplay() throws Exception {
 		RequestPostProcessor player = newPlayer();
 		DocumentContext match = start(player, "developers");
-		while (handCard(match, true) == null) {
+		while (affordableCharacter(match) == null) {
 			match = endTurn(player, match);
 		}
-		int instanceId = (Integer) handCard(match, true).get("instanceId");
+		int instanceId = (Integer) affordableCharacter(match).get("instanceId");
 
 		DocumentContext played = move(player, match.read("$.matchId"), "play", playBody(match, instanceId));
 

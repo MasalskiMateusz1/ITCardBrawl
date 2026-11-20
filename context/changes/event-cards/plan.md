@@ -440,20 +440,20 @@ Partie trzymane w pamięci (`MatchStore`) nie przeżywają restartu, więc zmian
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 1.2 `CardCatalogTests` pokrywa każdą nową regułę walidacji efektów i prawdziwy katalog (16 wydarzeń z efektami, talie po 30 kart)
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — b9b821e
+- [x] 1.2 `CardCatalogTests` pokrywa każdą nową regułę walidacji efektów i prawdziwy katalog (16 wydarzeń z efektami, talie po 30 kart) — b9b821e
 
 #### Manual
 
-- [x] 1.3 Przegląd tabeli efektów 16 wydarzeń: wartości do przyjęcia jako szkic, opisy generowane pl/en czytelne
+- [x] 1.3 Przegląd tabeli efektów 16 wydarzeń: wartości do przyjęcia jako szkic, opisy generowane pl/en czytelne — b9b821e
 
 ### Phase 2: Efekty natychmiastowe i cele w silniku
 
 #### Automated
 
-- [ ] 2.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [ ] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu
-- [ ] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu
+- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify`
+- [x] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu
+- [x] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu
 
 ### Phase 3: Efekty trwające
 

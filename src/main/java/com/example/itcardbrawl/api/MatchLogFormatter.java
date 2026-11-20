@@ -11,6 +11,7 @@ import com.example.itcardbrawl.game.MatchEvent.CardDrawn;
 import com.example.itcardbrawl.game.MatchEvent.CardPlayed;
 import com.example.itcardbrawl.game.MatchEvent.CharacterDefeated;
 import com.example.itcardbrawl.game.MatchEvent.EventExpired;
+import com.example.itcardbrawl.game.MatchEvent.EffectApplied;
 import com.example.itcardbrawl.game.MatchEvent.MatchEnded;
 import com.example.itcardbrawl.game.MatchEvent.StressChanged;
 import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
@@ -45,6 +46,7 @@ public class MatchLogFormatter {
 					? text(language, "Zagrywasz: " + name(e.card(), language), "You play: " + name(e.card(), language))
 					: text(language, "Przeciwnik zagrywa: " + name(e.card(), language),
 							"Opponent plays: " + name(e.card(), language));
+			case EffectApplied e -> effectApplied(e, language);
 			case AbilityTriggered e -> abilityTriggered(e, language);
 			case Attacked e -> attacked(e, language);
 			case StressChanged e -> mine(e.affected())
@@ -67,6 +69,15 @@ public class MatchLogFormatter {
 					: text(language, "Przeciwnik kończy turę", "Opponent ends their turn");
 			case MatchEnded e -> matchEnded(e.result(), language);
 		};
+	}
+
+	private static String effectApplied(EffectApplied e, Language language) {
+		String description = e.effect().describe().in(language);
+		String target = e.targetCharacter() != null ? " — " + name(e.targetCharacter(), language)
+				: e.targetPlayer() != null ? (mine(e.targetPlayer())
+						? text(language, " — Twój stres", " — your stress")
+						: text(language, " — stres przeciwnika", " — opponent stress")) : "";
+		return name(e.card(), language) + ": " + description + target;
 	}
 
 	private static String abilityTriggered(AbilityTriggered e, Language language) {
