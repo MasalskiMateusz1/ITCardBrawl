@@ -4,7 +4,11 @@ package com.example.itcardbrawl.game;
  * Postać na stole: egzemplarz karty, obrażenia otrzymane w bieżącej turze i gotowość do ataku.
  * Pozostałe HP = {@code health - damage}.
  */
-public record BoardCharacter(CardInstance instance, int damage, boolean canAttack) {
+public record BoardCharacter(CardInstance instance, int damage, boolean enteredThisTurn, boolean attacked) {
+
+	public BoardCharacter(CardInstance instance, int damage, boolean canAttack) {
+		this(instance, damage, !canAttack, false);
+	}
 
 	public int attack() {
 		return instance.card().attack();
@@ -24,11 +28,19 @@ public record BoardCharacter(CardInstance instance, int damage, boolean canAttac
 	}
 
 	public BoardCharacter withDamage(int damage) {
-		return new BoardCharacter(instance, damage, canAttack);
+		return new BoardCharacter(instance, damage, enteredThisTurn, attacked);
 	}
 
-	public BoardCharacter withCanAttack(boolean canAttack) {
-		return new BoardCharacter(instance, damage, canAttack);
+	public boolean canAttack() {
+		return !attacked && (!enteredThisTurn || has(AbilityKeyword.RUSH));
+	}
+
+	public BoardCharacter withAttackReady(boolean ready) {
+		return new BoardCharacter(instance, damage, !ready, false);
+	}
+
+	public BoardCharacter markAttacked() {
+		return new BoardCharacter(instance, damage, enteredThisTurn, true);
 	}
 
 }

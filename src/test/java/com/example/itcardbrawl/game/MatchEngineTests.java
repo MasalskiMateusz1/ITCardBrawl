@@ -314,8 +314,8 @@ class MatchEngineTests {
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.Attack(1, 2));
 
-		assertThat(after.player().board()).containsExactly(new BoardCharacter(attacker, 1, false));
-		assertThat(after.opponent().board()).containsExactly(new BoardCharacter(target, 2, false));
+		assertThat(after.player().board()).containsExactly(new BoardCharacter(attacker, 1, false, true));
+		assertThat(after.opponent().board()).containsExactly(new BoardCharacter(target, 2, true, false));
 		assertThat(after.player().board().getFirst().remainingHealth()).isEqualTo(4);
 	}
 
@@ -411,8 +411,8 @@ class MatchEngineTests {
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.EndTurn());
 
-		assertThat(after.player().board()).containsExactly(new BoardCharacter(mine, 0, false));
-		assertThat(after.opponent().board()).containsExactly(new BoardCharacter(theirs, 0, true));
+		assertThat(after.player().board()).containsExactly(new BoardCharacter(mine, 0, true, false));
+		assertThat(after.opponent().board()).containsExactly(new BoardCharacter(theirs, 0, false, false));
 	}
 
 	@Test
@@ -454,6 +454,135 @@ class MatchEngineTests {
 		assertThat(ownThirdTurn.player().activeEvents()).isEmpty();
 		assertThat(ownThirdTurn.player().graveyard()).containsExactly(lasting);
 		assertThat(ownThirdTurn.log()).contains(new EventExpired(Side.PLAYER, lasting));
+	}
+
+	@Test
+	void lastingAurasAffectLaterCharactersAndStackWithAttackFloor() {
+		CardInstance boost = event(1, 1, 4, new Effect(EffectKind.ATTACK, EffectScope.OWN_BOARD, 2));
+		CardInstance boostAgain = event(2, 1, 4, new Effect(EffectKind.ATTACK, EffectScope.OWN_BOARD, 3));
+		CardInstance reduce = event(3, 1, 4, new Effect(EffectKind.ATTACK, EffectScope.OWN_BOARD, -10));
+		CardInstance laterUnit = character(4, 1, 1, 5, null);
+		CardInstance attacker = character(5, 1, 4, 5, null);
+		Match match = match(side().hand(boost, boostAgain, reduce, laterUnit).resource(8)
+				.board(onBoard(attacker, true)), side());
+
+		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1));
+		after = ENGINE.apply(after, Side.PLAYER, new Move.PlayCard(2));
+		after = ENGINE.apply(after, Side.PLAYER, new Move.PlayCard(3));
+		after = ENGINE.apply(after, Side.PLAYER, new Move.PlayCard(4));
+		BoardCharacter playedUnderAura = after.player().board().stream()
+				.filter(character -> character.instance().instanceId() == 4).findFirst().orElseThrow();
+		assertThat(CharacterStats.of(playedUnderAura, Side.PLAYER, after.player().activeEvents(),
+				after.opponent().activeEvents()).attack()).isZero();
+		after = ENGINE.apply(after, Side.PLAYER, new Move.Attack(5, null));
+
+		assertThat(after.log()).filteredOn(MatchEvent.Attacked.class::isInstance)
+				.contains(new MatchEvent.Attacked(Side.PLAYER, attacker, null, 0, 0));
+	}
+
+	@Test
+	void negativeHealthModifierDefeatsDamagedAndNewCharacters() {
+		CardInstance weakened = event(1, 1, 3,
+				new Effect(EffectKind.HEALTH, EffectScope.ENEMY_BOARD, -2));
+		CardInstance damaged = character(2, 1, 1, 3, null);
+		BoardCharacter alreadyDamaged = new BoardCharacter(damaged, 2, false);
+		Match first = match(side().hand(weakened).resource(2), side().board(alreadyDamaged));
+
+		Match afterFirst = ENGINE.apply(first, Side.PLAYER, new Move.PlayCard(1));
+
+		assertThat(afterFirst.opponent().board()).isEmpty();
+		assertThat(afterFirst.opponent().graveyard()).containsExactly(damaged);
+
+		CardInstance ownWeak = event(3, 1, 3, new Effect(EffectKind.HEALTH, EffectScope.OWN_BOARD, -1));
+		CardInstance fragile = character(4, 1, 1, 1, null);
+		Match second = match(side().hand(ownWeak, fragile).resource(3), side());
+		Match afterSecond = ENGINE.apply(ENGINE.apply(second, Side.PLAYER, new Move.PlayCard(3)), Side.PLAYER,
+				new Move.PlayCard(4));
+
+		assertThat(afterSecond.player().board()).isEmpty();
+		assertThat(afterSecond.player().graveyard()).containsExactly(fragile);
+	}
+
+	@Test
+	void trapDisablesGuardAndRushAndCannotBeTargetedAgain() {
+		CardInstance attacker = character(1, 1, 2, 5, ability(AbilityKeyword.RUSH));
+		CardInstance trappedGuard = character(2, 1, 1, 5, ability(AbilityKeyword.GUARD));
+		CardInstance other = character(3, 1, 1, 5, null);
+		CardInstance trap = event(4, 1, 3, new Effect(EffectKind.TRAP, EffectScope.TARGET, 0));
+		CardInstance trapOwnAttacker = event(5, 1, 3, new Effect(EffectKind.TRAP, EffectScope.TARGET, 0));
+		CardInstance area = event(6, 1, 0, new Effect(EffectKind.DAMAGE, EffectScope.ALL_BOARDS, 1));
+		Match match = match(side().hand(trap, trapOwnAttacker, area).resource(5).board(onBoard(attacker, true)),
+				side().board(onBoard(trappedGuard, false), onBoard(other, false)));
+
+		Match afterTrap = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(4, new Target.Character(2)));
+		assertThat(ENGINE.legalMoves(afterTrap, Side.PLAYER)).contains(new Move.Attack(1, 3),
+				new Move.Attack(1, null));
+		assertThat(ENGINE.legalMoves(afterTrap, Side.PLAYER)).noneMatch(move -> move instanceof Move.Attack attack
+				&& Integer.valueOf(2).equals(attack.targetId()));
+		assertThat(ENGINE.legalMoves(afterTrap, Side.PLAYER)).noneMatch(move -> move instanceof Move.PlayCard play
+				&& play.target() instanceof Target.Character target && target.instanceId() == 2);
+		assertIllegal(afterTrap, Side.PLAYER, new Move.Attack(1, 2));
+		Match withSecondTrap = new Match(afterTrap.id(), afterTrap.turnNumber(), afterTrap.activeSide(),
+				new MatchSide(FACTION, afterTrap.player().deck(), List.of(trapOwnAttacker, area), afterTrap.player().stress(),
+						afterTrap.player().resourceCurrent(), afterTrap.player().resourceMax(),
+						afterTrap.player().board(), afterTrap.player().graveyard(), afterTrap.player().activeEvents()),
+				afterTrap.opponent(), afterTrap.status(), afterTrap.result(), afterTrap.log());
+		Match afterOwnTrap = ENGINE.apply(withSecondTrap, Side.PLAYER, new Move.PlayCard(5, new Target.Character(1)));
+		assertThat(ENGINE.legalMoves(afterOwnTrap, Side.PLAYER)).noneMatch(move -> move instanceof Move.Attack attack
+				&& attack.attackerId() == 1);
+		Match afterArea = ENGINE.apply(afterOwnTrap, Side.PLAYER, new Move.PlayCard(6));
+		assertThat(afterArea.opponent().board()).filteredOn(c -> c.instance().instanceId() == 2)
+				.singleElement().extracting(BoardCharacter::damage).isEqualTo(1);
+	}
+
+	@Test
+	void grantedGuardRestrictsAttackTargets() {
+		CardInstance guardAura = event(1, 1, 3, new Effect(EffectKind.GUARD, EffectScope.ENEMY_BOARD, 0));
+		CardInstance attacker = character(2, 1, 1, 5, null);
+		CardInstance firstEnemy = character(3, 1, 1, 5, null);
+		CardInstance secondEnemy = character(4, 1, 1, 5, null);
+		Match match = match(side().hand(guardAura).resource(2).board(onBoard(attacker, true)),
+				side().board(onBoard(firstEnemy, false), onBoard(secondEnemy, false)));
+
+		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1));
+
+		assertThat(ENGINE.legalMoves(after, Side.PLAYER)).containsExactly(new Move.Attack(2, 3),
+				new Move.Attack(2, 4));
+	}
+
+	@Test
+	void grantedRushWorksForFreshCharacterButNeverAfterItHasAttacked() {
+		CardInstance rush = event(1, 1, 3, new Effect(EffectKind.RUSH, EffectScope.OWN_BOARD, 0));
+		CardInstance alreadyAttacked = character(2, 1, 2, 5, null);
+		CardInstance fresh = character(3, 1, 2, 5, null);
+		Match match = match(side().hand(rush, fresh).resource(4)
+				.board(new BoardCharacter(alreadyAttacked, 0, false, true)), side());
+
+		Match afterRush = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1));
+		assertThat(ENGINE.legalMoves(afterRush, Side.PLAYER)).noneMatch(move -> move instanceof Move.Attack attack
+				&& attack.attackerId() == 2);
+		afterRush = ENGINE.apply(afterRush, Side.PLAYER, new Move.PlayCard(3));
+		assertThat(ENGINE.legalMoves(afterRush, Side.PLAYER)).contains(new Move.Attack(3, null));
+		afterRush = ENGINE.apply(afterRush, Side.PLAYER, new Move.Attack(3, null));
+		assertThat(ENGINE.legalMoves(afterRush, Side.PLAYER)).noneMatch(move -> move instanceof Move.Attack attack
+				&& attack.attackerId() == 3);
+	}
+
+	@Test
+	void expiringHealthBuffRestoresEffectiveHealth() {
+		CardInstance buff = event(1, 1, 1, new Effect(EffectKind.HEALTH, EffectScope.OWN_BOARD, 2));
+		CardInstance unit = character(2, 1, 1, 2, null);
+		Match match = match(side().hand(buff).resource(2).board(new BoardCharacter(unit, 1, false))
+				.deck(filler(90, 2)), side().deck(filler(100, 2)));
+
+		Match played = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1));
+		assertThat(played.player().board()).hasSize(1);
+		Match expired = endTurns(played, 2);
+
+		assertThat(expired.player().activeEvents()).isEmpty();
+		assertThat(expired.player().board()).hasSize(1);
+		assertThat(CharacterStats.of(expired.player().board().getFirst(), Side.PLAYER,
+				expired.player().activeEvents(), expired.opponent().activeEvents()).health()).isEqualTo(2);
 	}
 
 	@Test
