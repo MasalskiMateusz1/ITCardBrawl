@@ -53,6 +53,20 @@ class MatchFactoryTests {
 	}
 
 	@Test
+	void matchStartsInProgressWithEmptyTablesAndTurnStartedLog() {
+		Match match = create("developers", 1, false);
+
+		assertThat(match.status()).isEqualTo(Match.Status.IN_PROGRESS);
+		assertThat(match.result()).isNull();
+		assertThat(match.log()).containsExactly(new MatchEvent.TurnStarted(Match.Side.OPPONENT, 1));
+		for (MatchSide side : List.of(match.player(), match.opponent())) {
+			assertThat(side.board()).isEmpty();
+			assertThat(side.graveyard()).isEmpty();
+			assertThat(side.activeEvents()).isEmpty();
+		}
+	}
+
+	@Test
 	void opponentGetsTheOtherPlayableFaction() {
 		Match asDevelopers = create("developers", 1, true);
 		Match asTesters = create("testers", 1, true);

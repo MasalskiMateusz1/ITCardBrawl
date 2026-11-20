@@ -41,9 +41,11 @@ public class MatchFactory {
 		List<CardInstance> opponentDeck = shuffledDeck(opponentFaction, nextInstanceId);
 		Match.Side activeSide = random.nextBoolean() ? Match.Side.PLAYER : Match.Side.OPPONENT;
 
+		// Stan startowy to już początek tury 1: zaczynający nie dobiera, więc log ma tylko TurnStarted.
 		return new Match(UUID.randomUUID(), 1, activeSide,
 				deal(playerFaction, playerDeck, activeSide == Match.Side.PLAYER),
-				deal(opponentFaction, opponentDeck, activeSide == Match.Side.OPPONENT));
+				deal(opponentFaction, opponentDeck, activeSide == Match.Side.OPPONENT), Match.Status.IN_PROGRESS,
+				null, List.of(new MatchEvent.TurnStarted(activeSide, 1)));
 	}
 
 	private List<CardInstance> shuffledDeck(Faction faction, int[] nextInstanceId) {
@@ -61,7 +63,7 @@ public class MatchFactory {
 		List<CardInstance> hand = deck.subList(0, MatchRules.STARTING_HAND);
 		List<CardInstance> rest = deck.subList(MatchRules.STARTING_HAND, deck.size());
 		int resource = active ? 1 : 0;
-		return new MatchSide(faction, rest, hand, 0, resource, resource);
+		return new MatchSide(faction, rest, hand, 0, resource, resource, List.of(), List.of(), List.of());
 	}
 
 }

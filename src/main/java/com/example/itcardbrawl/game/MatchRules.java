@@ -20,6 +20,12 @@ public final class MatchRules {
 
 	public static final int DRAW_PER_TURN = 1;
 
+	/** Karta dobrana przy pełnej ręce zostaje spalona (trafia na cmentarz). */
+	public static final int HAND_LIMIT = 10;
+
+	/** Maksymalna liczba postaci na stole jednej strony. */
+	public static final int BOARD_LIMIT = 5;
+
 	private MatchRules() {
 	}
 

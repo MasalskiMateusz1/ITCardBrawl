@@ -529,20 +529,20 @@ Partie trzymane są tylko w pamięci, więc stare partie znikają przy restarcie
 
 #### Automated
 
-- [x] 1.1 Testy katalogu przechodzą: `./mvnw -B test -Dtest=CardCatalogTests`
-- [x] 1.2 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 1.1 Testy katalogu przechodzą: `./mvnw -B test -Dtest=CardCatalogTests` — 2a7305d
+- [x] 1.2 Pełny build backendu przechodzi: `./mvnw -B verify` — 2a7305d
 
 #### Manual
 
-- [x] 1.3 Przegląd `factions.json`: wartości zgadzają się z tabelą z planu, a teksty zdolności pl/en czytają się naturalnie
+- [x] 1.3 Przegląd `factions.json`: wartości zgadzają się z tabelą z planu, a teksty zdolności pl/en czytają się naturalnie — 2a7305d
 
 ### Phase 2: Silnik reguł partii
 
 #### Automated
 
-- [ ] 2.1 Testy silnika przechodzą: `./mvnw -B test -Dtest=MatchEngineTests`
-- [ ] 2.2 Testy fabryki nadal przechodzą: `./mvnw -B test -Dtest=MatchFactoryTests`
-- [ ] 2.3 Pełny build backendu przechodzi: `./mvnw -B verify`
+- [x] 2.1 Testy silnika przechodzą: `./mvnw -B test -Dtest=MatchEngineTests`
+- [x] 2.2 Testy fabryki nadal przechodzą: `./mvnw -B test -Dtest=MatchFactoryTests`
+- [x] 2.3 Pełny build backendu przechodzi: `./mvnw -B verify`
 
 ### Phase 3: Komputer i atomowy magazyn partii
 
