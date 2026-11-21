@@ -630,7 +630,7 @@ class MatchControllerTests {
 		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
 				playBody(match, TARGETED_EVENT, "{\"kind\":\"CHARACTER\",\"instanceId\":" + ENEMY_CHARACTER + "}"));
 
-		// The manual tester has less than 5 HP - five damage defeats it.
+		// The Manual Tester has less than 5 HP - five damage defeats it.
 		assertThat((List<Integer>) after.read("$.opponent.board[*].instanceId")).doesNotContain(ENEMY_CHARACTER);
 		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(30);
 	}

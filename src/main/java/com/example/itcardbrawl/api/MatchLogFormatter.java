@@ -24,8 +24,8 @@ import com.example.itcardbrawl.game.PolishNumberForms;
 import org.springframework.stereotype.Component;
 
 /**
- * Composes match log sentences from the player's perspective: their side is "You" (in each language), the
- * computer's side is "Opponent" (in each language). Card names come from the catalog in the request language.
+ * Composes match log sentences from the player's perspective: their side is "Ty" (pl) / "You" (en), the
+ * computer's side is "Przeciwnik" (pl) / "Opponent" (en). Card names come from the catalog in the request language.
  * Cards drawn by the opponent are not revealed.
  */
 @Component
@@ -74,8 +74,7 @@ public class MatchLogFormatter {
 		};
 	}
 
-	// The reason for a computer move: a factual sentence with the "Opponent:" prefix, based only on the card,
-	// target and number.
+	// Computer move reason: a factual sentence prefixed "Przeciwnik:" / "Opponent:", from card, target, number only.
 	// The event's side is not checked: MoveExplained is written only by ComputerOpponent (side OPPONENT).
 	private static String moveExplained(MoveExplained e, Language language) {
 		String card = e.card() != null ? name(e.card(), language) : "";
