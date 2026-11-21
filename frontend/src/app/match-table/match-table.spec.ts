@@ -5,12 +5,15 @@ import { provideRouter, Router } from '@angular/router';
 import { GameService } from '../game/game.service';
 import {
   BoardCharacter,
+  EffectView,
   EndReason,
   HandCard,
   LogEntry,
   MatchView,
+  PlayedEvent,
   ReplayStep,
   Side,
+  Target,
 } from '../game/match';
 import { LANGUAGE_STORAGE_KEY, LanguageService } from '../i18n/language.service';
 import { MatchTable, REPLAY_STEP_MS } from './match-table';
@@ -21,7 +24,22 @@ const MATCH_ID = '00000000-0000-0000-0000-000000000001';
 
 const GUARD = { keyword: 'GUARD', text: 'Ochrona: musi zostać zaatakowana pierwsza' } as const;
 
-const HAND: HandCard[] = [
+const BUFF: EffectView = {
+  kind: 'ATTACK',
+  scope: 'TARGET',
+  amount: 2,
+  text: 'Wybrana postać: +2 ataku',
+};
+
+const GAIN: EffectView = {
+  kind: 'RESOURCE',
+  scope: 'SELF',
+  amount: 2,
+  text: 'Zyskaj 2 pkt zasobu',
+};
+
+/** Hand cards without legality; `hand()` adds it the way the backend would. */
+const CARDS: Omit<HandCard, 'playable' | 'targets'>[] = [
   {
     instanceId: 1,
     cardId: 'dev-1',
@@ -34,6 +52,8 @@ const HAND: HandCard[] = [
     health: 2,
     ability: null,
     duration: null,
+    effects: [],
+    requiresTarget: false,
   },
   {
     instanceId: 2,
@@ -47,6 +67,8 @@ const HAND: HandCard[] = [
     health: 4,
     ability: null,
     duration: null,
+    effects: [],
+    requiresTarget: false,
   },
   {
     instanceId: 3,
@@ -60,6 +82,8 @@ const HAND: HandCard[] = [
     health: null,
     ability: null,
     duration: 2,
+    effects: [BUFF],
+    requiresTarget: true,
   },
   {
     instanceId: 4,
@@ -72,7 +96,9 @@ const HAND: HandCard[] = [
     attack: null,
     health: null,
     ability: null,
-    duration: 1,
+    duration: 0,
+    effects: [GAIN],
+    requiresTarget: false,
   },
   {
     instanceId: 5,
@@ -86,8 +112,24 @@ const HAND: HandCard[] = [
     health: 3,
     ability: GUARD,
     duration: null,
+    effects: [],
+    requiresTarget: false,
   },
 ];
+
+/**
+ * The hand as the backend sends it: a card is playable on the player's turn when it is affordable;
+ * the targeted event gets `eventTargets`.
+ */
+function hand(resource: number, active: Side = 'PLAYER', eventTargets: Target[] = []): HandCard[] {
+  return CARDS.map((card) => ({
+    ...card,
+    playable: active === 'PLAYER' && card.cost <= resource,
+    targets: card.requiresTarget ? eventTargets : [],
+  }));
+}
+
+const HAND = hand(1);
 
 function character(
   instanceId: number,
@@ -103,6 +145,11 @@ function character(
     damage: 0,
     canAttack: true,
     ability: null,
+    baseAttack: overrides.attack ?? 2,
+    baseHealth: overrides.health ?? 3,
+    keywords: [],
+    trapped: false,
+    attackTargets: [],
     ...overrides,
   };
 }
@@ -118,10 +165,11 @@ function matchView(active: Side = 'PLAYER'): MatchView {
       stressLimit: 30,
       resource: { current: 1, max: 1 },
       deckCount: 25,
-      hand: HAND,
+      hand: hand(1, active),
       board: [],
       activeEvents: [],
       graveyardCount: 0,
+      lastEvent: null,
     },
     opponent: {
       faction: { id: 'testers', name: 'Testerzy' },
@@ -133,6 +181,7 @@ function matchView(active: Side = 'PLAYER'): MatchView {
       board: [],
       activeEvents: [],
       graveyardCount: 0,
+      lastEvent: null,
     },
     result: null,
     log: [],
@@ -140,8 +189,18 @@ function matchView(active: Side = 'PLAYER'): MatchView {
   };
 }
 
-/** A view mid-game: the player has an attacker on the board, the opponent two characters. */
-function boardView(opponentGuard = false): MatchView {
+const OPPONENT_STRESS: Target = { kind: 'PLAYER', instanceId: null, side: 'OPPONENT' };
+const PLAYER_STRESS: Target = { kind: 'PLAYER', instanceId: null, side: 'PLAYER' };
+
+function characterTarget(instanceId: number): Target {
+  return { kind: 'CHARACTER', instanceId, side: null };
+}
+
+/**
+ * A view mid-game: the player has an attacker on the board, the opponent two characters. With Guard
+ * the backend allows only the Guard character as an attack target.
+ */
+function boardView(opponentGuard = false, eventTargets: Target[] = []): MatchView {
   const match = matchView();
   return {
     ...match,
@@ -149,17 +208,38 @@ function boardView(opponentGuard = false): MatchView {
     player: {
       ...match.player,
       resource: { current: 3, max: 3 },
-      board: [character(10, 'Tech Lead', { attack: 4, health: 5, damage: 2 })],
+      hand: hand(3, 'PLAYER', eventTargets),
+      board: [
+        character(10, 'Tech Lead', {
+          attack: 4,
+          health: 5,
+          damage: 2,
+          attackTargets: opponentGuard
+            ? [characterTarget(21)]
+            : [OPPONENT_STRESS, characterTarget(20), characterTarget(21)],
+        }),
+      ],
     },
     opponent: {
       ...match.opponent,
       board: [
         character(20, 'QA Junior', { canAttack: false }),
-        character(21, 'QA Lead', { canAttack: false, ability: opponentGuard ? GUARD : null }),
+        character(21, 'QA Lead', {
+          canAttack: false,
+          ability: opponentGuard ? GUARD : null,
+          keywords: opponentGuard ? ['GUARD'] : [],
+        }),
       ],
     },
   };
 }
+
+/** boardView() with the "Hotfix" event (instance 3) targeting Tech Lead, QA Lead or the opponent. */
+function targetView(): MatchView {
+  return boardView(false, [characterTarget(10), characterTarget(21), OPPONENT_STRESS]);
+}
+
+const HOTFIX_PLAYED: PlayedEvent = { instanceId: 3, name: 'Hotfix', effects: [BUFF] };
 
 function finishedView(winner: Side, reason: EndReason): MatchView {
   const match = matchView();
@@ -432,7 +512,7 @@ describe('MatchTable', () => {
     await fixture.whenStable();
 
     const request = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
-    expect(request.request.body).toEqual({ turn: 1, instanceId: 1 });
+    expect(request.request.body).toEqual({ turn: 1, instanceId: 1, target: null });
     const after = matchView();
     request.flush({
       ...after,
@@ -469,20 +549,38 @@ describe('MatchTable', () => {
     expect(button(element, '.end-turn').disabled).toBe(true);
   });
 
-  it('disables "Zagraj" for a character when the board is full', async () => {
+  it('disables "Zagraj" for a card the backend marks as not playable', async () => {
     const match = matchView();
     const element = await renderWithMatch({
       ...match,
       player: {
         ...match.player,
         resource: { current: 5, max: 5 },
-        board: [1, 2, 3, 4, 5].map((n) => character(100 + n, `Postać ${n}`)),
+        hand: hand(5).map((card) => (card.instanceId === 1 ? { ...card, playable: false } : card)),
       },
     });
 
     const buttons = playButtons(element);
-    expect(buttons[0].disabled).toBe(true); // character
-    expect(buttons[2].disabled).toBe(false); // event
+    expect(buttons[0].disabled).toBe(true); // affordable, but e.g. the board is full
+    expect(buttons[2].disabled).toBe(false);
+  });
+
+  it('plays an event without a target at once with target null', async () => {
+    const match = matchView();
+    const fixture = await renderFixture({
+      ...match,
+      player: { ...match.player, resource: { current: 5, max: 5 }, hand: hand(5) },
+    });
+    const element = fixture.nativeElement as HTMLElement;
+
+    playButtons(element)[3].click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('.cancel-target')).toBeNull();
+    const request = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+    expect(request.request.body).toEqual({ turn: 1, instanceId: 4, target: null });
+    request.flush(matchView());
+    await fixture.whenStable();
   });
 
   it('shows card stats, ability and event duration in the hand', async () => {
@@ -493,6 +591,14 @@ describe('MatchTable', () => {
     expect(cards[0].querySelector('.card-duration')).toBeNull();
     expect(text(cards[2].querySelector('.card-duration'))).toBe('Czas trwania (tury): 2');
     expect(cards[2].querySelector('.card-stats')).toBeNull();
+    expect(text(cards[3].querySelector('.card-duration'))).toBe('Natychmiastowe');
+    expect(Array.from(cards[2].querySelectorAll('.effects .effect')).map(text)).toEqual([
+      'Wybrana postać: +2 ataku',
+    ]);
+    expect(Array.from(cards[3].querySelectorAll('.effects .effect')).map(text)).toEqual([
+      'Zyskaj 2 pkt zasobu',
+    ]);
+    expect(cards[0].querySelector('.effects')).toBeNull();
     expect(text(cards[4].querySelector('.ability'))).toBe(
       'Ochrona: musi zostać zaatakowana pierwsza',
     );
@@ -506,12 +612,32 @@ describe('MatchTable', () => {
         ...match.player,
         stress: 33,
         graveyardCount: 2,
-        activeEvents: [{ instanceId: 30, cardId: 'ev', name: 'Sprint', turnsLeft: 2 }],
+        activeEvents: [
+          {
+            instanceId: 30,
+            cardId: 'ev',
+            name: 'Sprint',
+            turnsLeft: 2,
+            effects: [BUFF],
+            targetName: 'Tech Lead',
+          },
+        ],
       },
       opponent: {
         ...match.opponent,
         graveyardCount: 4,
-        activeEvents: [{ instanceId: 31, cardId: 'ev2', name: 'Code Freeze', turnsLeft: 1 }],
+        activeEvents: [
+          {
+            instanceId: 31,
+            cardId: 'ev2',
+            name: 'Code Freeze',
+            turnsLeft: 1,
+            effects: [
+              { kind: 'RUSH', scope: 'OWN_BOARD', amount: 0, text: 'Własne postacie: Szarża' },
+            ],
+            targetName: null,
+          },
+        ],
       },
     });
 
@@ -525,6 +651,10 @@ describe('MatchTable', () => {
     expect(text(player.querySelector('.event-turns'))).toBe('Pozostało tur: 2');
     expect(text(opponent.querySelector('.event-name'))).toBe('Code Freeze');
     expect(text(opponent.querySelector('.event-turns'))).toBe('Pozostało tur: 1');
+    expect(text(player.querySelector('.event .effect'))).toBe('Wybrana postać: +2 ataku');
+    expect(text(player.querySelector('.event-target-name'))).toBe('Cel: Tech Lead');
+    expect(text(opponent.querySelector('.event .effect'))).toBe('Własne postacie: Szarża');
+    expect(opponent.querySelector('.event-target-name')).toBeNull();
     expect(text(player.querySelector('.events-heading'))).toBe('Aktywne wydarzenia');
   });
 
@@ -583,7 +713,7 @@ describe('MatchTable', () => {
     await fixture.whenStable();
   });
 
-  it('allows only Guard targets and no stress attack when the opponent has Guard', async () => {
+  it('enables only the attack targets the backend allows', async () => {
     const fixture = await renderFixture(boardView(true));
     const element = fixture.nativeElement as HTMLElement;
 
@@ -594,6 +724,206 @@ describe('MatchTable', () => {
     const targets = Array.from(element.querySelectorAll<HTMLButtonElement>('.opponent .target'));
     expect(targets[0].disabled).toBe(true);
     expect(targets[1].disabled).toBe(false);
+  });
+
+  it('enters target mode for an event with a target and offers only its targets', async () => {
+    const fixture = await renderFixture(targetView());
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.event-target')).toBeNull();
+    expect(element.querySelector('.target-stress')).toBeNull();
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+
+    httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+    expect(text(element.querySelector('.choose-target'))).toBe('Wybierz cel wydarzenia');
+    expect(element.querySelector('.player .card.selected .card-name')?.textContent).toBe('Hotfix');
+    const own = Array.from(element.querySelectorAll<HTMLButtonElement>('.player .event-target'));
+    const enemy = Array.from(
+      element.querySelectorAll<HTMLButtonElement>('.opponent .event-target'),
+    );
+    expect(own.map((b) => b.disabled)).toEqual([false]);
+    expect(enemy.map((b) => b.disabled)).toEqual([true, false]);
+    expect(text(enemy[0])).toBe('Cel');
+    const opponentStress = button(element, '.opponent .target-stress');
+    const playerStress = button(element, '.player .target-stress');
+    expect(text(opponentStress)).toBe('Cel: stres przeciwnika');
+    expect(text(playerStress)).toBe('Cel: Twój stres');
+    expect(opponentStress.disabled).toBe(false);
+    expect(playerStress.disabled).toBe(true);
+    // Attack targets are not offered in target mode.
+    expect(element.querySelector('.opponent .target')).toBeNull();
+
+    enemy[1].click();
+    await fixture.whenStable();
+
+    const request = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+    expect(request.request.body).toEqual({
+      turn: 5,
+      instanceId: 3,
+      target: { kind: 'CHARACTER', instanceId: 21 },
+    });
+    request.flush(boardView());
+    await fixture.whenStable();
+    expect(element.querySelector('.event-target')).toBeNull();
+    expect(element.querySelector('.cancel-target')).toBeNull();
+  });
+
+  it('plays an event on a player target with kind and side', async () => {
+    const fixture = await renderFixture(targetView());
+    const element = fixture.nativeElement as HTMLElement;
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+    button(element, '.opponent .target-stress').click();
+    await fixture.whenStable();
+
+    const request = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+    expect(request.request.body).toEqual({
+      turn: 5,
+      instanceId: 3,
+      target: { kind: 'PLAYER', side: 'OPPONENT' },
+    });
+    request.flush(boardView());
+    await fixture.whenStable();
+  });
+
+  it('leaves target mode on "Anuluj" and when an attacker is chosen', async () => {
+    const fixture = await renderFixture(targetView());
+    const element = fixture.nativeElement as HTMLElement;
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+    const cancel = button(element, '.cancel-target');
+    expect(text(cancel)).toBe('Anuluj');
+    cancel.click();
+    await fixture.whenStable();
+    expect(element.querySelector('.event-target')).toBeNull();
+    expect(element.querySelector('.choose-target')).toBeNull();
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+    button(element, '.player .character button.attack').click();
+    await fixture.whenStable();
+    expect(element.querySelector('.event-target')).toBeNull();
+    expect(element.querySelectorAll('.opponent .target').length).toBe(2);
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+    expect(element.querySelector('.opponent .target')).toBeNull();
+    expect(element.querySelector('.cancel-attack')).toBeNull();
+    expect(element.querySelectorAll('.event-target').length).toBe(3);
+  });
+
+  it('disables "Zagraj", "Cel" and "Anuluj" while an event request is in flight', async () => {
+    const fixture = await renderFixture(targetView());
+    const element = fixture.nativeElement as HTMLElement;
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+    button(element, '.opponent .target-stress').click();
+    await fixture.whenStable();
+
+    expect(playButtons(element).every((b) => b.disabled)).toBe(true);
+    const targets = Array.from(element.querySelectorAll<HTMLButtonElement>('.event-target'));
+    expect(targets.length).toBe(3);
+    expect(targets.every((b) => b.disabled)).toBe(true);
+    expect(button(element, '.opponent .target-stress').disabled).toBe(true);
+    expect(button(element, '.cancel-target').disabled).toBe(true);
+
+    httpTesting
+      .expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` })
+      .flush(boardView());
+    await fixture.whenStable();
+    expect(playButtons(element)[0].disabled).toBe(false);
+  });
+
+  it('shows effective stats, trapping and keywords given by events', async () => {
+    const match = boardView();
+    const element = await renderWithMatch({
+      ...match,
+      player: {
+        ...match.player,
+        board: [
+          character(10, 'Tech Lead', {
+            attack: 6,
+            baseAttack: 4,
+            health: 5,
+            baseHealth: 5,
+            keywords: ['RUSH'],
+          }),
+          character(11, 'Nowy', { canAttack: false }),
+        ],
+      },
+      opponent: {
+        ...match.opponent,
+        board: [
+          character(20, 'QA Junior', {
+            canAttack: false,
+            trapped: true,
+            ability: GUARD,
+            keywords: ['GUARD'],
+          }),
+        ],
+      },
+    });
+
+    const own = element.querySelectorAll('.player .character');
+    expect(text(own[0].querySelector('.character-stats'))).toBe('Atak 6 / HP 5');
+    expect(own[0].querySelector('.character-stats')?.classList).toContain('modified');
+    expect(Array.from(own[0].querySelectorAll('.character-keyword')).map(text)).toEqual(['Szarża']);
+    expect(own[0].querySelector('.character-trapped')).toBeNull();
+    expect(own[1].querySelector('.character-stats')?.classList).not.toContain('modified');
+    const trapped = element.querySelector('.opponent .character')!;
+    expect(text(trapped.querySelector('.character-trapped'))).toBe('Uwięziona');
+    // The own Guard ability is shown as its text, not as a given keyword.
+    expect(trapped.querySelector('.character-keyword')).toBeNull();
+  });
+
+  it('shows the last played event of each side', async () => {
+    const match = boardView();
+    const element = await renderWithMatch({
+      ...match,
+      player: { ...match.player, lastEvent: HOTFIX_PLAYED },
+    });
+
+    const player = element.querySelector('.player')!;
+    const opponent = element.querySelector('.opponent')!;
+    expect(text(player.querySelector('.last-played-heading'))).toBe('Ostatnio zagrane');
+    expect(text(player.querySelector('.last-played-name'))).toBe('Hotfix');
+    expect(text(player.querySelector('.last-played .effect'))).toBe('Wybrana postać: +2 ataku');
+    expect(text(opponent.querySelector('.last-played'))).toBe('Brak zagranych wydarzeń');
+  });
+
+  it('renders the event texts in English', async () => {
+    TestBed.inject(LanguageService).setLanguage('en');
+    const match = targetView();
+    const fixture = await renderFixture({
+      ...match,
+      opponent: {
+        ...match.opponent,
+        board: [character(20, 'QA Junior', { trapped: true, keywords: ['GUARD'] })],
+      },
+    });
+    const element = fixture.nativeElement as HTMLElement;
+
+    const cards = Array.from(element.querySelectorAll('.player .card'));
+    expect(text(cards[3].querySelector('.card-duration'))).toBe('Instant');
+    expect(text(element.querySelector('.player .last-played-heading'))).toBe('Last played');
+    expect(text(element.querySelector('.player .last-played'))).toBe('No events played');
+    const opponentCharacter = element.querySelector('.opponent .character')!;
+    expect(text(opponentCharacter.querySelector('.character-trapped'))).toBe('Trapped');
+    expect(text(opponentCharacter.querySelector('.character-keyword'))).toBe('Guard');
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+    expect(text(element.querySelector('.choose-target'))).toBe('Choose the event target');
+    expect(text(element.querySelector('.cancel-target'))).toBe('Cancel');
+    expect(text(element.querySelector('.opponent .target-stress'))).toBe(
+      "Target: opponent's stress",
+    );
+    expect(text(element.querySelector('.player .target-stress'))).toBe('Target: your stress');
+    expect(text(element.querySelector('.event-target'))).toBe('Target');
   });
 
   it('offers "Atakuj" only for characters that can attack', async () => {
@@ -799,6 +1129,26 @@ describe('MatchTable', () => {
       expect(attackButton(element).disabled).toBe(false);
     });
 
+    it("shows the opponent's last played event in the playback steps", async () => {
+      const fixture = await renderBoardThenFakeClock();
+      const element = fixture.nativeElement as HTMLElement;
+
+      button(element, '.end-turn').click();
+      flushEndTurn();
+      fixture.detectChanges();
+      expect(text(element.querySelector('.opponent .last-played'))).toBe('Brak zagranych wydarzeń');
+
+      advance(fixture, STEP_MS);
+      expect(text(element.querySelector('.opponent .last-played-name'))).toBe('Code Review');
+      expect(text(element.querySelector('.opponent .last-played .effect'))).toBe(
+        'Zadaj przeciwnikowi 4 stresu',
+      );
+
+      advance(fixture, STEP_MS);
+      expect(element.querySelector('.opponent-moving')).toBeNull();
+      expect(text(element.querySelector('.opponent .last-played-name'))).toBe('Code Review');
+    });
+
     it('refetches the match only after playback when the language changes during it', async () => {
       const fixture = await renderBoardThenFakeClock();
       const element = fixture.nativeElement as HTMLElement;
@@ -914,6 +1264,13 @@ function endTurnResponse(): MatchView {
   const opponent = {
     ...before.opponent,
     board: [...before.opponent.board, character(22, 'QA Senior', { canAttack: false })],
+    lastEvent: {
+      instanceId: 40,
+      name: 'Code Review',
+      effects: [
+        { kind: 'STRESS', scope: 'OPPONENT', amount: 4, text: 'Zadaj przeciwnikowi 4 stresu' },
+      ],
+    } satisfies PlayedEvent,
   };
   const player = { ...before.player, stress: 4 };
   const step = (overrides: Partial<ReplayStep>): ReplayStep => ({

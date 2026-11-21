@@ -466,26 +466,26 @@ Partie trzymane w pamięci (`MatchStore`) nie przeżywają restartu, więc zmian
 
 #### Automated
 
-- [x] 4.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 4.2 `MatchControllerTests` pokrywa zagranie z celem postaci i gracza, błędy celu (400) oraz `targets`/`playable`/`attackTargets` w odpowiedzi
-- [x] 4.3 `MatchViewTests` pokrywa statystyki efektywne, `trapped`, `lastEvent` (także w kroku odtwarzania) i opisy efektów w pl i en
+- [x] 4.1 Testy backendu przechodzą: `./mvnw -B verify` — 7bb04fb
+- [x] 4.2 `MatchControllerTests` pokrywa zagranie z celem postaci i gracza, błędy celu (400) oraz `targets`/`playable`/`attackTargets` w odpowiedzi — 7bb04fb
+- [x] 4.3 `MatchViewTests` pokrywa statystyki efektywne, `trapped`, `lastEvent` (także w kroku odtwarzania) i opisy efektów w pl i en — 7bb04fb
 
 #### Manual
 
-- [ ] 4.4 Lokalnie po zalogowaniu odpowiedź `GET /api/matches/current` zawiera `effects`, `targets` i `lastEvent` w języku z `Accept-Language`
+- [x] 4.4 Lokalnie po zalogowaniu odpowiedź `GET /api/matches/current` zawiera `effects`, `targets` i `lastEvent` w języku z `Accept-Language` — 7bb04fb
 
 ### Phase 5: Stół w SPA — wybór celu, ostatnio zagrane, opisy efektów
 
 #### Automated
 
-- [ ] 5.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 5.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 5.3 Testy backendu dalej zielone: `./mvnw -B verify`
+- [x] 5.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 5.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 5.3 Testy backendu dalej zielone: `./mvnw -B verify`
 
 #### Manual
 
-- [ ] 5.4 Lokalnie rozegranie partii każdą frakcją: zagranie wydarzenia bez celu, z celem-postacią obu stron i z celem-graczem; efekty zgodne z opisem na karcie
-- [ ] 5.5 Pułapka: uwięziona postać nie atakuje i nie jest celem; efekt obszarowy ją trafia; jej Ochrona nie blokuje ataku
-- [ ] 5.6 Aura: postać zagrana w czasie działania wzmocnienia dostaje bonus; po wygaśnięciu wartości wracają
-- [ ] 5.7 „Ostatnio zagrane” i wpisy logu pokazują wydarzenie gracza i komputera (także w odtwarzaniu tury komputera); `duration 0` ma „Natychmiastowe”
-- [ ] 5.8 Po przełączeniu na EN opisy efektów, log i nowe etykiety są po angielsku
+- [x] 5.4 Lokalnie rozegranie partii każdą frakcją: zagranie wydarzenia bez celu, z celem-postacią obu stron i z celem-graczem; efekty zgodne z opisem na karcie
+- [x] 5.5 Pułapka: uwięziona postać nie atakuje i nie jest celem; efekt obszarowy ją trafia; jej Ochrona nie blokuje ataku
+- [x] 5.6 Aura: postać zagrana w czasie działania wzmocnienia dostaje bonus; po wygaśnięciu wartości wracają
+- [x] 5.7 „Ostatnio zagrane” i wpisy logu pokazują wydarzenie gracza i komputera (także w odtwarzaniu tury komputera); `duration 0` ma „Natychmiastowe”
+- [x] 5.8 Po przełączeniu na EN opisy efektów, log i nowe etykiety są po angielsku

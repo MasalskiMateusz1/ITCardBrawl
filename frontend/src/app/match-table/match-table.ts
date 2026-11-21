@@ -12,13 +12,18 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { GameService } from '../game/game.service';
-import { BoardCharacter, HandCard, MatchView, ReplayStep } from '../game/match';
+import {
+  AbilityKeyword,
+  BoardCharacter,
+  HandCard,
+  MatchView,
+  ReplayStep,
+  Side,
+  Target,
+} from '../game/match';
 import { LanguageService } from '../i18n/language.service';
 
 type MatchTableError = 'loadMatch' | 'moveRejected' | 'moveFailed';
-
-/** Mirrors MatchRules.BOARD_LIMIT; only used to disable the button — the backend validates anyway. */
-const BOARD_LIMIT = 5;
 
 /** Delay between computer moves played back on the table; specs provide their own. */
 export const REPLAY_STEP_MS = new InjectionToken<number>('REPLAY_STEP_MS', {
@@ -46,6 +51,11 @@ export class MatchTable {
   protected readonly replaying = signal(false);
   /** The player's character chosen to attack; targets are offered only while one is selected. */
   protected readonly selectedAttacker = signal<number | null>(null);
+  /**
+   * The event card waiting for its target; event targets are offered only while one is selected.
+   * Never set together with `selectedAttacker`.
+   */
+  protected readonly selectedEvent = signal<number | null>(null);
   /** A key, not text — the message is taken from the dictionary at render time. */
   protected readonly error = signal<MatchTableError | null>(null);
   protected readonly errorText = computed(() => {
@@ -67,10 +77,16 @@ export class MatchTable {
     const match = this.match();
     return match !== null && match.status === 'IN_PROGRESS' && match.turn.active === 'PLAYER';
   });
-  /** An opponent character with Guard must be attacked first — no stress, no other targets. */
-  protected readonly opponentGuarded = computed(
-    () => this.match()?.opponent.board.some(isGuard) ?? false,
-  );
+  /** The legal attack targets of the selected attacker, as sent by the backend. */
+  private readonly attackTargets = computed(() => {
+    const attackerId = this.selectedAttacker();
+    return this.match()?.player.board.find((c) => c.instanceId === attackerId)?.attackTargets ?? [];
+  });
+  /** The legal targets of the selected event card, as sent by the backend. */
+  private readonly eventTargets = computed(() => {
+    const eventId = this.selectedEvent();
+    return this.match()?.player.hand.find((c) => c.instanceId === eventId)?.targets ?? [];
+  });
 
   /** The GET /current in flight; a newer one cancels it, so a stale response cannot win. */
   private loadRequest: Subscription | null = null;
@@ -102,30 +118,52 @@ export class MatchTable {
     });
   }
 
+  /** Legality comes from the backend; the SPA does not repeat the rules. */
   protected canPlay(card: HandCard): boolean {
-    const match = this.match();
-    if (match === null || !this.myTurn() || this.busy()) {
-      return false;
-    }
-    if (card.cost > match.player.resource.current) {
-      return false;
-    }
-    return card.type !== 'CHARACTER' || match.player.board.length < BOARD_LIMIT;
+    return !this.busy() && card.playable;
   }
 
-  protected canTarget(character: BoardCharacter): boolean {
-    return !this.opponentGuarded() || isGuard(character);
-  }
-
+  /** A card that needs a target enters target mode; any other card is played at once. */
   protected play(card: HandCard): void {
-    const match = this.match();
-    if (match === null) {
+    if (card.requiresTarget) {
+      this.selectedAttacker.set(null);
+      this.selectedEvent.set(card.instanceId);
       return;
     }
-    this.move(this.gameService.playCard(match.matchId, match.turn.number, card.instanceId));
+    this.sendPlay(card.instanceId, null);
+  }
+
+  /** `instanceId === null` targets the player of `side`. */
+  protected canTargetEvent(instanceId: number | null, side: Side): boolean {
+    return this.eventTargets().some((target) => sameTarget(target, instanceId, side));
+  }
+
+  protected chooseTarget(instanceId: number | null, side: Side): void {
+    const eventId = this.selectedEvent();
+    if (eventId === null) {
+      return;
+    }
+    const target: Target =
+      instanceId === null ? { kind: 'PLAYER', side } : { kind: 'CHARACTER', instanceId };
+    this.sendPlay(eventId, target);
+  }
+
+  protected cancelTarget(): void {
+    this.selectedEvent.set(null);
+  }
+
+  /** `targetId === null` is the opponent's stress. */
+  protected canAttackTarget(targetId: number | null): boolean {
+    return this.attackTargets().some((target) => sameTarget(target, targetId, 'OPPONENT'));
+  }
+
+  /** Keywords given by active events — the character's own ability is already shown as text. */
+  protected grantedKeywords(character: BoardCharacter): AbilityKeyword[] {
+    return character.keywords.filter((keyword) => keyword !== character.ability?.keyword);
   }
 
   protected selectAttacker(character: BoardCharacter): void {
+    this.selectedEvent.set(null);
     this.selectedAttacker.set(character.instanceId);
   }
 
@@ -151,6 +189,14 @@ export class MatchTable {
     this.move(this.gameService.endTurn(match.matchId, match.turn.number));
   }
 
+  private sendPlay(instanceId: number, target: Target | null): void {
+    const match = this.match();
+    if (match === null) {
+      return;
+    }
+    this.move(this.gameService.playCard(match.matchId, match.turn.number, instanceId, target));
+  }
+
   /** A move request is in flight or the computer's moves are being played back. */
   protected busy(): boolean {
     return this.pending() || this.replaying();
@@ -165,11 +211,11 @@ export class MatchTable {
     this.pending.set(true);
     request.pipe(finalize(() => this.pending.set(false))).subscribe({
       next: (match) => {
-        this.selectedAttacker.set(null);
+        this.clearSelection();
         this.show(match);
       },
       error: (error: unknown) => {
-        this.selectedAttacker.set(null);
+        this.clearSelection();
         if (!(error instanceof HttpErrorResponse)) {
           this.error.set('moveFailed');
         } else if (error.status === 409 || error.status === 404) {
@@ -184,6 +230,11 @@ export class MatchTable {
         }
       },
     });
+  }
+
+  private clearSelection(): void {
+    this.selectedAttacker.set(null);
+    this.selectedEvent.set(null);
   }
 
   /**
@@ -268,6 +319,9 @@ function stepView(final: MatchView, step: ReplayStep): MatchView {
   };
 }
 
-function isGuard(character: BoardCharacter): boolean {
-  return character.ability?.keyword === 'GUARD';
+/** `instanceId === null` means the player of `side`; a character target ignores `side`. */
+function sameTarget(target: Target, instanceId: number | null, side: Side): boolean {
+  return instanceId === null
+    ? target.kind === 'PLAYER' && target.side === side
+    : target.kind === 'CHARACTER' && target.instanceId === instanceId;
 }
