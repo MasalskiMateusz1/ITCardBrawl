@@ -253,22 +253,22 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 1.2 Brak nazw zasobu w backendzie: grep z wykluczeniami (Testing Strategy) ograniczony do `src` zwraca pusty wynik
-- [x] 1.3 Kontrola celowego uszkodzenia: przywrócenie nazwy składnika `PlayerView.budget` na `resource` łamie asercje `budget` w `MatchControllerTests` (przywrócone przed commitem)
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 92e0db7
+- [x] 1.2 Brak nazw zasobu w backendzie: grep z wykluczeniami (Testing Strategy) ograniczony do `src` zwraca pusty wynik — 92e0db7
+- [x] 1.3 Kontrola celowego uszkodzenia: przywrócenie nazwy składnika `PlayerView.budget` na `resource` łamie asercje `budget` w `MatchControllerTests` (przywrócone przed commitem) — 92e0db7
 
 #### Manual
 
-- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 2 pola `kind`, żadnych innych pól
+- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 2 pola `kind`, żadnych innych pól — 92e0db7
 
 ### Phase 2: SPA — budżet w typach, stole i i18n
 
 #### Automated
 
-- [ ] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 2.3 Testy backendu dalej zielone: `./mvnw -B verify`
-- [ ] 2.4 Brak nazw zasobu we froncie: grep z wykluczeniami (Testing Strategy) ograniczony do `frontend/src` zwraca pusty wynik
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify`
+- [x] 2.4 Brak nazw zasobu we froncie: grep z wykluczeniami (Testing Strategy) ograniczony do `frontend/src` zwraca pusty wynik
 
 #### Manual
 

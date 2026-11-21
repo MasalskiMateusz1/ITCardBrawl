@@ -32,10 +32,10 @@ const BUFF: EffectView = {
 };
 
 const GAIN: EffectView = {
-  kind: 'RESOURCE',
+  kind: 'BUDGET_GAIN',
   scope: 'SELF',
   amount: 2,
-  text: 'Zyskaj 2 pkt zasobu',
+  text: 'Zwiększ budżet o 2',
 };
 
 /** Hand cards without legality; `hand()` adds it the way the backend would. */
@@ -121,10 +121,10 @@ const CARDS: Omit<HandCard, 'playable' | 'targets'>[] = [
  * The hand as the backend sends it: a card is playable on the player's turn when it is affordable;
  * the targeted event gets `eventTargets`.
  */
-function hand(resource: number, active: Side = 'PLAYER', eventTargets: Target[] = []): HandCard[] {
+function hand(budget: number, active: Side = 'PLAYER', eventTargets: Target[] = []): HandCard[] {
   return CARDS.map((card) => ({
     ...card,
-    playable: active === 'PLAYER' && card.cost <= resource,
+    playable: active === 'PLAYER' && card.cost <= budget,
     targets: card.requiresTarget ? eventTargets : [],
   }));
 }
@@ -163,7 +163,7 @@ function matchView(active: Side = 'PLAYER'): MatchView {
       faction: { id: 'developers', name: 'Developerzy' },
       hp: 30,
       maxHp: 30,
-      resource: { current: 1, max: 1 },
+      budget: { current: 1, max: 1 },
       deckCount: 25,
       hand: hand(1, active),
       board: [],
@@ -175,7 +175,7 @@ function matchView(active: Side = 'PLAYER'): MatchView {
       faction: { id: 'testers', name: 'Testerzy' },
       hp: 30,
       maxHp: 30,
-      resource: { current: 0, max: 0 },
+      budget: { current: 0, max: 0 },
       deckCount: 24,
       handCount: 6,
       board: [],
@@ -207,7 +207,7 @@ function boardView(opponentGuard = false, eventTargets: Target[] = []): MatchVie
     turn: { number: 5, active: 'PLAYER' },
     player: {
       ...match.player,
-      resource: { current: 3, max: 3 },
+      budget: { current: 3, max: 3 },
       hand: hand(3, 'PLAYER', eventTargets),
       board: [
         character(10, 'Tech Lead', {
@@ -323,19 +323,20 @@ describe('MatchTable', () => {
     expect(text(cards[2].querySelector('.card-type'))).toBe('Wydarzenie');
   });
 
-  it('shows the HP of both sides, opponent card counts and resources', async () => {
+  it('shows the HP of both sides, opponent card counts and budgets', async () => {
     const element = await renderWithMatch();
 
     const opponent = element.querySelector('.opponent')!;
     const player = element.querySelector('.player')!;
     expect(text(opponent)).toContain('Testerzy');
     expect(text(opponent.querySelector('.hp dd'))).toBe('30/30');
-    expect(text(opponent.querySelector('.resource dd'))).toBe('0/0');
+    expect(text(opponent.querySelector('.budget dd'))).toBe('0/0');
     expect(text(opponent.querySelector('.hand-count dd'))).toBe('6');
     expect(text(opponent.querySelector('.deck-count dd'))).toBe('24');
     expect(text(player)).toContain('Developerzy');
     expect(text(player.querySelector('.hp dd'))).toBe('30/30');
-    expect(text(player.querySelector('.resource dd'))).toBe('1/1');
+    expect(text(player.querySelector('.budget dd'))).toBe('1/1');
+    expect(text(player.querySelector('.budget dt'))).toBe('Budżet');
     expect(text(player.querySelector('.deck-count dd'))).toBe('25');
   });
 
@@ -409,7 +410,7 @@ describe('MatchTable', () => {
     expect(text(element.querySelector('.opponent h2'))).toBe('Opponent: Testers');
     expect(text(element.querySelector('.player h2'))).toBe('You: Developers');
     expect(text(element.querySelector('.opponent .hp dt'))).toBe('HP');
-    expect(text(element.querySelector('.opponent .resource dt'))).toBe('Resource');
+    expect(text(element.querySelector('.opponent .budget dt'))).toBe('Budget');
     expect(text(element.querySelector('.opponent .hand-count dt'))).toBe('Cards in hand');
     expect(text(element.querySelector('.opponent .deck-count dt'))).toBe('Cards in deck');
     expect(text(element.querySelector('.player .hand-heading'))).toBe('Your hand');
@@ -518,7 +519,7 @@ describe('MatchTable', () => {
       ...after,
       player: {
         ...after.player,
-        resource: { current: 0, max: 1 },
+        budget: { current: 0, max: 1 },
         hand: HAND.slice(1),
         board: [character(1, 'Junior Dev', { attack: 1, health: 2, canAttack: false })],
       },
@@ -530,6 +531,7 @@ describe('MatchTable', () => {
     expect(text(board[0].querySelector('.character-name'))).toBe('Junior Dev');
     expect(text(board[0].querySelector('.character-stats'))).toBe('Atak 1 / HP 2');
     expect(element.querySelectorAll('.player .card').length).toBe(4);
+    expect(text(element.querySelector('.player .budget dd'))).toBe('0/1');
   });
 
   it('disables "Zagraj" for a card that costs too much', async () => {
@@ -555,7 +557,7 @@ describe('MatchTable', () => {
       ...match,
       player: {
         ...match.player,
-        resource: { current: 5, max: 5 },
+        budget: { current: 5, max: 5 },
         hand: hand(5).map((card) => (card.instanceId === 1 ? { ...card, playable: false } : card)),
       },
     });
@@ -569,7 +571,7 @@ describe('MatchTable', () => {
     const match = matchView();
     const fixture = await renderFixture({
       ...match,
-      player: { ...match.player, resource: { current: 5, max: 5 }, hand: hand(5) },
+      player: { ...match.player, budget: { current: 5, max: 5 }, hand: hand(5) },
     });
     const element = fixture.nativeElement as HTMLElement;
 
@@ -596,7 +598,7 @@ describe('MatchTable', () => {
       'Wybrana postać: +2 ataku',
     ]);
     expect(Array.from(cards[3].querySelectorAll('.effects .effect')).map(text)).toEqual([
-      'Zyskaj 2 pkt zasobu',
+      'Zwiększ budżet o 2',
     ]);
     expect(cards[0].querySelector('.effects')).toBeNull();
     expect(text(cards[4].querySelector('.ability'))).toBe(
@@ -1010,7 +1012,7 @@ describe('MatchTable', () => {
     await fixture.whenStable();
     httpTesting
       .expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` })
-      .flush({ message: 'Za mało zasobu' }, { status: 400, statusText: 'Bad Request' });
+      .flush({ message: 'Za mało budżetu' }, { status: 400, statusText: 'Bad Request' });
     await fixture.whenStable();
 
     expect(text(element.querySelector('.message'))).toBe('Ten ruch jest niedozwolony.');

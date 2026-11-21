@@ -33,7 +33,7 @@ export const pl: Messages = {
     opponentHeading: (factionName) => `Przeciwnik: ${factionName}`,
     playerHeading: (factionName) => `Ty: ${factionName}`,
     hp: 'HP',
-    resource: 'Zasób',
+    budget: 'Budżet',
     handCount: 'Kart na ręce',
     deckCount: 'Kart w talii',
     turn: (n, mine) => `Tura ${n} — ${mine ? 'Twoja tura' : 'tura przeciwnika'}`,
