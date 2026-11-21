@@ -1,4 +1,4 @@
-import { CardType, EndReason } from '../game/match';
+import { AbilityKeyword, CardType, EndReason } from '../game/match';
 
 /** Every user-visible UI text, grouped per screen. Each language must provide all of them. */
 export interface Messages {
@@ -56,6 +56,21 @@ export interface Messages {
     log: string;
     attackHealth: (attack: number, health: number) => string;
     duration: (turns: number) => string;
+    /** Shown instead of the duration for an event with `duration 0`. */
+    instant: string;
+    chooseTarget: string;
+    cancelTarget: string;
+    /** Event target button at the player's own stress. */
+    targetPlayer: string;
+    /** Event target button at the opponent's stress. */
+    targetOpponent: string;
+    /** The target character of an active event. */
+    eventTarget: (name: string) => string;
+    trapped: string;
+    /** Names of keywords a character has; only the ones given by events are shown. */
+    keyword: Record<AbilityKeyword, string>;
+    lastPlayed: string;
+    nothingPlayed: string;
     turnsLeft: (turns: number) => string;
     moveRejected: string;
     moveFailed: string;

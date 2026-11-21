@@ -40,10 +40,20 @@
       <button
         type="button"
         class="attack-stress"
-        [disabled]="busy() || opponentGuarded()"
+        [disabled]="busy() || !canAttackTarget(null)"
         (click)="attack(null)"
       >
         {{ texts().matchTable.attackStress }}
+      </button>
+    }
+    @if (!finished() && selectedEvent() !== null) {
+      <button
+        type="button"
+        class="target-stress"
+        [disabled]="busy() || !canTargetEvent(null, 'OPPONENT')"
+        (click)="chooseTarget(null, 'OPPONENT')"
+      >
+        {{ texts().matchTable.targetOpponent }}
       </button>
     }
 
@@ -52,19 +62,40 @@
       @for (character of m.opponent.board; track character.instanceId) {
         <li class="character">
           <strong class="character-name">{{ character.name }}</strong>
-          <span class="character-stats">
+          <span
+            class="character-stats"
+            [class.modified]="
+              character.attack !== character.baseAttack || character.health !== character.baseHealth
+            "
+          >
             {{
               texts().matchTable.attackHealth(character.attack, character.health - character.damage)
             }}
           </span>
+          @if (character.trapped) {
+            <span class="character-trapped">{{ texts().matchTable.trapped }}</span>
+          }
+          @for (keyword of grantedKeywords(character); track keyword) {
+            <span class="character-keyword">{{ texts().matchTable.keyword[keyword] }}</span>
+          }
           @if (character.ability; as ability) {
             <p class="ability">{{ ability.text }}</p>
+          }
+          @if (!finished() && selectedEvent() !== null) {
+            <button
+              type="button"
+              class="event-target"
+              [disabled]="busy() || !canTargetEvent(character.instanceId, 'OPPONENT')"
+              (click)="chooseTarget(character.instanceId, 'OPPONENT')"
+            >
+              {{ texts().matchTable.target }}
+            </button>
           }
           @if (!finished() && selectedAttacker() !== null) {
             <button
               type="button"
               class="target"
-              [disabled]="busy() || !canTarget(character)"
+              [disabled]="busy() || !canAttackTarget(character.instanceId)"
               (click)="attack(character.instanceId)"
             >
               {{ texts().matchTable.target }}
@@ -80,9 +111,31 @@
         <li class="event">
           <strong class="event-name">{{ event.name }}</strong>
           <span class="event-turns">{{ texts().matchTable.turnsLeft(event.turnsLeft) }}</span>
+          @if (event.targetName; as targetName) {
+            <span class="event-target-name">{{ texts().matchTable.eventTarget(targetName) }}</span>
+          }
+          <ul class="effects">
+            @for (effect of event.effects; track $index) {
+              <li class="effect">{{ effect.text }}</li>
+            }
+          </ul>
         </li>
       }
     </ul>
+
+    <h3 class="last-played-heading">{{ texts().matchTable.lastPlayed }}</h3>
+    @if (m.opponent.lastEvent; as last) {
+      <div class="last-played">
+        <strong class="last-played-name">{{ last.name }}</strong>
+        <ul class="effects">
+          @for (effect of last.effects; track $index) {
+            <li class="effect">{{ effect.text }}</li>
+          }
+        </ul>
+      </div>
+    } @else {
+      <p class="last-played nothing-played">{{ texts().matchTable.nothingPlayed }}</p>
+    }
   </section>
 
   <div class="turn-bar">
@@ -91,6 +144,12 @@
       @if (selectedAttacker() !== null) {
         <button type="button" class="cancel-attack" [disabled]="busy()" (click)="cancelAttack()">
           {{ texts().matchTable.cancelAttack }}
+        </button>
+      }
+      @if (selectedEvent() !== null) {
+        <p class="choose-target" role="status">{{ texts().matchTable.chooseTarget }}</p>
+        <button type="button" class="cancel-target" [disabled]="busy()" (click)="cancelTarget()">
+          {{ texts().matchTable.cancelTarget }}
         </button>
       }
       @if (replaying()) {
@@ -128,18 +187,50 @@
       </div>
     </dl>
 
+    @if (!finished() && selectedEvent() !== null) {
+      <button
+        type="button"
+        class="target-stress"
+        [disabled]="busy() || !canTargetEvent(null, 'PLAYER')"
+        (click)="chooseTarget(null, 'PLAYER')"
+      >
+        {{ texts().matchTable.targetPlayer }}
+      </button>
+    }
+
     <h3 class="board-heading">{{ texts().matchTable.board }}</h3>
     <ul class="board">
       @for (character of m.player.board; track character.instanceId) {
         <li class="character" [class.selected]="selectedAttacker() === character.instanceId">
           <strong class="character-name">{{ character.name }}</strong>
-          <span class="character-stats">
+          <span
+            class="character-stats"
+            [class.modified]="
+              character.attack !== character.baseAttack || character.health !== character.baseHealth
+            "
+          >
             {{
               texts().matchTable.attackHealth(character.attack, character.health - character.damage)
             }}
           </span>
+          @if (character.trapped) {
+            <span class="character-trapped">{{ texts().matchTable.trapped }}</span>
+          }
+          @for (keyword of grantedKeywords(character); track keyword) {
+            <span class="character-keyword">{{ texts().matchTable.keyword[keyword] }}</span>
+          }
           @if (character.ability; as ability) {
             <p class="ability">{{ ability.text }}</p>
+          }
+          @if (!finished() && selectedEvent() !== null) {
+            <button
+              type="button"
+              class="event-target"
+              [disabled]="busy() || !canTargetEvent(character.instanceId, 'PLAYER')"
+              (click)="chooseTarget(character.instanceId, 'PLAYER')"
+            >
+              {{ texts().matchTable.target }}
+            </button>
           }
           @if (!finished() && character.canAttack) {
             <button
@@ -161,14 +252,36 @@
         <li class="event">
           <strong class="event-name">{{ event.name }}</strong>
           <span class="event-turns">{{ texts().matchTable.turnsLeft(event.turnsLeft) }}</span>
+          @if (event.targetName; as targetName) {
+            <span class="event-target-name">{{ texts().matchTable.eventTarget(targetName) }}</span>
+          }
+          <ul class="effects">
+            @for (effect of event.effects; track $index) {
+              <li class="effect">{{ effect.text }}</li>
+            }
+          </ul>
         </li>
       }
     </ul>
 
+    <h3 class="last-played-heading">{{ texts().matchTable.lastPlayed }}</h3>
+    @if (m.player.lastEvent; as last) {
+      <div class="last-played">
+        <strong class="last-played-name">{{ last.name }}</strong>
+        <ul class="effects">
+          @for (effect of last.effects; track $index) {
+            <li class="effect">{{ effect.text }}</li>
+          }
+        </ul>
+      </div>
+    } @else {
+      <p class="last-played nothing-played">{{ texts().matchTable.nothingPlayed }}</p>
+    }
+
     <h3 class="hand-heading">{{ texts().matchTable.yourHand }}</h3>
     <ul class="hand">
       @for (card of m.player.hand; track card.instanceId) {
-        <li class="card">
+        <li class="card" [class.selected]="selectedEvent() === card.instanceId">
           <strong class="card-name">{{ card.name }}</strong>
           <span class="card-type">{{ texts().cardType[card.type] }}</span>
           <span class="card-cost">{{ texts().matchTable.cost(card.cost) }}</span>
@@ -180,10 +293,19 @@
               texts().matchTable.attackHealth(card.attack, card.health)
             }}</span>
           }
-          @if (card.duration !== null) {
+          @if (card.duration === 0) {
+            <span class="card-duration">{{ texts().matchTable.instant }}</span>
+          } @else if (card.duration !== null) {
             <span class="card-duration">{{ texts().matchTable.duration(card.duration) }}</span>
           }
           <p class="card-text">{{ card.text }}</p>
+          @if (card.effects.length > 0) {
+            <ul class="effects">
+              @for (effect of card.effects; track $index) {
+                <li class="effect">{{ effect.text }}</li>
+              }
+            </ul>
+          }
           @if (card.ability; as ability) {
             <p class="ability">{{ ability.text }}</p>
           }

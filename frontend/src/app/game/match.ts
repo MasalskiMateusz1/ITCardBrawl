@@ -27,12 +27,62 @@ export type AbilityView = {
   text: string;
 };
 
+export type EffectKind =
+  | 'STRESS'
+  | 'DAMAGE'
+  | 'HEAL'
+  | 'DRAW'
+  | 'RESOURCE'
+  | 'RESOURCE_MAX'
+  | 'ATTACK'
+  | 'HEALTH'
+  | 'GUARD'
+  | 'RUSH'
+  | 'TRAP';
+
+export type EffectScope =
+  | 'TARGET'
+  | 'OPPONENT'
+  | 'SELF'
+  | 'OWN_BOARD'
+  | 'ENEMY_BOARD'
+  | 'OWN_ALL'
+  | 'ENEMY_ALL'
+  | 'ALL_BOARDS';
+
+/** An event effect; `text` is already localized by the backend. */
+export type EffectView = {
+  kind: EffectKind;
+  scope: EffectScope;
+  amount: number;
+  text: string;
+};
+
+/**
+ * A target of an event or an attack (MatchView.TargetView / MatchController.TargetRequest):
+ * a character by `instanceId` or a player by `side`. The backend sends the unused field as `null`;
+ * the SPA omits it in requests.
+ */
+export type Target =
+  | { kind: 'CHARACTER'; instanceId: number; side?: null }
+  | { kind: 'PLAYER'; side: Side; instanceId?: null };
+
+/** The last event a side played; `effects` are already localized. */
+export type PlayedEvent = {
+  instanceId: number;
+  name: string;
+  effects: EffectView[];
+};
+
 export type ResourceView = {
   current: number;
   max: number;
 };
 
-/** `attack`, `health` and `ability` are set only for characters, `duration` only for events. */
+/**
+ * `attack`, `health` and `ability` are set only for characters, `duration` and `effects` only for
+ * events (`duration 0` = instant). `playable` and `targets` come from the backend's legal moves.
+ */
 export type HandCard = {
   instanceId: number;
   cardId: string;
@@ -45,9 +95,16 @@ export type HandCard = {
   health: number | null;
   ability: AbilityView | null;
   duration: number | null;
+  effects: EffectView[];
+  requiresTarget: boolean;
+  playable: boolean;
+  targets: Target[];
 };
 
-/** A character on the board; remaining HP is `health - damage`. */
+/**
+ * A character on the board. `attack` and `health` are effective (active events applied), remaining HP
+ * is `health - damage`. `keywords` are effective; `attackTargets` is empty for opponent characters.
+ */
 export type BoardCharacter = {
   instanceId: number;
   cardId: string;
@@ -57,6 +114,11 @@ export type BoardCharacter = {
   damage: number;
   canAttack: boolean;
   ability: AbilityView | null;
+  baseAttack: number;
+  baseHealth: number;
+  keywords: AbilityKeyword[];
+  trapped: boolean;
+  attackTargets: Target[];
 };
 
 export type ActiveEvent = {
@@ -64,6 +126,9 @@ export type ActiveEvent = {
   cardId: string;
   name: string;
   turnsLeft: number;
+  effects: EffectView[];
+  /** The target character's name, or `null` when the event has no character target. */
+  targetName: string | null;
 };
 
 export type PlayerView = {
@@ -76,6 +141,7 @@ export type PlayerView = {
   board: BoardCharacter[];
   activeEvents: ActiveEvent[];
   graveyardCount: number;
+  lastEvent: PlayedEvent | null;
 };
 
 export type OpponentView = {
@@ -88,6 +154,7 @@ export type OpponentView = {
   board: BoardCharacter[];
   activeEvents: ActiveEvent[];
   graveyardCount: number;
+  lastEvent: PlayedEvent | null;
 };
 
 export type MatchResult = {

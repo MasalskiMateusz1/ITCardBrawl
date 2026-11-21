@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { FactionSummary, MatchView } from './match';
+import { FactionSummary, MatchView, Target } from './match';
 
 /** Game API calls. A 401 on any of them is handled by authInterceptor. */
 @Injectable({ providedIn: 'root' })
@@ -34,9 +34,21 @@ export class GameService {
     return this.http.get<MatchView>('/api/matches/current');
   }
 
-  /** `turn` lets the backend reject a move made against a stale view (409). */
-  playCard(matchId: string, turn: number, instanceId: number): Observable<MatchView> {
-    return this.http.post<MatchView>(`/api/matches/${matchId}/play`, { turn, instanceId });
+  /**
+   * `turn` lets the backend reject a move made against a stale view (409); `target` is `null` for
+   * a card that takes no target.
+   */
+  playCard(
+    matchId: string,
+    turn: number,
+    instanceId: number,
+    target: Target | null,
+  ): Observable<MatchView> {
+    return this.http.post<MatchView>(`/api/matches/${matchId}/play`, {
+      turn,
+      instanceId,
+      target,
+    });
   }
 
   /** `targetId === null` attacks the opponent's stress. */
