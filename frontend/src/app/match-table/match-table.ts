@@ -77,6 +77,20 @@ export class MatchTable {
     const match = this.match();
     return match !== null && match.status === 'IN_PROGRESS' && match.turn.active === 'PLAYER';
   });
+  /**
+   * The computer's reason for the move shown in the current playback step: the last reason entry
+   * of the visible log, which is already cut to the step's `logSize`. Null outside playback.
+   */
+  protected readonly moveReason = computed(() => {
+    if (!this.replaying()) {
+      return null;
+    }
+    return (
+      this.match()
+        ?.log.filter((entry) => entry.reason)
+        .at(-1)?.text ?? null
+    );
+  });
   /** The legal attack targets of the selected attacker, as sent by the backend. */
   private readonly attackTargets = computed(() => {
     const attackerId = this.selectedAttacker();

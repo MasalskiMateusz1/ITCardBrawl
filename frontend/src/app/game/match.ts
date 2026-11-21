@@ -162,10 +162,14 @@ export type MatchResult = {
   reason: EndReason;
 };
 
-/** A log line, already localized by the backend. */
+/**
+ * A log line, already localized by the backend. `reason` marks the computer's explanation of its
+ * next move; it precedes that move's entries.
+ */
 export type LogEntry = {
   side: Side;
   text: string;
+  reason: boolean;
 };
 
 export type TurnView = { number: number; active: Side };

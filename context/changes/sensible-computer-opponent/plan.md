@@ -305,22 +305,22 @@ Brak danych do migracji: partie żyją w pamięci (`MatchStore`). Po wdrożeniu 
 
 #### Automated
 
-- [x] 2.1 Testy powodów i formatera przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,MatchLogFormatterTests,MatchViewTests,MatchControllerTests'`
-- [x] 2.2 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify`
+- [x] 2.1 Testy powodów i formatera przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,MatchLogFormatterTests,MatchViewTests,MatchControllerTests'` — 2e62acd
+- [x] 2.2 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify` — 2e62acd
 
 #### Manual
 
-- [x] 2.3 W lokalnej partii log pokazuje przed każdym ruchem komputera zrozumiały powód po polsku i po angielsku (przełącznik języka)
+- [x] 2.3 W lokalnej partii log pokazuje przed każdym ruchem komputera zrozumiały powód po polsku i po angielsku (przełącznik języka) — 2e62acd
 
 ### Phase 3: Podpis powodu w SPA
 
 #### Automated
 
-- [ ] 3.1 Testy SPA przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 3.2 Build produkcyjny SPA przechodzi: `cd frontend && npm run build`
+- [x] 3.1 Testy SPA przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 3.2 Build produkcyjny SPA przechodzi: `cd frontend && npm run build`
 
 #### Manual
 
-- [ ] 3.3 Podczas tury komputera nad stołem widać przy każdym kroku jego powód, w tempie pozwalającym go przeczytać lub doczytać w logu
-- [ ] 3.4 Wpisy z powodem są w logu wizualnie odróżnione od skutków ruchów
-- [ ] 3.5 Po zagraniu kilku partii komputer sprawia wrażenie grającego sensownie, a partia mieści się w ≤ 15 minutach
+- [x] 3.3 Podczas tury komputera nad stołem widać przy każdym kroku jego powód, w tempie pozwalającym go przeczytać lub doczytać w logu
+- [x] 3.4 Wpisy z powodem są w logu wizualnie odróżnione od skutków ruchów
+- [x] 3.5 Po zagraniu kilku partii komputer sprawia wrażenie grającego sensownie, a partia mieści się w ≤ 15 minutach
