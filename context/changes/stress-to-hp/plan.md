@@ -305,9 +305,9 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [x] 3.1 Brak „stres” w PRD: `grep -ni "stres" context/foundation/prd.md` zwraca pusty wynik
-- [x] 3.2 Brak „stres” w kodzie: `grep -rni "stres" src frontend/src` zwraca pusty wynik
+- [x] 3.1 Brak „stres” w PRD: `grep -ni "stres" context/foundation/prd.md` zwraca pusty wynik — 3d87ff1
+- [x] 3.2 Brak „stres” w kodzie: `grep -rni "stres" src frontend/src` zwraca pusty wynik — 3d87ff1
 
 #### Manual
 
-- [x] 3.3 Przegląd PRD: reguła wygranej/przegranej odpowiada zachowaniu silnika (start 30, sufit 30, HP ≤ 0, wartość ujemna widoczna)
+- [x] 3.3 Przegląd PRD: reguła wygranej/przegranej odpowiada zachowaniu silnika (start 30, sufit 30, HP ≤ 0, wartość ujemna widoczna) — 3d87ff1
