@@ -1,7 +1,7 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Tekst w każdym obsługiwanym języku; w katalogu JSON zapisany jako {@code { "pl": "…", "en": "…" }}.
+ * Text in every supported language; stored in the JSON catalog as {@code { "pl": "…", "en": "…" }}.
  */
 public record LocalizedText(String pl, String en) {
 

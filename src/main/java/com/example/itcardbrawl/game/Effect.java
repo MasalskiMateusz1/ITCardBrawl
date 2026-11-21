@@ -3,10 +3,10 @@ package com.example.itcardbrawl.game;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Efekt wydarzenia określony rodzajem, zasięgiem i opcjonalną wartością. */
+/** An event effect defined by its kind, scope and an optional value. */
 public record Effect(EffectKind kind, EffectScope scope, int amount) {
 
-	// Pominięte amount oznacza zero, jak dla zdolności bez wartości liczbowej.
+	// An omitted amount means zero, as for abilities without a numeric value.
 	@JsonCreator
 	static Effect fromJson(@JsonProperty("kind") EffectKind kind, @JsonProperty("scope") EffectScope scope,
 			@JsonProperty("amount") Integer amount) {

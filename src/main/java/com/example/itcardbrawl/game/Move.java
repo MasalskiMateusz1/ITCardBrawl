@@ -1,7 +1,7 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Ruch strony w partii. Gracz i komputer wykonują ruchy przez {@link MatchEngine#apply}.
+ * A side's move in a match. Both the player and the computer make moves through {@link MatchEngine#apply}.
  */
 public sealed interface Move {
 
@@ -13,7 +13,7 @@ public sealed interface Move {
 
 	}
 
-	/** Atak postaci; {@code targetId == null} oznacza atak w gracza (HP przeciwnika). */
+	/** A character attack; {@code targetId == null} means an attack on the player (the opponent's HP). */
 	record Attack(int attackerId, Integer targetId) implements Move {
 	}
 

@@ -1,6 +1,6 @@
 package com.example.itcardbrawl.game;
 
-/** Cel wydarzenia: postać na stole albo strona partii. */
+/** An event target: a character on the board or a side of the match. */
 public sealed interface Target {
 
 	record Character(int instanceId) implements Target {

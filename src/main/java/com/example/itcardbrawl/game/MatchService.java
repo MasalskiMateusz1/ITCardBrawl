@@ -12,8 +12,8 @@ import com.example.itcardbrawl.game.Match.Status;
 import org.springframework.stereotype.Component;
 
 /**
- * Orkiestracja partii gracza: start, ruchy gracza i tura komputera. Każdy ruch wraz z ewentualną turą
- * komputera wykonuje się w jednej atomowej aktualizacji {@link MatchStore#update}.
+ * Orchestration of a player's match: start, player moves and the computer turn. Every move, together with any
+ * resulting computer turn, runs in a single atomic update {@link MatchStore#update}.
  */
 @Component
 public class MatchService {
@@ -34,10 +34,10 @@ public class MatchService {
 	}
 
 	/**
-	 * Tworzy nową partię gracza, zastępując poprzednią. Gdy zaczyna komputer, od razu rozgrywa jego turę;
-	 * {@code replay} to wtedy stan startowy i stan po każdym ruchu komputera, w przeciwnym razie jest pusty.
+	 * Creates a new player match, replacing the previous one. When the computer starts, its turn is played right away;
+	 * {@code replay} is then the starting state and the state after each computer move, otherwise it is empty.
 	 *
-	 * @throws IllegalArgumentException gdy frakcja nie istnieje albo nie jest grywalna
+	 * @throws IllegalArgumentException when the faction does not exist or is not playable
 	 */
 	public MatchOutcome start(String playerKey, String factionId) {
 		Match match = factory.create(factionId);
@@ -52,17 +52,18 @@ public class MatchService {
 	}
 
 	/**
-	 * Wykonuje ruch gracza; po zakończeniu tury w trwającej partii rozgrywa też turę komputera. {@code replay}
-	 * to wtedy stan po końcu tury gracza i stan po każdym ruchu komputera; dla pozostałych ruchów jest pusty.
+	 * Applies a player move; after an end of turn in a match in progress it also plays the computer turn.
+	 * {@code replay} is then the state after the player's end of turn and the state after each computer move; for
+	 * any other move it is empty.
 	 *
-	 * @return nowy stan partii albo {@link Optional#empty()}, gdy gracz nie ma bieżącej partii
-	 * @throws StaleMoveException gdy {@code matchId} albo {@code turn} nie zgadzają się z bieżącą partią
-	 * @throws IllegalMoveException gdy ruch łamie zasady
+	 * @return the new match state, or {@link Optional#empty()} when the player has no current match
+	 * @throws StaleMoveException when {@code matchId} or {@code turn} does not match the current match
+	 * @throws IllegalMoveException when the move breaks the rules
 	 */
 	public Optional<MatchOutcome> move(String playerKey, UUID matchId, int turn, Move move) {
-		// Kroki powstają w tej samej atomowej aktualizacji, a magazyn przyjmuje tylko stan końcowy —
-		// wynosimy je z lambdy przez lokalny holder. Magazyn może wywołać lambdę ponownie (konflikt zapisu),
-		// więc każda próba zaczyna od pustych kroków.
+		// The steps are produced in the same atomic update, but the store accepts only the final state —
+		// so we carry them out of the lambda through a local holder. The store may invoke the lambda again (write
+		// conflict), so every attempt starts with empty steps.
 		AtomicReference<List<Match>> replay = new AtomicReference<>(List.of());
 		return store.update(playerKey, current -> {
 			replay.set(List.of());

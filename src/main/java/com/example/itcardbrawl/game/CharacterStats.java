@@ -6,7 +6,7 @@ import java.util.Set;
 
 import com.example.itcardbrawl.game.Match.Side;
 
-/** Wartości postaci po uwzględnieniu aktywnych wydarzeń obu stron. */
+/** A character's values after applying the active events of both sides. */
 public record CharacterStats(int attack, int health, Set<AbilityKeyword> keywords, boolean trapped) {
 
 	public CharacterStats {

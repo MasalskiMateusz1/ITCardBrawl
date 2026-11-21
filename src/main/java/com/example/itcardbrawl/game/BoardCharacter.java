@@ -1,9 +1,9 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Postać na stole: egzemplarz karty, obrażenia otrzymane w bieżącej turze oraz stan gotowości
- * ({@code enteredThisTurn}, {@code attacked}). Atak, HP, słowa kluczowe i uwięzienie zależą od aktywnych
- * wydarzeń - liczy je {@link CharacterStats}, nie ten rekord.
+ * A character on the board: the card instance, the damage taken this turn and its readiness state
+ * ({@code enteredThisTurn}, {@code attacked}). Attack, HP, keywords and being trapped depend on active
+ * events - they are computed by {@link CharacterStats}, not by this record.
  */
 public record BoardCharacter(CardInstance instance, int damage, boolean enteredThisTurn, boolean attacked) {
 

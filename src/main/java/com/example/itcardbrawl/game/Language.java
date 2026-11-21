@@ -3,10 +3,10 @@ package com.example.itcardbrawl.game;
 import java.util.Locale;
 
 /**
- * Obsługiwane języki treści gry. Wszystko spoza angielskiego (także brak języka) daje polski.
+ * Supported game content languages. Anything other than English (including no language) yields Polish.
  * <p>
- * Celowa asymetria z frontem: SPA dla przeglądarek spoza {@code pl*} wybiera angielski, ale zawsze wysyła
- * {@code Accept-Language: pl|en} (interceptor), więc polski domyślny dotyczy tylko klientów bez tego nagłówka.
+ * Deliberate asymmetry with the frontend: the SPA picks English for browsers outside {@code pl*}, but always sends
+ * {@code Accept-Language: pl|en} (interceptor), so the Polish default only applies to clients without that header.
  */
 public enum Language {
 

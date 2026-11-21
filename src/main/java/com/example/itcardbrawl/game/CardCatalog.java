@@ -8,8 +8,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Zwalidowany, niemutowalny katalog frakcji, kart i talii. Niepoprawne dane rzucają
- * {@link IllegalStateException} już przy budowie, żeby zatrzymać start aplikacji.
+ * A validated, immutable catalog of factions, cards and decks. Invalid data throws
+ * {@link IllegalStateException} already at construction, to stop the application from starting.
  */
 public final class CardCatalog {
 
@@ -61,7 +61,7 @@ public final class CardCatalog {
 		this.decks = Collections.unmodifiableMap(expandedDecks);
 	}
 
-	/** Grywalne frakcje w kolejności z pliku katalogu. */
+	/** Playable factions in catalog file order. */
 	public List<Faction> playableFactions() {
 		return factions.values().stream().filter(Faction::playable).toList();
 	}
@@ -74,16 +74,16 @@ public final class CardCatalog {
 		return Optional.ofNullable(id).map(cards::get);
 	}
 
-	/** Karta neutralna = karta z niegrywalnej puli dokładanej do talii. */
+	/** Neutral card = a card from the non-playable pool that is added to the decks. */
 	public boolean isNeutral(Card card) {
 		Faction faction = factions.get(card.faction());
 		return faction != null && !faction.playable();
 	}
 
 	/**
-	 * Rozwinięta talia grywalnej frakcji ({@link MatchRules#DECK_SIZE} kart, kopie powtórzone, kolejność z pliku).
+	 * The expanded deck of a playable faction ({@link MatchRules#DECK_SIZE} cards, copies repeated, file order).
 	 *
-	 * @throws IllegalArgumentException gdy frakcja nie istnieje albo nie jest grywalna
+	 * @throws IllegalArgumentException when the faction does not exist or is not playable
 	 */
 	public List<Card> deck(String factionId) {
 		List<Card> deck = factionId != null ? decks.get(factionId) : null;
@@ -272,7 +272,7 @@ public final class CardCatalog {
 						.formatted(factionId, entry.card(), entry.copies(), MIN_COPIES, MAX_COPIES));
 				}
 				total += entry.copies();
-				// Rozwijamy tylko poprawne pozycje — literówka w copies nie może wyczerpać pamięci przed raportem błędów.
+				// Expand only valid entries — a typo in copies must not exhaust memory before errors are reported.
 				if (card != null && copiesInRange) {
 					for (int i = 0; i < entry.copies(); i++) {
 						deckCards.add(card);
@@ -287,7 +287,7 @@ public final class CardCatalog {
 		return expanded;
 	}
 
-	// Każde pole tekstowe musi mieć niepustą wartość w każdym obsługiwanym języku.
+	// Every text field must have a non-blank value in every supported language.
 	private static void requireAllLanguages(String kind, String id, String field, LocalizedText value,
 			List<String> errors) {
 		for (Language language : Language.values()) {

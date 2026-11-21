@@ -11,16 +11,16 @@ import com.example.itcardbrawl.game.MatchResult.EndReason;
 import org.springframework.stereotype.Component;
 
 /**
- * Silnik zasad partii: jedyne miejsce, które zmienia stan {@link Match}. Gracz i komputer przechodzą przez
- * {@link #apply}; każdy krok trafia do logu jako {@link MatchEvent}. Silnik jest bezstanowy i bez zależności.
+ * The match rules engine: the only place that changes {@link Match} state. Both the player and the computer go through
+ * {@link #apply}; every step is logged as a {@link MatchEvent}. The engine is stateless and has no dependencies.
  */
 @Component
 public class MatchEngine {
 
 	/**
-	 * Wykonuje ruch strony i zwraca nowy stan partii.
+	 * Applies a side's move and returns the new match state.
 	 *
-	 * @throws IllegalMoveException gdy ruch łamie zasady (partia zakończona, nie ta tura, zła karta lub cel)
+	 * @throws IllegalMoveException when the move breaks the rules (match finished, wrong turn, invalid card or target)
 	 */
 	public Match apply(Match match, Side side, Move move) {
 		if (match.status() != Status.IN_PROGRESS) {
@@ -40,14 +40,14 @@ public class MatchEngine {
 	}
 
 	/**
-	 * Poprawne zagrania i ataki strony: najpierw zagrania kart z ręki, potem ataki. Lista nie zawiera
-	 * {@link Move.EndTurn}, choć jest on zawsze poprawny dla aktywnej strony w trwającej partii.
+	 * A side's legal plays and attacks: card plays from the hand first, then attacks. The list does not contain
+	 * {@link Move.EndTurn}, although it is always legal for the active side in a match in progress.
 	 */
 	public List<Move> legalMoves(Match match, Side side) {
 		if (match.status() != Status.IN_PROGRESS || side != match.activeSide()) {
 			return List.of();
 		}
-		// Te same pomocnicze funkcje co apply, na kopii stanu - legalMoves i apply nie mogą się rozjechać.
+		// The same helper functions as apply, on a copy of the state - legalMoves and apply must not diverge.
 		State state = new State(match);
 		SideState own = state.side(side);
 		List<Move> moves = new ArrayList<>();
@@ -145,7 +145,7 @@ public class MatchEngine {
 				own.budgetMax = Math.min(own.budgetMax + amount, MatchRules.BUDGET_CAP);
 			}
 			case ATTACK, HEALTH, GUARD, RUSH, TRAP -> {
-				// Modyfikatory zaczynają działać w fazie efektów trwających.
+				// Modifiers take effect in the ongoing-effects phase.
 			}
 		}
 	}
@@ -238,7 +238,7 @@ public class MatchEngine {
 	}
 
 	private static void defeatCharacters(State state, Side actor) {
-		// Po końcu partii log kończy się na MatchEnded - żadnych dalszych wpisów.
+		// Once the match is over, the log ends with MatchEnded - no further entries.
 		if (state.finished()) {
 			return;
 		}
@@ -268,7 +268,7 @@ public class MatchEngine {
 				&& stats(state, owner, c).has(AbilityKeyword.GUARD));
 	}
 
-	// Jeśli przeciwnik ma postacie z Ochroną, tylko one są dozwolonym celem (atak w gracza też odpada).
+	// If the opponent has characters with Guard, only they are valid targets (attacking the player is ruled out too).
 	private static List<BoardCharacter> allowedTargets(State state, Side owner) {
 		List<BoardCharacter> board = state.side(owner).board;
 		return isGuarded(state, owner) ? board.stream().filter(c -> !stats(state, owner, c).trapped()
@@ -341,7 +341,7 @@ public class MatchEngine {
 				state.changeHp(actor, ability.amount());
 			}
 			case GUARD, RUSH, OVERTIME -> {
-				// Zdolności stałe: działają przy ataku albo na koniec tury, nie przy zagraniu.
+				// Static abilities: they act on attack or at end of turn, not on play.
 			}
 		}
 		defeatCharacters(state, actor);
@@ -380,7 +380,7 @@ public class MatchEngine {
 			throw new IllegalMoveException("Najpierw trzeba zaatakować postać z Ochroną");
 		}
 
-		// Obie postacie zadają sobie obrażenia jednocześnie.
+		// Both characters deal damage to each other simultaneously.
 		BoardCharacter hitAttacker = attacker.withDamage(attacker.damage() + targetStats.attack()).markAttacked();
 		BoardCharacter hitTarget = target.withDamage(target.damage() + attackerStats.attack());
 		own.board.set(attackerIndex, hitAttacker);
@@ -395,7 +395,7 @@ public class MatchEngine {
 		Side ending = state.activeSide;
 		SideState own = state.active();
 
-		// (1) Nadgodziny: każda postać z OVERTIME zadaje przeciwnikowi 1 obrażenie; koniec partii przerywa resztę.
+		// (1) Overtime: every character with OVERTIME deals 1 damage to the opponent; the match ending stops the rest.
 		for (BoardCharacter character : List.copyOf(own.board)) {
 			if (stats(state, ending, character).has(AbilityKeyword.OVERTIME)) {
 				state.log(new MatchEvent.AbilityTriggered(ending, character.instance(), AbilityKeyword.OVERTIME, 1));
@@ -406,12 +406,12 @@ public class MatchEngine {
 			}
 		}
 
-		// (2) Obrażenia znikają na koniec tury u obu stron.
+		// (2) Damage clears at the end of the turn on both sides.
 		state.player.board.replaceAll(c -> c.withDamage(0));
 		state.opponent.board.replaceAll(c -> c.withDamage(0));
 		state.log(new MatchEvent.TurnEnded(ending));
 
-		// (3) Zmiana aktywnej strony, (4) początek jej tury.
+		// (3) Switch the active side, (4) start its turn.
 		state.activeSide = ending.opponent();
 		state.turnNumber++;
 		startTurn(state);
@@ -422,7 +422,7 @@ public class MatchEngine {
 		SideState own = state.active();
 		state.log(new MatchEvent.TurnStarted(starting, state.turnNumber));
 
-		// Tick aktywnych wydarzeń właściciela; po wygaśnięciu trafiają na cmentarz.
+		// Tick the owner's active events; once expired they go to the graveyard.
 		List<ActiveEvent> remaining = new ArrayList<>();
 		for (ActiveEvent event : own.activeEvents) {
 			int turnsLeft = event.turnsLeft() - 1;
@@ -438,7 +438,7 @@ public class MatchEngine {
 		own.activeEvents.addAll(remaining);
 		defeatCharacters(state, starting);
 
-		// Dobranie: pusta talia przegrywa partię, pełna ręka pali kartę.
+		// Draw: an empty deck loses the match, a full hand burns the card.
 		drawOne(state, starting);
 		if (state.finished()) {
 			return;
@@ -475,7 +475,7 @@ public class MatchEngine {
 		return Optional.empty();
 	}
 
-	/** Robocza, mutowalna kopia partii na czas jednego ruchu. */
+	/** A working, mutable copy of the match for the duration of one move. */
 	private static final class State {
 
 		private final Match original;
@@ -521,8 +521,8 @@ public class MatchEngine {
 			return status == Status.FINISHED;
 		}
 
-		// Jedyne miejsce zmiany HP gracza: leczenie (delta > 0) ma sufit MatchRules.MAX_HP, obrażenia nie mają
-		// dolnej granicy. Strona, której HP spadło do 0 lub niżej, przegrywa.
+		// The only place that changes a player's HP: healing (delta > 0) is capped at MatchRules.MAX_HP, damage has no
+		// lower bound. The side whose HP dropped to 0 or below loses.
 		void changeHp(Side affected, int delta) {
 			SideState side = side(affected);
 			int from = side.hp;

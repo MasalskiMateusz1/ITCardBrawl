@@ -9,8 +9,8 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Wczytuje i waliduje katalog kart z pliku JSON. Każdy błąd (brak pliku, zły JSON, niepoprawne dane)
- * kończy się {@link IllegalStateException} z czytelnym komunikatem.
+ * Loads and validates the card catalog from a JSON file. Every error (missing file, malformed JSON, invalid data)
+ * ends in an {@link IllegalStateException} with a readable message.
  */
 public final class CardCatalogLoader {
 

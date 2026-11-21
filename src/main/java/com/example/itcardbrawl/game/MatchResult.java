@@ -1,14 +1,14 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Wynik zakończonej partii: zwycięzca i przyczyna przegranej drugiej strony.
+ * The result of a finished match: the winner and the reason the other side lost.
  */
 public record MatchResult(Match.Side winner, EndReason reason) {
 
 	public enum EndReason {
-		/** HP przegranego spadło do 0 lub niżej. */
+		/** The loser's HP dropped to 0 or below. */
 		HP_DEPLETED,
-		/** Przegrany musiał dobrać kartę z pustej talii. */
+		/** The loser had to draw a card from an empty deck. */
 		EMPTY_DECK
 	}
 

@@ -3,8 +3,8 @@ package com.example.itcardbrawl.game;
 import java.util.List;
 
 /**
- * Stan jednej strony partii. {@code deck} jest uporządkowany od wierzchu, {@code board} i {@code graveyard}
- * w kolejności wejścia.
+ * State of one side of a match. {@code deck} is ordered from the top, {@code board} and {@code graveyard}
+ * in order of entry.
  */
 public record MatchSide(Faction faction, List<CardInstance> deck, List<CardInstance> hand, int hp,
 		int budgetCurrent, int budgetMax, List<BoardCharacter> board, List<CardInstance> graveyard,

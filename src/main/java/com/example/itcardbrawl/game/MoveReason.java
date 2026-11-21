@@ -1,47 +1,48 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Rodzaj powodu ruchu komputera ({@link MatchEvent.MoveExplained}). Zdania dla gracza składa widok.
+ * The kind of reason for a computer move ({@link MatchEvent.MoveExplained}).
+ * Player-facing sentences are composed by the view.
  */
 public enum MoveReason {
 
-	/** Ruch wygrywa partię. */
+	/** The move wins the match. */
 	LETHAL,
 
-	/** Ruch pokonuje postać gracza. */
+	/** The move defeats a player's character. */
 	REMOVE_THREAT,
 
-	/** Atak w postać, który osłabia stół gracza bardziej niż własny. */
+	/** An attack on a character that weakens the player's board more than its own. */
 	FAVORABLE_TRADE,
 
-	/** Atak w postać z Ochroną, która blokuje inne cele. */
+	/** An attack on a character with Guard, which blocks other targets. */
 	OPEN_GUARD,
 
-	/** Obrażenia w HP gracza. */
+	/** Damage to the player's HP. */
 	PRESSURE,
 
-	/** Zagranie postaci. */
+	/** Playing a character. */
 	DEVELOP_BOARD,
 
-	/** Wzmocnienie własnych postaci. */
+	/** Strengthening own characters. */
 	STRENGTHEN,
 
-	/** Osłabienie lub uwięzienie postaci gracza. */
+	/** Weakening or trapping a player's character. */
 	WEAKEN,
 
-	/** Leczenie własnego HP lub Ochrona przy niskim własnym HP. */
+	/** Healing own HP, or Guard when own HP is low. */
 	DEFEND,
 
-	/** Dobranie kart. */
+	/** Drawing cards. */
 	DRAW_CARDS,
 
-	/** Zwiększenie budżetu. */
+	/** Increasing the budget. */
 	GAIN_BUDGET,
 
-	/** Koniec tury: żaden ruch nie poprawia pozycji. */
+	/** End of turn: no move improves the position. */
 	END_NO_GAIN,
 
-	/** Koniec tury: brak poprawnych ruchów. */
+	/** End of turn: no legal moves. */
 	END_NO_MOVES
 
 }

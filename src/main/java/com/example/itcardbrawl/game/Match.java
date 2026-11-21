@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Stan partii gracza przeciwko komputerowi. {@code result} jest {@code null}, dopóki partia trwa;
- * {@code log} trzyma zdarzenia całej partii w kolejności chronologicznej.
+ * State of a player's match against the computer. {@code result} is {@code null} while the match is in progress;
+ * {@code log} holds the events of the whole match in chronological order.
  */
 public record Match(UUID id, int turnNumber, Side activeSide, MatchSide player, MatchSide opponent, Status status,
 		MatchResult result, List<MatchEvent> log) {
@@ -34,8 +34,8 @@ public record Match(UUID id, int turnNumber, Side activeSide, MatchSide player, 
 	}
 
 	/**
-	 * Kopia partii z wpisem logu wstawionym na pozycji {@code index}. Log nie jest stanem zasad, więc dopisanie
-	 * wyjaśnienia poza {@link MatchEngine} nie zmienia przebiegu gry.
+	 * A copy of the match with a log entry inserted at position {@code index}. The log is not rule state, so adding
+	 * an explanation outside {@link MatchEngine} does not change the course of the game.
 	 */
 	public Match withEventAt(int index, MatchEvent event) {
 		List<MatchEvent> entries = new ArrayList<>(log);
