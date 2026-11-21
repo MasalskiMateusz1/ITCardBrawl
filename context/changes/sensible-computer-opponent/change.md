@@ -1,7 +1,7 @@
 ---
 change_id: sensible-computer-opponent
 title: Sensible computer opponent
-status: implementing
+status: implemented
 created: 2026-11-21
 updated: 2026-11-21
 ---

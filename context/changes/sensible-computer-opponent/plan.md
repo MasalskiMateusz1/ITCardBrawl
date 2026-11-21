@@ -316,11 +316,11 @@ Brak danych do migracji: partie żyją w pamięci (`MatchStore`). Po wdrożeniu 
 
 #### Automated
 
-- [x] 3.1 Testy SPA przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 3.2 Build produkcyjny SPA przechodzi: `cd frontend && npm run build`
+- [x] 3.1 Testy SPA przechodzą: `cd frontend && npx ng test --watch=false` — dfbffdd
+- [x] 3.2 Build produkcyjny SPA przechodzi: `cd frontend && npm run build` — dfbffdd
 
 #### Manual
 
-- [x] 3.3 Podczas tury komputera nad stołem widać przy każdym kroku jego powód, w tempie pozwalającym go przeczytać lub doczytać w logu
-- [x] 3.4 Wpisy z powodem są w logu wizualnie odróżnione od skutków ruchów
-- [x] 3.5 Po zagraniu kilku partii komputer sprawia wrażenie grającego sensownie, a partia mieści się w ≤ 15 minutach
+- [x] 3.3 Podczas tury komputera nad stołem widać przy każdym kroku jego powód, w tempie pozwalającym go przeczytać lub doczytać w logu — dfbffdd
+- [x] 3.4 Wpisy z powodem są w logu wizualnie odróżnione od skutków ruchów — dfbffdd
+- [x] 3.5 Po zagraniu kilku partii komputer sprawia wrażenie grającego sensownie, a partia mieści się w ≤ 15 minutach — dfbffdd
