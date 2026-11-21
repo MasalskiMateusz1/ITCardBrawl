@@ -4,6 +4,7 @@ import com.example.itcardbrawl.game.CardInstance;
 import com.example.itcardbrawl.game.Language;
 import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.MatchEvent;
+import com.example.itcardbrawl.game.PolishNumberForms;
 import com.example.itcardbrawl.game.MatchEvent.AbilityTriggered;
 import com.example.itcardbrawl.game.MatchEvent.Attacked;
 import com.example.itcardbrawl.game.MatchEvent.CardBurned;
@@ -89,10 +90,10 @@ public class MatchLogFormatter {
 		int amount = e.amount();
 		return switch (e.keyword()) {
 			case ON_PLAY_DAMAGE, OVERTIME -> mine(e.side())
-					? text(language, "%s zadaje przeciwnikowi obrażenia: −%d".formatted(card, amount),
-							"%s damages the opponent: −%d".formatted(card, amount))
-					: text(language, "%s zadaje Ci obrażenia: −%d".formatted(card, amount),
-							"%s damages you: −%d".formatted(card, amount));
+					? text(language, "%s zadaje przeciwnikowi %d %s".formatted(card, amount, damageNoun(amount)),
+							"%s deals %d damage to the opponent".formatted(card, amount))
+					: text(language, "%s zadaje Ci %d %s".formatted(card, amount, damageNoun(amount)),
+							"%s deals you %d damage".formatted(card, amount));
 			case HEAL -> mine(e.side())
 					? text(language, "%s leczy Twoje HP o %d".formatted(card, amount),
 							"%s heals your HP by %d".formatted(card, amount))
@@ -136,6 +137,10 @@ public class MatchLogFormatter {
 					? text(language, "Wygrywasz: przeciwnikowi skończyła się talia", "You win: opponent ran out of cards")
 					: text(language, "Przegrywasz: skończyła się Twoja talia", "You lose: your deck ran out");
 		};
+	}
+
+	private static String damageNoun(int amount) {
+		return PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń");
 	}
 
 	// Ujemne HP z typograficznym minusem (U+2212), jak kwoty obrażeń w logu.

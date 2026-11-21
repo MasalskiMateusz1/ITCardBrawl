@@ -272,8 +272,8 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Manual
 
-- [ ] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem
-- [ ] 2.6 Na wdrożonej wersji panel „Budżet” po obu stronach pokazuje 1/1 i 0/0 na starcie, rośnie co turę, zagranie karty obniża bieżący budżet, a „Kawa z automatu” pokazuje „Zwiększ budżet o 2” (pl i en)
+- [x] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem — f6bbfca
+- [x] 2.6 Na wdrożonej wersji panel „Budżet” po obu stronach pokazuje 1/1 i 0/0 na starcie, rośnie co turę, zagranie karty obniża bieżący budżet, a „Kawa z automatu” pokazuje „Zwiększ budżet o 2” (pl i en) — f6bbfca
 
 ### Phase 3: PRD i kontrola resztek
 

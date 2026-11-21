@@ -1,12 +1,12 @@
 package com.example.itcardbrawl.game;
 
 /** Dobiera polską formę rzeczownika po liczbie całkowitej. */
-final class PolishNumberForms {
+public final class PolishNumberForms {
 
 	private PolishNumberForms() {
 	}
 
-	static String form(int value, String singular, String plural, String genitivePlural) {
+	public static String form(int value, String singular, String plural, String genitivePlural) {
 		int absolute = Math.abs(value);
 		int lastTwo = absolute % 100;
 		if (absolute == 1) {
