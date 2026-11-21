@@ -94,8 +94,8 @@ class MatchLogFormatterTests {
 
 		assertThat(formatter.format(played, Language.PL)).isEqualTo("Przeciwnik zagrywa: Tech Lead");
 		assertThat(formatter.format(played, Language.EN)).isEqualTo("Opponent plays: Tech Lead");
-		assertThat(formatter.format(attacked, Language.PL)).isEqualTo("Tech Lead atakuje Cię: −8");
-		assertThat(formatter.format(attacked, Language.EN)).isEqualTo("Tech Lead attacks you: −8");
+		assertThat(formatter.format(attacked, Language.PL)).isEqualTo("Tech Lead atakuje Cię i zadaje 8 obrażeń");
+		assertThat(formatter.format(attacked, Language.EN)).isEqualTo("Tech Lead attacks you for 8 damage");
 		assertThat(formatter.format(hp, Language.PL)).isEqualTo("Twoje HP: 24 → 16/30");
 		assertThat(formatter.format(hp, Language.EN)).isEqualTo("Your HP: 24 → 16/30");
 		assertThat(formatter.format(opponentHp, Language.PL)).isEqualTo("HP przeciwnika: 2 → −3/30");
@@ -119,8 +119,8 @@ class MatchLogFormatterTests {
 		assertThat(formatter.format(healByPlayer, Language.EN)).isEqualTo("Tech Lead heals your HP by 3");
 		assertThat(formatter.format(healByOpponent, Language.PL)).isEqualTo("Tech Lead leczy HP przeciwnika o 3");
 		assertThat(formatter.format(healByOpponent, Language.EN)).isEqualTo("Tech Lead heals opponent HP by 3");
-		assertThat(formatter.format(attackByPlayer, Language.PL)).isEqualTo("Tech Lead atakuje przeciwnika: −8");
-		assertThat(formatter.format(attackByPlayer, Language.EN)).isEqualTo("Tech Lead attacks the opponent: −8");
+		assertThat(formatter.format(attackByPlayer, Language.PL)).isEqualTo("Tech Lead atakuje przeciwnika i zadaje 8 obrażeń");
+		assertThat(formatter.format(attackByPlayer, Language.EN)).isEqualTo("Tech Lead attacks the opponent for 8 damage");
 	}
 
 	@Test

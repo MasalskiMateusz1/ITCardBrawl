@@ -582,6 +582,7 @@ class CardCatalogTests {
 		}
 		assertThat(AbilityKeyword.ON_PLAY_DAMAGE.describe(4).pl()).isEqualTo("Po zagraniu: zadaj przeciwnikowi 4 obrażenia");
 		assertThat(AbilityKeyword.ON_PLAY_DAMAGE.describe(4).en()).isEqualTo("On play: deal 4 damage to the opponent");
+		assertThat(AbilityKeyword.ON_PLAY_DAMAGE.describe(5).pl()).isEqualTo("Po zagraniu: zadaj przeciwnikowi 5 obrażeń");
 		assertThat(AbilityKeyword.HEAL.describe(3).pl()).isEqualTo("Po zagraniu: leczenie 3 HP");
 		assertThat(AbilityKeyword.HEAL.describe(3).en()).isEqualTo("On play: heal 3 HP");
 		assertThat(AbilityKeyword.OVERTIME.describe(0).pl()).isEqualTo("Nadgodziny: na koniec tury zadaj przeciwnikowi 1 obrażenie");

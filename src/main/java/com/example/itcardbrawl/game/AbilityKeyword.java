@@ -44,7 +44,7 @@ public enum AbilityKeyword {
 	public LocalizedText describe(int amount) {
 		return switch (this) {
 			case ON_PLAY_DAMAGE -> new LocalizedText("Po zagraniu: zadaj przeciwnikowi %d %s".formatted(amount,
-					PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń")),
+					PolishNumberForms.damage(amount)),
 					"On play: deal %d damage to the opponent".formatted(amount));
 			case HEAL -> new LocalizedText("Po zagraniu: leczenie %d HP".formatted(amount),
 					"On play: heal %d HP".formatted(amount));

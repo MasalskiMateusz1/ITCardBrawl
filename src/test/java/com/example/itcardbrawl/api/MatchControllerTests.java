@@ -549,7 +549,7 @@ class MatchControllerTests {
 			MatchSide o = m.opponent();
 			MatchSide player = new MatchSide(p.faction(), p.deck(),
 					List.of(instance(TARGETED_EVENT, "dev-force-push"), instance(UNTARGETED_EVENT, "dev-stackoverflow")),
-					30, 10, 10, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
+					30, MatchRules.BUDGET_CAP, MatchRules.BUDGET_CAP, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
 					p.graveyard(), List.of());
 			MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 30, o.budgetCurrent(),
 					o.budgetMax(), List.of(new BoardCharacter(instance(ENEMY_CHARACTER, "tst-manual"), 0, false, false)),
