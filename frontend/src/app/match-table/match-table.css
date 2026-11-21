@@ -170,7 +170,8 @@
   flex: 1;
 }
 
-.opponent-moving {
+.opponent-moving,
+.move-reason {
   margin: 0;
   font-style: italic;
   color: #555;
@@ -203,6 +204,11 @@
 
 .log-entry.mine {
   font-weight: bold;
+}
+
+.log-entry.reason {
+  font-style: italic;
+  color: #555;
 }
 
 a {

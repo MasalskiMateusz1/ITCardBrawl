@@ -154,6 +154,9 @@
       }
       @if (replaying()) {
         <p class="opponent-moving" role="status">{{ texts().matchTable.opponentMoving }}</p>
+        @if (moveReason(); as reason) {
+          <p class="move-reason" role="status">{{ texts().matchTable.moveReason(reason) }}</p>
+        }
       } @else {
         <button type="button" class="end-turn" [disabled]="busy() || !myTurn()" (click)="endTurn()">
           {{ texts().matchTable.endTurn }}
@@ -323,7 +326,9 @@
     <h2>{{ texts().matchTable.log }}</h2>
     <ol class="log-entries">
       @for (entry of m.log; track $index) {
-        <li class="log-entry" [class.mine]="entry.side === 'PLAYER'">{{ entry.text }}</li>
+        <li class="log-entry" [class.mine]="entry.side === 'PLAYER'" [class.reason]="entry.reason">
+          {{ entry.text }}
+        </li>
       }
     </ol>
   </section>

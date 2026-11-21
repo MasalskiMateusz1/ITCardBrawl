@@ -49,6 +49,7 @@ export const pl: Messages = {
     endTurn: 'Zakończ turę',
     cancelAttack: 'Anuluj atak',
     opponentMoving: 'Ruch przeciwnika…',
+    moveReason: (reason) => `Dlaczego: ${reason}`,
     board: 'Stół',
     activeEvents: 'Aktywne wydarzenia',
     graveyard: 'Cmentarz',

@@ -660,7 +660,7 @@ describe('MatchTable', () => {
     expect(text(player.querySelector('.events-heading'))).toBe('Aktywne wydarzenia');
   });
 
-  it("attacks the opponent player after choosing an attacker", async () => {
+  it('attacks the opponent player after choosing an attacker', async () => {
     const fixture = await renderFixture(boardView());
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('.attack-player')).toBeNull();
@@ -921,9 +921,7 @@ describe('MatchTable', () => {
     await fixture.whenStable();
     expect(text(element.querySelector('.choose-target'))).toBe('Choose the event target');
     expect(text(element.querySelector('.cancel-target'))).toBe('Cancel');
-    expect(text(element.querySelector('.opponent .target-player'))).toBe(
-      "Target: opponent's HP",
-    );
+    expect(text(element.querySelector('.opponent .target-player'))).toBe("Target: opponent's HP");
     expect(text(element.querySelector('.player .target-player'))).toBe('Target: your HP');
     expect(text(element.querySelector('.event-target'))).toBe('Target');
   });
@@ -1151,6 +1149,34 @@ describe('MatchTable', () => {
       expect(text(element.querySelector('.opponent .last-played-name'))).toBe('Code Review');
     });
 
+    it("captions each playback step with the computer's reason and drops it afterwards", async () => {
+      const fixture = await renderBoardThenFakeClock();
+      const element = fixture.nativeElement as HTMLElement;
+
+      button(element, '.end-turn').click();
+      httpTesting
+        .expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` })
+        .flush(reasonResponse());
+      fixture.detectChanges();
+
+      const caption = element.querySelector('.move-reason');
+      expect(caption?.getAttribute('role')).toBe('status');
+      expect(text(caption)).toBe('Dlaczego: Wystawia postać, bo stół jest pusty');
+      const reasonEntries = element.querySelectorAll('.log .log-entry.reason');
+      expect(Array.from(reasonEntries).map(text)).toEqual(['Wystawia postać, bo stół jest pusty']);
+
+      advance(fixture, STEP_MS);
+      expect(text(element.querySelector('.move-reason'))).toBe(
+        'Dlaczego: Atakuje gracza, bo może wygrać',
+      );
+
+      advance(fixture, STEP_MS);
+      expect(element.querySelector('.opponent-moving')).toBeNull();
+      expect(element.querySelector('.move-reason')).toBeNull();
+      expect(element.querySelectorAll('.log .log-entry.reason').length).toBe(2);
+      expect(element.querySelectorAll('.log .log-entry:not(.reason)').length).toBe(5);
+    });
+
     it('refetches the match only after playback when the language changes during it', async () => {
       const fixture = await renderBoardThenFakeClock();
       const element = fixture.nativeElement as HTMLElement;
@@ -1172,7 +1198,7 @@ describe('MatchTable', () => {
       httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' }).flush({
         ...endTurnResponse(),
         replay: [],
-        log: [{ side: 'PLAYER', text: 'You end your turn' }],
+        log: [{ side: 'PLAYER', text: 'You end your turn', reason: false }],
       });
       fixture.detectChanges();
 
@@ -1203,7 +1229,9 @@ describe('MatchTable', () => {
 
     const result = element.querySelector('.result')!;
     expect(text(result.querySelector('h2'))).toBe('Wygrana');
-    expect(text(result.querySelector('.result-reason'))).toBe('Przyczyna: HP spadło do 0 lub niżej');
+    expect(text(result.querySelector('.result-reason'))).toBe(
+      'Przyczyna: HP spadło do 0 lub niżej',
+    );
     const link = result.querySelector('a.play-again');
     expect(text(link)).toBe('Zagraj ponownie');
     expect(link?.getAttribute('href')).toBe('/new-match');
@@ -1232,9 +1260,9 @@ describe('MatchTable', () => {
     const element = await renderWithMatch({
       ...matchView(),
       log: [
-        { side: 'PLAYER', text: 'Zagrywasz: Junior Dev' },
-        { side: 'OPPONENT', text: 'Przeciwnik zagrywa: Tech Lead' },
-        { side: 'OPPONENT', text: 'Tech Lead atakuje Cię i zadaje 8 obrażeń' },
+        { side: 'PLAYER', text: 'Zagrywasz: Junior Dev', reason: false },
+        { side: 'OPPONENT', text: 'Przeciwnik zagrywa: Tech Lead', reason: false },
+        { side: 'OPPONENT', text: 'Tech Lead atakuje Cię i zadaje 8 obrażeń', reason: false },
       ],
     });
 
@@ -1249,11 +1277,11 @@ describe('MatchTable', () => {
 });
 
 const LOG: LogEntry[] = [
-  { side: 'PLAYER', text: 'Kończysz turę' },
-  { side: 'OPPONENT', text: 'Tura przeciwnika 6' },
-  { side: 'OPPONENT', text: 'Przeciwnik zagrywa: QA Senior' },
-  { side: 'OPPONENT', text: 'Przeciwnik kończy turę' },
-  { side: 'PLAYER', text: 'Twoja tura 7' },
+  { side: 'PLAYER', text: 'Kończysz turę', reason: false },
+  { side: 'OPPONENT', text: 'Tura przeciwnika 6', reason: false },
+  { side: 'OPPONENT', text: 'Przeciwnik zagrywa: QA Senior', reason: false },
+  { side: 'OPPONENT', text: 'Przeciwnik kończy turę', reason: false },
+  { side: 'PLAYER', text: 'Twoja tura 7', reason: false },
 ];
 
 /**
@@ -1270,7 +1298,12 @@ function endTurnResponse(): MatchView {
       instanceId: 40,
       name: 'Code Review',
       effects: [
-        { kind: 'PLAYER_DAMAGE', scope: 'OPPONENT', amount: 4, text: 'Zadaj przeciwnikowi 4 obrażenia' },
+        {
+          kind: 'PLAYER_DAMAGE',
+          scope: 'OPPONENT',
+          amount: 4,
+          text: 'Zadaj przeciwnikowi 4 obrażenia',
+        },
       ],
     } satisfies PlayedEvent,
   };
@@ -1294,6 +1327,33 @@ function endTurnResponse(): MatchView {
       step({ logSize: 2 }),
       step({ player, opponent, logSize: 3 }),
       step({ turn: { number: 7, active: 'PLAYER' }, player, opponent, logSize: 5 }),
+    ],
+  };
+}
+
+/**
+ * endTurnResponse() with a reason before each computer move: step 1 shows the first reason,
+ * step 2 the second, the final state ends the playback.
+ */
+function reasonResponse(): MatchView {
+  const response = endTurnResponse();
+  const log: LogEntry[] = [
+    { side: 'PLAYER', text: 'Kończysz turę', reason: false },
+    { side: 'OPPONENT', text: 'Tura przeciwnika 6', reason: false },
+    { side: 'OPPONENT', text: 'Wystawia postać, bo stół jest pusty', reason: true },
+    { side: 'OPPONENT', text: 'Przeciwnik zagrywa: QA Senior', reason: false },
+    { side: 'OPPONENT', text: 'Atakuje gracza, bo może wygrać', reason: true },
+    { side: 'OPPONENT', text: 'QA Senior atakuje Cię i zadaje 4 obrażenia', reason: false },
+    { side: 'PLAYER', text: 'Twoja tura 7', reason: false },
+  ];
+  const [first, second, last] = response.replay;
+  return {
+    ...response,
+    log,
+    replay: [
+      { ...first, logSize: 4 },
+      { ...second, logSize: 6 },
+      { ...last, logSize: 7 },
     ],
   };
 }

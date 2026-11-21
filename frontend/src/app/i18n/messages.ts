@@ -50,6 +50,8 @@ export interface Messages {
     endTurn: string;
     cancelAttack: string;
     opponentMoving: string;
+    /** Caption with the computer's reason for the move being played back. */
+    moveReason: (reason: string) => string;
     board: string;
     activeEvents: string;
     graveyard: string;
