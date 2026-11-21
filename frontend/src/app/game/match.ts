@@ -17,9 +17,9 @@ export type CardType = 'CHARACTER' | 'EVENT';
 
 export type MatchStatus = 'IN_PROGRESS' | 'FINISHED';
 
-export type EndReason = 'STRESS_LIMIT' | 'EMPTY_DECK';
+export type EndReason = 'HP_DEPLETED' | 'EMPTY_DECK';
 
-export type AbilityKeyword = 'ON_PLAY_STRESS' | 'HEAL' | 'GUARD' | 'RUSH' | 'OVERTIME';
+export type AbilityKeyword = 'ON_PLAY_DAMAGE' | 'HEAL' | 'GUARD' | 'RUSH' | 'OVERTIME';
 
 /** Character ability; `text` is already localized by the backend. */
 export type AbilityView = {
@@ -28,7 +28,7 @@ export type AbilityView = {
 };
 
 export type EffectKind =
-  | 'STRESS'
+  | 'PLAYER_DAMAGE'
   | 'DAMAGE'
   | 'HEAL'
   | 'DRAW'
@@ -133,8 +133,8 @@ export type ActiveEvent = {
 
 export type PlayerView = {
   faction: FactionRef;
-  stress: number;
-  stressLimit: number;
+  hp: number;
+  maxHp: number;
   resource: ResourceView;
   deckCount: number;
   hand: HandCard[];
@@ -146,8 +146,8 @@ export type PlayerView = {
 
 export type OpponentView = {
   faction: FactionRef;
-  stress: number;
-  stressLimit: number;
+  hp: number;
+  maxHp: number;
   resource: ResourceView;
   deckCount: number;
   handCount: number;

@@ -33,7 +33,7 @@ export interface Messages {
     playerZone: string;
     opponentHeading: (factionName: string) => string;
     playerHeading: (factionName: string) => string;
-    stress: string;
+    hp: string;
     resource: string;
     handCount: string;
     deckCount: string;
@@ -46,7 +46,7 @@ export interface Messages {
     play: string;
     attack: string;
     target: string;
-    attackStress: string;
+    attackPlayer: string;
     endTurn: string;
     cancelAttack: string;
     opponentMoving: string;
@@ -60,9 +60,9 @@ export interface Messages {
     instant: string;
     chooseTarget: string;
     cancelTarget: string;
-    /** Event target button at the player's own stress. */
+    /** Event target button at the player's own HP. */
     targetPlayer: string;
-    /** Event target button at the opponent's stress. */
+    /** Event target button at the opponent's HP. */
     targetOpponent: string;
     /** The target character of an active event. */
     eventTarget: (name: string) => string;
