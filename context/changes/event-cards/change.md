@@ -1,7 +1,7 @@
 ---
 change_id: event-cards
 title: Event cards
-status: implementing
+status: implemented
 created: 2026-11-20
 updated: 2026-11-21
 archived_at: null
