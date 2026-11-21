@@ -1,0 +1,400 @@
+package com.example.itcardbrawl.game;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.SplittableRandom;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.random.RandomGenerator;
+import java.util.stream.IntStream;
+
+import com.example.itcardbrawl.game.Match.Side;
+import com.example.itcardbrawl.game.Match.Status;
+import com.example.itcardbrawl.game.MatchEvent.CardPlayed;
+import com.example.itcardbrawl.game.MatchEvent.EffectApplied;
+import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
+import com.example.itcardbrawl.game.MatchEvent.TurnStarted;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
+
+import tools.jackson.databind.json.JsonMapper;
+
+class ComputerOpponentTests {
+
+	private static final CardCatalog CATALOG = CardCatalogLoader.load(JsonMapper.builder().build(),
+			new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION));
+
+	private static final MatchEngine ENGINE = new MatchEngine();
+
+	private static final PositionEvaluator EVALUATOR = new PositionEvaluator();
+
+	private static final Faction FACTION = new Faction("test", text("Test"), text("Test"), true);
+
+	// Limit tur jednej partii w teście: talie po 30 kart kończą partię najpóźniej w okolicach tury 60.
+	private static final int MAX_TURNS = 200;
+
+	private static final int SIMULATED_MATCHES = 200;
+
+	// Talie zapasowe ręcznie budowanych stanów dostają unikalne instanceId.
+	private static final AtomicInteger NEXT_FILLER_ID = new AtomicInteger(1_000);
+
+	private static final double REQUIRED_WIN_RATE = 0.8;
+
+	// Gwarancje „bez głupich ruchów” nie mogą zależeć od losowania.
+	private static final int SEEDS = 20;
+
+	private static ComputerOpponent computer(long seed) {
+		return new ComputerOpponent(ENGINE, EVALUATOR, new SplittableRandom(seed));
+	}
+
+	@Test
+	void beatsRandomPlayerInAtLeastEightyPercentOfSeededMatches() {
+		int wins = 0;
+		for (long seed = 0; seed < SIMULATED_MATCHES; seed++) {
+			String faction = seed % 2 == 0 ? "developers" : "testers";
+			boolean playerStarts = (seed / 2) % 2 == 0;
+			Match match = new MatchFactory(CATALOG, factoryRandom(seed, playerStarts)).create(faction);
+			assertThat(match.activeSide()).isEqualTo(playerStarts ? Side.PLAYER : Side.OPPONENT);
+			ComputerOpponent opponent = computer(seed + 1_000);
+			RandomPlayer player = new RandomPlayer(ENGINE, new SplittableRandom(seed + 2_000));
+
+			while (match.status() == Status.IN_PROGRESS) {
+				assertThat(match.turnNumber()).as("partia z ziarnem %d nie kończy się", seed).isLessThan(MAX_TURNS);
+				if (match.activeSide() == Side.OPPONENT) {
+					match = opponent.playTurn(match);
+					assertThat(match.status() == Status.FINISHED || match.activeSide() == Side.PLAYER).isTrue();
+				}
+				else {
+					match = player.playTurn(match);
+				}
+			}
+
+			assertThat(match.result()).as("wynik partii z ziarnem %d", seed).isNotNull();
+			if (match.result().winner() == Side.OPPONENT) {
+				wins++;
+			}
+		}
+		assertThat((double) wins / SIMULATED_MATCHES).as("odsetek wygranych komputera (%d/%d)", wins,
+				SIMULATED_MATCHES).isGreaterThanOrEqualTo(REQUIRED_WIN_RATE);
+	}
+
+	@Test
+	void takesWinningAttackEvenWhenOtherGoodMovesExist() {
+		BoardCharacter attacker = ready(character(1, 1, 3, 3));
+		CardInstance playable = character(2, 1, 2, 2);
+		BoardCharacter defender = ready(character(3, 1, 2, 2));
+		Match match = opponentTurn(side(3, List.of(), List.of(defender), 0),
+				side(MatchRules.MAX_HP, List.of(playable), List.of(attacker), 3));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed).playTurnSteps(match);
+
+			assertThat(steps).as("ziarno %d", seed).hasSize(1);
+			assertThat(steps.getFirst().result().winner()).isEqualTo(Side.OPPONENT);
+		}
+	}
+
+	@Test
+	void takesWinningEventIntoPlayerHp() {
+		CardInstance damage = event(1, 1, new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 5));
+		CardInstance playable = character(2, 1, 2, 2);
+		Match match = opponentTurn(side(4, List.of(), List.of(ready(character(3, 1, 2, 2))), 0),
+				side(MatchRules.MAX_HP, List.of(damage, playable), List.of(), 3));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed).playTurnSteps(match);
+
+			assertThat(steps).as("ziarno %d", seed).hasSize(1);
+			assertThat(steps.getFirst().result().winner()).isEqualTo(Side.OPPONENT);
+			assertThat(steps.getFirst().log()).contains(new CardPlayed(Side.OPPONENT, damage));
+		}
+	}
+
+	@Test
+	void healsItselfButNeverThePlayer() {
+		CardInstance heal = event(1, 1, new Effect(EffectKind.HEAL, EffectScope.TARGET, 3));
+		Match match = opponentTurn(side(20, List.of(), List.of(), 0), side(20, List.of(heal), List.of(), 1));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match after = computer(seed).playTurn(match);
+
+			assertThat(effects(after)).as("ziarno %d", seed)
+				.noneMatch(e -> e.targetPlayer() == Side.PLAYER)
+				.anyMatch(e -> e.targetPlayer() == Side.OPPONENT);
+			assertThat(after.player().hp()).isEqualTo(20);
+			assertThat(after.opponent().hp()).isEqualTo(23);
+		}
+	}
+
+	@Test
+	void neverDamagesOwnCharacterOrItself() {
+		CardInstance damage = event(1, 1, new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 2));
+		CardInstance own = character(2, 1, 3, 3);
+		Match match = opponentTurn(side(MatchRules.MAX_HP, List.of(), List.of(ready(character(3, 1, 2, 2))), 0),
+				side(MatchRules.MAX_HP, List.of(damage), List.of(fresh(own)), 1));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match after = computer(seed).playTurn(match);
+
+			assertThat(effects(after)).as("ziarno %d", seed)
+				.noneMatch(e -> own.equals(e.targetCharacter()))
+				.noneMatch(e -> e.targetPlayer() == Side.OPPONENT);
+			assertThat(after.opponent().hp()).isEqualTo(MatchRules.MAX_HP);
+			assertThat(after.opponent().board()).extracting(BoardCharacter::instance).contains(own);
+		}
+	}
+
+	@Test
+	void neverTrapsOwnCharacter() {
+		CardInstance trap = event(1, 1, 3, new Effect(EffectKind.TRAP, EffectScope.TARGET, 0));
+		CardInstance own = character(2, 1, 3, 3);
+		CardInstance enemy = character(3, 1, 3, 3);
+		Match match = opponentTurn(side(MatchRules.MAX_HP, List.of(), List.of(ready(enemy)), 0),
+				side(MatchRules.MAX_HP, List.of(trap), List.of(fresh(own)), 1));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match after = computer(seed).playTurn(match);
+
+			assertThat(effects(after)).as("ziarno %d", seed)
+				.noneMatch(e -> own.equals(e.targetCharacter()))
+				.anyMatch(e -> enemy.equals(e.targetCharacter()));
+		}
+	}
+
+	@Test
+	void skipsBoardWipeThatMostlyDestroysOwnBoard() {
+		CardInstance wipe = event(1, 1, new Effect(EffectKind.DAMAGE, EffectScope.ALL_BOARDS, 4));
+		List<BoardCharacter> ownBoard = List.of(fresh(character(2, 1, 3, 3)), fresh(character(3, 1, 3, 3)),
+				fresh(character(4, 1, 3, 3)));
+		Match match = opponentTurn(side(MatchRules.MAX_HP, List.of(), List.of(ready(character(5, 1, 1, 1))), 0),
+				side(MatchRules.MAX_HP, List.of(wipe), ownBoard, 1));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match after = computer(seed).playTurn(match);
+
+			assertThat(after.log()).as("ziarno %d", seed).doesNotContain(new CardPlayed(Side.OPPONENT, wipe));
+			assertThat(after.opponent().board()).hasSize(3);
+		}
+	}
+
+	@Test
+	void endsTurnWhenOnlyLegalMovesAreHarmful() {
+		CardInstance heal = event(1, 1, new Effect(EffectKind.HEAL, EffectScope.TARGET, 3));
+		Match match = opponentTurn(side(20, List.of(), List.of(), 0),
+				side(MatchRules.MAX_HP, List.of(heal), List.of(), 1));
+		assertThat(ENGINE.legalMoves(match, Side.OPPONENT)).isNotEmpty();
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed).playTurnSteps(match);
+
+			assertThat(steps).as("ziarno %d", seed).hasSize(1);
+			Match after = steps.getFirst();
+			assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
+			assertThat(after.log()).noneMatch(CardPlayed.class::isInstance);
+			assertThat(after.opponent().hand()).containsExactly(heal);
+		}
+	}
+
+	@Test
+	void sameMoveAndScoreRegardlessOfHiddenCards() {
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match match = midgame(seed);
+			Match hidden = withDifferentHiddenCards(match);
+			assertThat(hidden.player().hand()).isNotEqualTo(match.player().hand());
+			assertThat(hidden.player().deck()).isNotEqualTo(match.player().deck());
+			assertThat(hidden.opponent().deck()).isNotEqualTo(match.opponent().deck());
+
+			assertThat(EVALUATOR.score(hidden, Side.OPPONENT)).as("ziarno %d", seed)
+				.isEqualTo(EVALUATOR.score(match, Side.OPPONENT));
+			assertThat(computer(seed + 5_000).chooseMove(hidden)).as("ziarno %d", seed)
+				.isEqualTo(computer(seed + 5_000).chooseMove(match));
+		}
+	}
+
+	@Test
+	void playsAffordableCardsBeforeEndingTurn() {
+		CardInstance first = character(1, 1, 1, 1);
+		CardInstance second = character(2, 2, 1, 1);
+		Match match = opponentTurn(side(List.of(), List.of(filler(100)), 0),
+				side(List.of(first, second), List.of(filler(200)), 3));
+
+		Match after = computer(7).playTurn(match);
+
+		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
+		assertThat(after.turnNumber()).isEqualTo(2);
+		assertThat(after.opponent().hand()).isEmpty();
+		assertThat(after.opponent().board()).extracting(BoardCharacter::instance).containsExactlyInAnyOrder(first, second);
+		assertThat(after.log()).contains(new CardPlayed(Side.OPPONENT, first), new CardPlayed(Side.OPPONENT, second),
+				new TurnEnded(Side.OPPONENT), new TurnStarted(Side.PLAYER, 2));
+	}
+
+	@Test
+	void endsTurnWhenNoLegalMovesRemain() {
+		Match match = opponentTurn(side(List.of(), List.of(filler(100)), 0),
+				side(List.of(character(1, 5, 1, 1)), List.of(), 1));
+
+		Match after = computer(7).playTurn(match);
+
+		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
+		assertThat(after.opponent().hand()).hasSize(1);
+		assertThat(after.log()).noneMatch(CardPlayed.class::isInstance);
+	}
+
+	@Test
+	void leavesMatchUntouchedOutsideOwnTurn() {
+		Match playerTurn = playerTurn();
+
+		assertThat(computer(7).playTurn(playerTurn)).isSameAs(playerTurn);
+	}
+
+	@Test
+	void playTurnStepsIsEmptyOutsideOwnTurn() {
+		assertThat(computer(7).playTurnSteps(playerTurn())).isEmpty();
+	}
+
+	@Test
+	void lastStepEqualsPlayTurnForSameSeed() {
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match match = computerStarts(seed);
+
+			List<Match> steps = computer(seed + 1_000).playTurnSteps(match);
+			Match played = computer(seed + 1_000).playTurn(match);
+
+			assertThat(steps).as("kroki z ziarnem %d", seed).isNotEmpty();
+			assertThat(steps.getLast()).isEqualTo(played);
+		}
+	}
+
+	@Test
+	void everyStepButTheLastHasOpponentActive() {
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed + 1_000).playTurnSteps(midgame(seed));
+
+			assertThat(steps.subList(0, steps.size() - 1)).as("kroki z ziarnem %d", seed)
+				.allSatisfy(step -> {
+					assertThat(step.status()).isEqualTo(Status.IN_PROGRESS);
+					assertThat(step.activeSide()).isEqualTo(Side.OPPONENT);
+				});
+			Match last = steps.getLast();
+			assertThat(last.status() == Status.FINISHED || last.activeSide() == Side.PLAYER).isTrue();
+		}
+	}
+
+	// Tasowanie z ziarna, a wybór zaczynającego (nextBoolean) ustalony przez test.
+	private static RandomGenerator factoryRandom(long seed, boolean playerStarts) {
+		SplittableRandom delegate = new SplittableRandom(seed);
+		return new RandomGenerator() {
+			@Override
+			public long nextLong() {
+				return delegate.nextLong();
+			}
+
+			@Override
+			public boolean nextBoolean() {
+				return playerStarts;
+			}
+		};
+	}
+
+	// Partia z katalogu, w której zaczyna komputer (gdy fabryka wylosuje gracza, gracz kończy turę 1).
+	private static Match computerStarts(long seed) {
+		Match match = new MatchFactory(CATALOG, new SplittableRandom(seed)).create("developers");
+		return match.activeSide() == Side.OPPONENT ? match : ENGINE.apply(match, Side.PLAYER, new Move.EndTurn());
+	}
+
+	// Partia z katalogu rozegrana do początku tury komputera od tury 7 (stoły i ręce nie są puste).
+	private static Match midgame(long seed) {
+		Match match = new MatchFactory(CATALOG, new SplittableRandom(seed))
+			.create(seed % 2 == 0 ? "developers" : "testers");
+		ComputerOpponent opponent = computer(seed + 3_000);
+		RandomPlayer player = new RandomPlayer(ENGINE, new SplittableRandom(seed + 4_000));
+		while (match.activeSide() == Side.PLAYER || match.turnNumber() < 7) {
+			match = match.activeSide() == Side.OPPONENT ? opponent.playTurn(match) : player.playTurn(match);
+			assertThat(match.status()).as("partia z ziarnem %d skończyła się przed turą 7", seed)
+				.isEqualTo(Status.IN_PROGRESS);
+		}
+		return match;
+	}
+
+	// Ta sama partia z inną zawartością ręki gracza i odwróconą kolejnością obu talii (liczby kart bez zmian).
+	private static Match withDifferentHiddenCards(Match match) {
+		MatchSide player = match.player();
+		int handSize = player.hand().size();
+		List<CardInstance> newHand = new ArrayList<>(player.deck().subList(0, handSize));
+		List<CardInstance> newDeck = new ArrayList<>(player.deck().subList(handSize, player.deck().size()));
+		newDeck.addAll(player.hand());
+		Collections.reverse(newDeck);
+		MatchSide opponent = match.opponent();
+		List<CardInstance> opponentDeck = new ArrayList<>(opponent.deck());
+		Collections.reverse(opponentDeck);
+		return new Match(match.id(), match.turnNumber(), match.activeSide(),
+				new MatchSide(player.faction(), newDeck, newHand, player.hp(), player.budgetCurrent(),
+						player.budgetMax(), player.board(), player.graveyard(), player.activeEvents()),
+				new MatchSide(opponent.faction(), opponentDeck, opponent.hand(), opponent.hp(),
+						opponent.budgetCurrent(), opponent.budgetMax(), opponent.board(), opponent.graveyard(),
+						opponent.activeEvents()),
+				match.status(), match.result(), match.log());
+	}
+
+	private static List<EffectApplied> effects(Match match) {
+		return match.log().stream().filter(EffectApplied.class::isInstance).map(EffectApplied.class::cast).toList();
+	}
+
+	private static Match playerTurn() {
+		Match opponentTurn = opponentTurn(side(List.of(), List.of(), 0),
+				side(List.of(character(1, 1, 1, 1)), List.of(), 1));
+		return new Match(opponentTurn.id(), 1, Side.PLAYER, opponentTurn.player(), opponentTurn.opponent(),
+				Status.IN_PROGRESS, null, List.of(new TurnStarted(Side.PLAYER, 1)));
+	}
+
+	// Partia w turze 1 komputera.
+	private static Match opponentTurn(MatchSide player, MatchSide opponent) {
+		return new Match(UUID.randomUUID(), 1, Side.OPPONENT, player, opponent, Status.IN_PROGRESS, null,
+				List.of(new TurnStarted(Side.OPPONENT, 1)));
+	}
+
+	private static MatchSide side(List<CardInstance> hand, List<CardInstance> deck, int budget) {
+		return new MatchSide(FACTION, deck, hand, MatchRules.MAX_HP, budget, budget, List.of(), List.of(), List.of());
+	}
+
+	// Strona z talią zapasową, żeby koniec tury nie kończył partii pustą talią.
+	private static MatchSide side(int hp, List<CardInstance> hand, List<BoardCharacter> board, int budget) {
+		return new MatchSide(FACTION, List.of(filler(NEXT_FILLER_ID.getAndAdd(10))), hand, hp, budget, budget, board,
+				List.of(), List.of());
+	}
+
+	private static BoardCharacter ready(CardInstance instance) {
+		return new BoardCharacter(instance, 0, false, false);
+	}
+
+	private static BoardCharacter fresh(CardInstance instance) {
+		return new BoardCharacter(instance, 0, true, false);
+	}
+
+	private static CardInstance character(int instanceId, int cost, int attack, int health) {
+		return new CardInstance(instanceId, new Card("char-" + instanceId, FACTION.id(), text("Postać"),
+				CardType.CHARACTER, cost, text("Opis"), attack, health, null, null, null));
+	}
+
+	private static CardInstance event(int instanceId, int cost, Effect effect) {
+		return event(instanceId, cost, 0, effect);
+	}
+
+	private static CardInstance event(int instanceId, int cost, int duration, Effect effect) {
+		return new CardInstance(instanceId, new Card("event-" + instanceId, FACTION.id(), text("Wydarzenie"),
+				CardType.EVENT, cost, text("Opis"), null, null, null, duration, List.of(effect)));
+	}
+
+	private static CardInstance[] filler(int firstId) {
+		return IntStream.range(0, 3).mapToObj(i -> character(firstId + i, 1, 1, 1)).toArray(CardInstance[]::new);
+	}
+
+	private static LocalizedText text(String value) {
+		return new LocalizedText(value, value);
+	}
+
+}

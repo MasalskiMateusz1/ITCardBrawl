@@ -45,7 +45,7 @@ class MatchServiceTests {
 	private MatchService service(boolean playerStarts) {
 		MatchEngine engine = new MatchEngine();
 		return new MatchService(new MatchFactory(CATALOG, random(11, playerStarts)), engine,
-				new RandomOpponent(engine, new SplittableRandom(13)), store);
+				new ComputerOpponent(engine, new PositionEvaluator(), new SplittableRandom(13)), store);
 	}
 
 	@Test
