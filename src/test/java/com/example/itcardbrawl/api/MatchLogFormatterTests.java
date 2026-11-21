@@ -111,10 +111,10 @@ class MatchLogFormatterTests {
 		MatchEvent healByOpponent = new MatchEvent.AbilityTriggered(Side.OPPONENT, TECH_LEAD, AbilityKeyword.HEAL, 3);
 		MatchEvent attackByPlayer = new MatchEvent.Attacked(Side.PLAYER, TECH_LEAD, null, 8, 0);
 
-		assertThat(formatter.format(damageByPlayer, Language.PL)).isEqualTo("Tech Lead zadaje przeciwnikowi obrażenia: −4");
-		assertThat(formatter.format(damageByPlayer, Language.EN)).isEqualTo("Tech Lead damages the opponent: −4");
-		assertThat(formatter.format(overtimeByOpponent, Language.PL)).isEqualTo("Tech Lead zadaje Ci obrażenia: −1");
-		assertThat(formatter.format(overtimeByOpponent, Language.EN)).isEqualTo("Tech Lead damages you: −1");
+		assertThat(formatter.format(damageByPlayer, Language.PL)).isEqualTo("Tech Lead zadaje przeciwnikowi 4 obrażenia");
+		assertThat(formatter.format(damageByPlayer, Language.EN)).isEqualTo("Tech Lead deals 4 damage to the opponent");
+		assertThat(formatter.format(overtimeByOpponent, Language.PL)).isEqualTo("Tech Lead zadaje Ci 1 obrażenie");
+		assertThat(formatter.format(overtimeByOpponent, Language.EN)).isEqualTo("Tech Lead deals you 1 damage");
 		assertThat(formatter.format(healByPlayer, Language.PL)).isEqualTo("Tech Lead leczy Twoje HP o 3");
 		assertThat(formatter.format(healByPlayer, Language.EN)).isEqualTo("Tech Lead heals your HP by 3");
 		assertThat(formatter.format(healByOpponent, Language.PL)).isEqualTo("Tech Lead leczy HP przeciwnika o 3");
