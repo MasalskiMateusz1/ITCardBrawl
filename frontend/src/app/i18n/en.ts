@@ -33,7 +33,7 @@ export const en: Messages = {
     opponentHeading: (factionName) => `Opponent: ${factionName}`,
     playerHeading: (factionName) => `You: ${factionName}`,
     hp: 'HP',
-    resource: 'Resource',
+    budget: 'Budget',
     handCount: 'Cards in hand',
     deckCount: 'Cards in deck',
     turn: (n, mine) => `Turn ${n} — ${mine ? 'your turn' : "opponent's turn"}`,

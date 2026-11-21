@@ -34,7 +34,7 @@ export interface Messages {
     opponentHeading: (factionName: string) => string;
     playerHeading: (factionName: string) => string;
     hp: string;
-    resource: string;
+    budget: string;
     handCount: string;
     deckCount: string;
     turn: (n: number, mine: boolean) => string;

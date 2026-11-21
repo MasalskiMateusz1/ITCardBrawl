@@ -32,8 +32,8 @@ export type EffectKind =
   | 'DAMAGE'
   | 'HEAL'
   | 'DRAW'
-  | 'RESOURCE'
-  | 'RESOURCE_MAX'
+  | 'BUDGET_GAIN'
+  | 'BUDGET_MAX'
   | 'ATTACK'
   | 'HEALTH'
   | 'GUARD'
@@ -74,7 +74,7 @@ export type PlayedEvent = {
   effects: EffectView[];
 };
 
-export type ResourceView = {
+export type BudgetView = {
   current: number;
   max: number;
 };
@@ -135,7 +135,7 @@ export type PlayerView = {
   faction: FactionRef;
   hp: number;
   maxHp: number;
-  resource: ResourceView;
+  budget: BudgetView;
   deckCount: number;
   hand: HandCard[];
   board: BoardCharacter[];
@@ -148,7 +148,7 @@ export type OpponentView = {
   faction: FactionRef;
   hp: number;
   maxHp: number;
-  resource: ResourceView;
+  budget: BudgetView;
   deckCount: number;
   handCount: number;
   board: BoardCharacter[];
