@@ -265,10 +265,10 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify`
-- [x] 2.4 Brak nazw zasobu we froncie: grep z wykluczeniami (Testing Strategy) ograniczony do `frontend/src` zwraca pusty wynik
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — f6bbfca
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — f6bbfca
+- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify` — f6bbfca
+- [x] 2.4 Brak nazw zasobu we froncie: grep z wykluczeniami (Testing Strategy) ograniczony do `frontend/src` zwraca pusty wynik — f6bbfca
 
 #### Manual
 
