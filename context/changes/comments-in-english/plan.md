@@ -239,13 +239,13 @@ None. Existing archived plans keep their Polish quotes of old comments. `git bla
 
 #### Automated
 
-- [x] 3.1 Comment-only diff check prints nothing for the nine files
-- [x] 3.2 Leftover Polish check prints nothing for `#` comment lines in the nine files
-- [x] 3.3 YAML still parses: `python3 -c "import yaml,sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" .github/workflows/ci.yml deploy/compose.yaml`
-- [x] 3.4 Shell script still parses: `bash -n deploy/deploy.sh`
-- [x] 3.5 `AGENTS.md` no longer mandates Polish comments: `grep -n "Comments, javadoc and validation messages are in Polish" AGENTS.md` prints nothing
-- [x] 3.6 Full backend suite passes: `./mvnw -B verify`
+- [x] 3.1 Comment-only diff check prints nothing for the nine files — b59c3ab
+- [x] 3.2 Leftover Polish check prints nothing for `#` comment lines in the nine files — b59c3ab
+- [x] 3.3 YAML still parses: `python3 -c "import yaml,sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" .github/workflows/ci.yml deploy/compose.yaml` — b59c3ab
+- [x] 3.4 Shell script still parses: `bash -n deploy/deploy.sh` — b59c3ab
+- [x] 3.5 `AGENTS.md` no longer mandates Polish comments: `grep -n "Comments, javadoc and validation messages are in Polish" AGENTS.md` prints nothing — b59c3ab
+- [x] 3.6 Full backend suite passes: `./mvnw -B verify` — b59c3ab
 
 #### Manual
 
-- [ ] 3.7 After the merge to `main`, the CI run and the automatic deploy succeed (comment-only change to `ci.yml`, `Dockerfile` and `deploy/`)
+- [x] 3.7 After the merge to `main`, the CI run and the automatic deploy succeed (comment-only change to `ci.yml`, `Dockerfile` and `deploy/`) — b59c3ab

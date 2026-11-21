@@ -1,7 +1,7 @@
 ---
 change_id: comments-in-english
 title: Code comments in English
-status: implementing
+status: implemented
 created: 2026-11-21
 updated: 2026-11-21
 archived_at: null
