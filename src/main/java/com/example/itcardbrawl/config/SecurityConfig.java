@@ -40,7 +40,7 @@ public class SecurityConfig {
 		return http.build();
 	}
 
-	// Trasy Angulara (GET, zgodne z regula fallbacku SPA); autoryzacje sprawdza guard przez /api/me.
+	// Angular routes (GET, matching the SPA fallback rule); authorization is checked by the guard via /api/me.
 	private static RequestMatcher spaRoutes() {
 		return request -> HttpMethod.GET.matches(request.getMethod())
 				&& SpaForwardController.isSpaRoute(SpaForwardController.pathWithinApplication(request));

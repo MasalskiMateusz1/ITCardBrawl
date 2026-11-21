@@ -73,7 +73,7 @@ class MatchViewTests {
 		MatchView view = MatchView.of(last, List.of(step, last), CATALOG, formatter, Language.EN, List.of());
 
 		assertThat(view.log()).hasSize(MatchView.LOG_LIMIT);
-		// Pierwszy wysłany wpis to TurnStarted dla tury 31 — 30 najstarszych wpisów pominięto.
+		// The first entry sent is TurnStarted for turn 31 — the 30 oldest entries were skipped.
 		assertThat(view.log().getFirst().text()).contains("31");
 		assertThat(view.replay()).extracting(MatchView.ReplayStepView::logSize)
 			.containsExactly(MatchView.LOG_LIMIT - 5, MatchView.LOG_LIMIT);
@@ -124,7 +124,8 @@ class MatchViewTests {
 		if (start.activeSide() == Side.PLAYER) {
 			start = engine.apply(start, Side.PLAYER, new Move.EndTurn());
 		}
-		// Pełna tura komputera, potem koniec tury gracza: log kroku startowego zawiera powody poprzedniej tury.
+		// A full computer turn, then the end of the player's turn: the starting step's log contains the previous
+		// turn's reasons.
 		Match playerTurn = opponent.playTurn(start);
 		Match secondTurn = engine.apply(playerTurn, Side.PLAYER, new Move.EndTurn());
 		assertThat(secondTurn.log()).anyMatch(MatchEvent.MoveExplained.class::isInstance);
@@ -224,7 +225,7 @@ class MatchViewTests {
 		MatchView view = MatchView.of(match, List.of(), CATALOG, formatter, Language.PL, List.of());
 		MatchView.BoardCharacterView ownView = view.player().board().getFirst();
 
-		// Atak −2 od wydarzenia przeciwnika, HP +2 od własnego.
+		// Attack −2 from the opponent's event, HP +2 from its own.
 		assertThat(ownView.baseAttack()).isEqualTo(8);
 		assertThat(ownView.attack()).isEqualTo(6);
 		assertThat(ownView.baseHealth()).isEqualTo(8);
@@ -256,7 +257,7 @@ class MatchViewTests {
 		assertThat(english.opponent().lastEvent().effects().getFirst().text()).contains("budget");
 	}
 
-	// Kontrakt JSON końca partii: HP poniżej zera widoczne w current i replay, przyczyna HP_DEPLETED.
+	// The match-end JSON contract: HP below zero visible in current and replay, cause HP_DEPLETED.
 	@Test
 	void finishedMatchSerializesHpBelowZeroAndHpDepletedReason() {
 		MatchSide winner = new MatchSide(FACTION, List.of(), List.of(), MatchRules.MAX_HP, 2, 4, List.of(), List.of(),
@@ -275,7 +276,7 @@ class MatchViewTests {
 		assertThat((String) json.read("$.replay[0].result.reason")).isEqualTo("HP_DEPLETED");
 		assertThat((Integer) json.read("$.replay[0].opponent.hp")).isEqualTo(-3);
 		assertThat((Integer) json.read("$.replay[0].player.maxHp")).isEqualTo(MatchRules.MAX_HP);
-		// Kontrakt budżetu: pole budget z current/max; pełna lista kluczy wyklucza dawną nazwę.
+		// The budget contract: a budget field with current/max; the full list of keys rules out the former name.
 		assertThat((Integer) json.read("$.player.budget.current")).isEqualTo(2);
 		assertThat((Integer) json.read("$.player.budget.max")).isEqualTo(4);
 		Map<String, Object> player = json.read("$.player");
@@ -283,7 +284,7 @@ class MatchViewTests {
 				"activeEvents", "graveyardCount", "lastEvent");
 	}
 
-	// Partia z logiem złożonym z kolejnych TurnStarted (tura 1..logSize), strony bez kart.
+	// A match whose log consists of consecutive TurnStarted entries (turn 1..logSize), sides without cards.
 	private static Match match(int logSize) {
 		MatchSide side = new MatchSide(FACTION, List.of(), List.of(), MatchRules.MAX_HP, 0, 0, List.of(), List.of(), List.of());
 		List<MatchEvent> log = IntStream.rangeClosed(1, logSize)

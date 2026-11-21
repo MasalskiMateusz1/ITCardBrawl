@@ -25,7 +25,7 @@ class CardCatalogTests {
 
 	private Map<String, List<DeckEntry>> decks;
 
-	// Poprawny katalog w pamięci: 2 grywalne frakcje po 10 kart x2 + 10 neutralnych x1 w każdej talii.
+	// A valid in-memory catalog: 2 playable factions of 10 cards x2 each + 10 neutral cards x1 in every deck.
 	@BeforeEach
 	void validData() {
 		factions = new ArrayList<>(List.of(
@@ -58,7 +58,7 @@ class CardCatalogTests {
 		return new Faction(id, text("Frakcja " + id), text("opis"), playable);
 	}
 
-	// Parzysty koszt = wydarzenie (czas trwania 0), nieparzysty = postać 1/1 bez zdolności.
+	// Even cost = event (duration 0), odd = a 1/1 character without an ability.
 	private static Card card(String id, String faction, int cost) {
 		return cost % 2 == 0 ? event(id, faction, cost, 0) : character(id, faction, cost, 1, 1, null);
 	}
@@ -375,7 +375,7 @@ class CardCatalogTests {
 				""";
 		var resource = new ByteArrayResource(json.getBytes(StandardCharsets.UTF_8), "katalog dwujęzyczny");
 
-		// Katalog jest niepoprawny (brak frakcji), ale komunikat nie może zgłaszać braku tekstów karty.
+		// The catalog is invalid (missing factions), but the message must not report missing card texts.
 		assertThatIllegalStateException()
 			.isThrownBy(() -> CardCatalogLoader.load(JsonMapper.builder().build(), resource))
 			.withMessageContaining("karta 'x' wskazuje nieistniejącą frakcję 'f'")
@@ -556,7 +556,7 @@ class CardCatalogTests {
 				""";
 		var resource = new ByteArrayResource(json.getBytes(StandardCharsets.UTF_8), "katalog ze zdolnością");
 
-		// Katalog jest niepoprawny (brak frakcji), ale GUARD bez amount musi przejść walidację karty.
+		// The catalog is invalid (missing factions), but GUARD without amount must pass card validation.
 		assertThatIllegalStateException()
 			.isThrownBy(() -> CardCatalogLoader.load(JsonMapper.builder().build(), resource))
 			.withMessageContaining("karta 'x' wskazuje nieistniejącą frakcję 'f'")

@@ -26,7 +26,7 @@ class MatchServiceTests {
 
 	private final MatchStore store = new MatchStore();
 
-	// Tasowanie z ziarna, a wybór zaczynającego (nextBoolean) ustalony przez test.
+	// Shuffling from the seed, while the choice of who starts (nextBoolean) is fixed by the test.
 	private static RandomGenerator random(long seed, boolean playerStarts) {
 		SplittableRandom delegate = new SplittableRandom(seed);
 		return new RandomGenerator() {
@@ -165,7 +165,7 @@ class MatchServiceTests {
 	void playCardHasEmptyReplay() {
 		MatchService service = service(true);
 		Match match = service.start(KEY, "developers").match();
-		// Budżet rośnie co turę - kończymy tury, aż gracz będzie mógł zagrać kartę.
+		// The budget grows every turn - we end turns until the player can play a card.
 		while (playCard(match) == null) {
 			assertThat(match.status()).isEqualTo(Status.IN_PROGRESS);
 			match = service.move(KEY, match.id(), match.turnNumber(), new Move.EndTurn()).orElseThrow().match();

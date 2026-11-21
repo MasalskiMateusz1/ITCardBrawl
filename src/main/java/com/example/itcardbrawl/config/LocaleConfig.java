@@ -19,7 +19,7 @@ import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 @Configuration
 public class LocaleConfig implements WebMvcConfigurer {
 
-	// Spring MVC szuka resolvera po nazwie beana "localeResolver" — inna nazwa byłaby zignorowana.
+	// Spring MVC looks the resolver up by the bean name "localeResolver" — any other name would be ignored.
 	@Bean
 	public LocaleResolver localeResolver() {
 		AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
@@ -28,7 +28,7 @@ public class LocaleConfig implements WebMvcConfigurer {
 		return resolver;
 	}
 
-	// Treść API zależy od Accept-Language — cache (przeglądarka, proxy) musi rozróżniać wersje językowe.
+	// API content depends on Accept-Language — caches (browser, proxy) must tell the language versions apart.
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
 		registry.addInterceptor(new HandlerInterceptor() {

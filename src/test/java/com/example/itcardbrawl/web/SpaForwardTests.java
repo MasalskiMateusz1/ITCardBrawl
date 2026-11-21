@@ -59,8 +59,8 @@ class SpaForwardTests {
 			.andExpect(status().isUnauthorized());
 	}
 
-	// Regula tras SPA musi decydowac na zdekodowanej sciezce, tak jak routing MVC:
-	// "/%61pi/me" to "/api/me" i nie moze ominac uwierzytelnienia jako "trasa SPA".
+	// The SPA route rule must decide on the decoded path, just like MVC routing:
+	// "/%61pi/me" is "/api/me" and must not bypass authentication as an "SPA route".
 	@Test
 	void percentEncodedApiPathStaysProtected() throws Exception {
 		mockMvc.perform(get(URI.create("/%61pi/me")))
@@ -80,8 +80,8 @@ class SpaForwardTests {
 			.andExpect(status().isNotFound());
 	}
 
-	// MockMvc nie wykonuje dispatchu ERROR po sendError, wiec symulujemy go wprost:
-	// w kontenerze brakujacy plik konczy sie dispatchem ERROR na /error, ktory nie moze dac 401.
+	// MockMvc does not perform the ERROR dispatch after sendError, so we simulate it directly:
+	// in the container a missing file ends in an ERROR dispatch to /error, which must not yield 401.
 	@Test
 	void errorDispatchForMissingFileIsNotFoundNotUnauthorized() throws Exception {
 		mockMvc.perform(get("/error").with(request -> {

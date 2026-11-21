@@ -24,9 +24,9 @@ import com.example.itcardbrawl.game.PolishNumberForms;
 import org.springframework.stereotype.Component;
 
 /**
- * Składa zdania logu partii z perspektywy gracza: jego strona to „Ty” / „You”, strona komputera to
- * „Przeciwnik” / „Opponent”. Nazwy kart pochodzą z katalogu w języku żądania. Karty dobierane przez
- * przeciwnika nie są ujawniane.
+ * Composes match log sentences from the player's perspective: their side is "You" (in each language), the
+ * computer's side is "Opponent" (in each language). Card names come from the catalog in the request language.
+ * Cards drawn by the opponent are not revealed.
  */
 @Component
 public class MatchLogFormatter {
@@ -74,8 +74,9 @@ public class MatchLogFormatter {
 		};
 	}
 
-	// Powód ruchu komputera: rzeczowe zdanie z prefiksem „Przeciwnik:”, oparte tylko na karcie, celu i liczbie.
-	// Strona zdarzenia nie jest sprawdzana: MoveExplained wpisuje wyłącznie ComputerOpponent (strona OPPONENT).
+	// The reason for a computer move: a factual sentence with the "Opponent:" prefix, based only on the card,
+	// target and number.
+	// The event's side is not checked: MoveExplained is written only by ComputerOpponent (side OPPONENT).
 	private static String moveExplained(MoveExplained e, Language language) {
 		String card = e.card() != null ? name(e.card(), language) : "";
 		String target = e.target() != null ? name(e.target(), language) : "";
@@ -154,7 +155,7 @@ public class MatchLogFormatter {
 							"%s heals your HP by %d".formatted(card, amount))
 					: text(language, "%s leczy HP przeciwnika o %d".formatted(card, amount),
 							"%s heals opponent HP by %d".formatted(card, amount));
-			// Zdolności stałe nie wyzwalają się jako zdarzenie, ale przełącznik musi być kompletny.
+			// Static abilities do not trigger as an event, but the switch must be exhaustive.
 			case GUARD, RUSH -> card + ": " + e.keyword().describe(amount).in(language);
 		};
 	}
@@ -196,7 +197,7 @@ public class MatchLogFormatter {
 		};
 	}
 
-	// Ujemne HP z typograficznym minusem (U+2212).
+	// Negative HP with a typographic minus sign (U+2212).
 	private static String hp(int value) {
 		return value < 0 ? "−" + -value : Integer.toString(value);
 	}

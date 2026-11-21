@@ -27,9 +27,9 @@ import com.example.itcardbrawl.game.Move;
 import com.example.itcardbrawl.game.Target;
 
 /**
- * Widok stołu z perspektywy gracza. Przeciwnik jest widoczny przez stół, aktywne wydarzenia i liczniki —
- * jego ręka i kolejność talii nie opuszczają serwera. Teksty (nazwy frakcji, nazwy i treść kart, log) są
- * w języku żądania; identyfikatory partii i kart od języka nie zależą.
+ * The board view from the player's perspective. The opponent is visible through the board, active events and
+ * counters — their hand and deck order never leave the server. Texts (faction names, card names and text, log) are
+ * in the request language; match and card identifiers do not depend on the language.
  */
 public record MatchView(UUID matchId, Match.Status status, TurnView turn, PlayerView player, OpponentView opponent,
 		ResultView result, List<LogEntryView> log, List<ReplayStepView> replay) {
@@ -51,9 +51,9 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 	}
 
 	/**
-	 * Stan stołu po jednym ruchu komputera. {@code reason} to powód ruchu, który doprowadził do tego kroku
-	 * (wpis {@code MoveExplained} z fragmentu logu dodanego w tym kroku), albo {@code null} dla kroku
-	 * startowego — jego log kończy się na poprzedniej turze, więc nie ma w nim powodu bieżącego ruchu.
+	 * The board state after one computer move. {@code reason} is the reason for the move that led to this step
+	 * (the {@code MoveExplained} entry from the log fragment added in this step), or {@code null} for the starting
+	 * step — its log ends at the previous turn, so it contains no reason for the current move.
 	 */
 	public record ReplayStepView(TurnView turn, Match.Status status, ResultView result, PlayerView player,
 			OpponentView opponent, int logSize, String reason) {
@@ -254,7 +254,7 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	/** Wpis logu; {@code reason} odróżnia powód ruchu komputera od skutków ruchów. */
+	/** A log entry; {@code reason} distinguishes the reason for a computer move from the effects of moves. */
 	public record LogEntryView(Match.Side side, String text, boolean reason) {
 
 		static LogEntryView of(MatchEvent event, MatchLogFormatter formatter, Language language) {

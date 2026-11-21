@@ -57,9 +57,9 @@ class SecurityFlowTests {
 			.contains("redirect_uri=http://localhost/login/oauth2/code/google");
 	}
 
-	// Token CSRF pobierany jak w SPA (cookie XSRF-TOKEN -> naglowek X-XSRF-TOKEN). Celowo bez
-	// post-procesora csrf(): podmienia on repozytorium tokenow w CsrfFilter wspoldzielonego kontekstu,
-	// przez co pozniejsze testy (MeControllerTests) nie dostaja cookie XSRF-TOKEN.
+	// The CSRF token is obtained as in the SPA (XSRF-TOKEN cookie -> X-XSRF-TOKEN header). Deliberately without
+	// the csrf() post-processor: it replaces the token repository in the CsrfFilter of the shared context,
+	// so later tests (MeControllerTests) do not get the XSRF-TOKEN cookie.
 	@Test
 	void logoutWithCsrfReturnsNoContent() throws Exception {
 		var github = clientRegistrations.findByRegistrationId("github");

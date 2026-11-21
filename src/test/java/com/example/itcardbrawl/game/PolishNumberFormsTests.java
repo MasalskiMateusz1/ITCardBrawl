@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 class PolishNumberFormsTests {
 
-	// 1 → pojedyncza; końcówka 2–4 poza 12–14 → mnoga; reszta (także 0) → dopełniacz liczby mnogiej.
+	// 1 → singular; ending in 2–4 except 12–14 → plural; the rest (including 0) → genitive plural.
 	@Test
 	void choosesPolishFormByNumber() {
 		assertThat(form(1)).isEqualTo("karta");

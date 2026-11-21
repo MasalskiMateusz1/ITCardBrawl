@@ -73,7 +73,7 @@ public class MatchController {
 
 	@GetMapping("/matches/current")
 	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication, Locale locale) {
-		// Bieżący stan nie ma kroków do odtworzenia.
+		// The current state has no steps to replay.
 		return respond(matchService.current(playerKey(authentication))
 			.map(match -> new MatchOutcome(match, List.of()))
 			.orElse(null), locale);
@@ -99,7 +99,7 @@ public class MatchController {
 		return move(authentication, matchId, request.turn(), new Move.EndTurn(), locale);
 	}
 
-	// Ruch nieaktualny (inna partia albo tura) — stan bez zmian, SPA powinno odświeżyć widok.
+	// A stale move (a different match or turn) — the state is unchanged, the SPA should refresh the view.
 	@ExceptionHandler(StaleMoveException.class)
 	public ResponseEntity<ErrorView> staleMove(StaleMoveException ex) {
 		return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorView(ex.getMessage()));
@@ -115,7 +115,7 @@ public class MatchController {
 		return respond(matchService.move(playerKey(authentication), matchId, turn, move).orElse(null), locale);
 	}
 
-	// Brak bieżącej partii gracza daje 404.
+	// No current match for the player yields 404.
 	private ResponseEntity<MatchView> respond(MatchOutcome outcome, Locale locale) {
 		return outcome == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(view(outcome, locale));
 	}
@@ -125,7 +125,7 @@ public class MatchController {
 				engine.legalMoves(outcome.match(), Match.Side.PLAYER));
 	}
 
-	// Rejestracja + nazwa principala jednoznacznie identyfikują gracza między dostawcami.
+	// The registration + principal name uniquely identify the player across providers.
 	private static String playerKey(OAuth2AuthenticationToken authentication) {
 		return authentication.getAuthorizedClientRegistrationId() + ":" + authentication.getName();
 	}
@@ -155,7 +155,7 @@ public class MatchController {
 		throw new IllegalMoveException("Nieprawidłowy cel wydarzenia");
 	}
 
-	/** {@code targetId == null} oznacza atak w gracza (HP przeciwnika). */
+	/** {@code targetId == null} means an attack on the player (the opponent's HP). */
 	public record AttackRequest(int turn, int attackerId, Integer targetId) {
 	}
 
