@@ -6,7 +6,7 @@ import java.util.Set;
 /** Rodzaje efektów wydarzeń wraz z ich kategorią, dozwolonymi zasięgami i zakresem wartości. */
 public enum EffectKind {
 
-	STRESS(true, 1, 10, EffectScope.OPPONENT),
+	PLAYER_DAMAGE(true, 1, 10, EffectScope.OPPONENT),
 	DAMAGE(true, 1, 10, EffectScope.TARGET, EffectScope.ENEMY_BOARD, EffectScope.ENEMY_ALL,
 			EffectScope.ALL_BOARDS),
 	HEAL(true, 1, 10, EffectScope.TARGET, EffectScope.OWN_BOARD, EffectScope.OWN_ALL,
@@ -66,8 +66,10 @@ public enum EffectKind {
 
 	public LocalizedText description(EffectScope scope, int amount) {
 		return switch (this) {
-			case STRESS -> text("Zadaj przeciwnikowi %d stresu".formatted(amount),
-					"Give the opponent %d stress".formatted(amount));
+			case PLAYER_DAMAGE -> text(
+					"Zadaj przeciwnikowi %d %s".formatted(amount,
+							PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń")),
+					"Deal %d damage to the opponent".formatted(amount));
 			case DAMAGE -> damageDescription(scope, amount);
 			case HEAL -> healDescription(scope, amount);
 			case DRAW -> text("Dobierz %d %s".formatted(amount, PolishNumberForms.form(amount, "kartę", "karty", "kart")),
@@ -94,8 +96,7 @@ public enum EffectKind {
 		return switch (scope) {
 			case TARGET -> text(pl + " wybranej postaci lub graczowi", en + " to a chosen character or player");
 			case ENEMY_BOARD -> text(pl + " postaciom przeciwnika", en + " to enemy characters");
-			case ENEMY_ALL -> text(pl + " postaciom i %d stresu przeciwnikowi".formatted(amount),
-					en + " to enemy characters and give the opponent %d stress".formatted(amount));
+			case ENEMY_ALL -> text(pl + " wrogim postaciom i przeciwnikowi", en + " to enemy characters and the opponent");
 			case ALL_BOARDS -> text(pl + " wszystkim postaciom", en + " to all characters");
 			default -> text(pl, en);
 		};
@@ -104,12 +105,13 @@ public enum EffectKind {
 	private static LocalizedText healDescription(EffectScope scope, int amount) {
 		return switch (scope) {
 			case TARGET -> text(
-					"Przywróć %d pkt zdrowia wybranej postaci lub obniż stres gracza o %d".formatted(amount, amount),
-					"Restore %d health to a chosen character or reduce a player's stress by %d".formatted(amount, amount));
+					"Przywróć %d pkt zdrowia wybranej postaci lub przywróć graczowi %d HP".formatted(amount, amount),
+					"Restore %d health to a chosen character or restore %d HP to a player".formatted(amount, amount));
 			case OWN_BOARD -> text("Przywróć własnym postaciom %d pkt zdrowia".formatted(amount),
 					"Restore %d health to your characters".formatted(amount));
-			case OWN_ALL -> text("Przywróć własnym postaciom %d pkt zdrowia i obniż własny stres".formatted(amount),
-					"Restore %d health to your characters and reduce your stress".formatted(amount));
+			case OWN_ALL -> text(
+					"Przywróć własnym postaciom %d pkt zdrowia i przywróć sobie %d HP".formatted(amount, amount),
+					"Restore %d health to your characters and restore %d HP to yourself".formatted(amount, amount));
 			case ALL_BOARDS -> text("Przywróć wszystkim postaciom %d pkt zdrowia".formatted(amount),
 					"Restore %d health to all characters".formatted(amount));
 			default -> text("Przywróć %d pkt zdrowia".formatted(amount), "Restore %d health".formatted(amount));

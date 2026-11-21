@@ -65,7 +65,7 @@ public class MatchEngine {
 			}
 		}
 		List<BoardCharacter> targets = allowedTargets(state, side.opponent());
-		boolean stressAllowed = !isGuarded(state, side.opponent());
+		boolean playerAttackAllowed = !isGuarded(state, side.opponent());
 		for (BoardCharacter attacker : own.board) {
 			if (!canAttack(state, side, attacker)) {
 				continue;
@@ -73,7 +73,7 @@ public class MatchEngine {
 			for (BoardCharacter target : targets) {
 				moves.add(new Move.Attack(attacker.instance().instanceId(), target.instance().instanceId()));
 			}
-			if (stressAllowed) {
+			if (playerAttackAllowed) {
 				moves.add(new Move.Attack(attacker.instance().instanceId(), null));
 			}
 		}
@@ -113,7 +113,7 @@ public class MatchEngine {
 
 	private static boolean supportsCharacter(EffectKind kind) {
 		return kind != EffectKind.RESOURCE && kind != EffectKind.RESOURCE_MAX && kind != EffectKind.DRAW
-				&& kind != EffectKind.STRESS;
+				&& kind != EffectKind.PLAYER_DAMAGE;
 	}
 
 	private static boolean supportsPlayer(EffectKind kind) {
@@ -128,7 +128,7 @@ public class MatchEngine {
 		state.log(new MatchEvent.EffectApplied(actor, card, effect, targetCharacter, targetPlayer));
 		int amount = effect.amount();
 		switch (effect.kind()) {
-			case STRESS -> state.addStress(actor.opponent(), amount);
+			case PLAYER_DAMAGE -> state.changeHp(actor.opponent(), -amount);
 			case DAMAGE -> applyDamage(state, actor, effect.scope(), amount, target);
 			case HEAL -> applyHeal(state, actor, effect.scope(), amount, target);
 			case DRAW -> {
@@ -163,7 +163,7 @@ public class MatchEngine {
 	private static void applyDamage(State state, Side actor, EffectScope scope, int amount, Target target) {
 		if (scope == EffectScope.TARGET) {
 			if (target instanceof Target.Player player) {
-				state.addStress(player.side(), amount);
+				state.changeHp(player.side(), -amount);
 			}
 			else if (target instanceof Target.Character character) {
 				addCharacterDamage(state, character.instanceId(), amount);
@@ -171,7 +171,7 @@ public class MatchEngine {
 			return;
 		}
 		if (scope == EffectScope.ENEMY_ALL) {
-			state.addStress(actor.opponent(), amount);
+			state.changeHp(actor.opponent(), -amount);
 			if (state.finished()) {
 				return;
 			}
@@ -203,8 +203,7 @@ public class MatchEngine {
 	private static void applyHeal(State state, Side actor, EffectScope scope, int amount, Target target) {
 		if (scope == EffectScope.TARGET) {
 			if (target instanceof Target.Player player) {
-				SideState affected = state.side(player.side());
-				state.addStress(player.side(), -Math.min(amount, affected.stress));
+				state.changeHp(player.side(), amount);
 			}
 			else if (target instanceof Target.Character character) {
 				healCharacter(state, character.instanceId(), amount);
@@ -212,8 +211,7 @@ public class MatchEngine {
 			return;
 		}
 		if (scope == EffectScope.OWN_ALL) {
-			SideState own = state.side(actor);
-			state.addStress(actor, -Math.min(amount, own.stress));
+			state.changeHp(actor, amount);
 		}
 		List<Side> affected = switch (scope) {
 			case OWN_BOARD, OWN_ALL -> List.of(actor);
@@ -270,7 +268,7 @@ public class MatchEngine {
 				&& stats(state, owner, c).has(AbilityKeyword.GUARD));
 	}
 
-	// Jeśli przeciwnik ma postacie z Ochroną, tylko one są dozwolonym celem (stres też odpada).
+	// Jeśli przeciwnik ma postacie z Ochroną, tylko one są dozwolonym celem (atak w gracza też odpada).
 	private static List<BoardCharacter> allowedTargets(State state, Side owner) {
 		List<BoardCharacter> board = state.side(owner).board;
 		return isGuarded(state, owner) ? board.stream().filter(c -> !stats(state, owner, c).trapped()
@@ -334,13 +332,13 @@ public class MatchEngine {
 		own.board.add(played);
 		Ability ability = definition.ability();
 		if (ability != null) switch (ability.keyword()) {
-			case ON_PLAY_STRESS -> {
+			case ON_PLAY_DAMAGE -> {
 				state.log(new MatchEvent.AbilityTriggered(actor, card, ability.keyword(), ability.amount()));
-				state.addStress(actor.opponent(), ability.amount());
+				state.changeHp(actor.opponent(), -ability.amount());
 			}
 			case HEAL -> {
 				state.log(new MatchEvent.AbilityTriggered(actor, card, ability.keyword(), ability.amount()));
-				state.addStress(actor, -Math.min(ability.amount(), own.stress));
+				state.changeHp(actor, ability.amount());
 			}
 			case GUARD, RUSH, OVERTIME -> {
 				// Zdolności stałe: działają przy ataku albo na koniec tury, nie przy zagraniu.
@@ -367,7 +365,7 @@ public class MatchEngine {
 			}
 			own.board.set(attackerIndex, attacker.markAttacked());
 			state.log(new MatchEvent.Attacked(actor, attacker.instance(), null, attackerStats.attack(), 0));
-			state.addStress(actor.opponent(), attackerStats.attack());
+			state.changeHp(actor.opponent(), -attackerStats.attack());
 			return;
 		}
 
@@ -397,11 +395,11 @@ public class MatchEngine {
 		Side ending = state.activeSide;
 		SideState own = state.active();
 
-		// (1) Nadgodziny: każda postać z OVERTIME dodaje 1 stresu przeciwnikowi; koniec partii przerywa resztę.
+		// (1) Nadgodziny: każda postać z OVERTIME zadaje przeciwnikowi 1 obrażenie; koniec partii przerywa resztę.
 		for (BoardCharacter character : List.copyOf(own.board)) {
 			if (stats(state, ending, character).has(AbilityKeyword.OVERTIME)) {
 				state.log(new MatchEvent.AbilityTriggered(ending, character.instance(), AbilityKeyword.OVERTIME, 1));
-				state.addStress(ending.opponent(), 1);
+				state.changeHp(ending.opponent(), -1);
 				if (state.finished()) {
 					return;
 				}
@@ -523,16 +521,18 @@ public class MatchEngine {
 			return status == Status.FINISHED;
 		}
 
-		// Każda zmiana stresu od razu sprawdza limit; strona, która go osiągnęła, przegrywa.
-		void addStress(Side affected, int delta) {
+		// Jedyne miejsce zmiany HP gracza: leczenie (delta > 0) ma sufit MatchRules.MAX_HP, obrażenia nie mają
+		// dolnej granicy. Strona, której HP spadło do 0 lub niżej, przegrywa.
+		void changeHp(Side affected, int delta) {
 			SideState side = side(affected);
-			int from = side.stress;
-			side.stress = from + delta;
-			if (side.stress != from) {
-				log(new MatchEvent.StressChanged(activeSide, affected, from, side.stress));
+			int from = side.hp;
+			int to = delta > 0 ? Math.min(from + delta, MatchRules.MAX_HP) : from + delta;
+			side.hp = to;
+			if (to != from) {
+				log(new MatchEvent.HpChanged(activeSide, affected, from, to));
 			}
-			if (side.stress >= MatchRules.STRESS_LIMIT) {
-				finish(affected.opponent(), EndReason.STRESS_LIMIT, activeSide);
+			if (to <= 0) {
+				finish(affected.opponent(), EndReason.HP_DEPLETED, activeSide);
 			}
 		}
 
@@ -563,7 +563,7 @@ public class MatchEngine {
 
 		private final List<ActiveEvent> activeEvents;
 
-		private int stress;
+		private int hp;
 
 		private int resourceCurrent;
 
@@ -576,13 +576,13 @@ public class MatchEngine {
 			this.board = new ArrayList<>(side.board());
 			this.graveyard = new ArrayList<>(side.graveyard());
 			this.activeEvents = new ArrayList<>(side.activeEvents());
-			this.stress = side.stress();
+			this.hp = side.hp();
 			this.resourceCurrent = side.resourceCurrent();
 			this.resourceMax = side.resourceMax();
 		}
 
 		MatchSide toMatchSide() {
-			return new MatchSide(faction, deck, hand, stress, resourceCurrent, resourceMax, board, graveyard,
+			return new MatchSide(faction, deck, hand, hp, resourceCurrent, resourceMax, board, graveyard,
 					activeEvents);
 		}
 

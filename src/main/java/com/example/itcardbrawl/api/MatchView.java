@@ -81,13 +81,13 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	public record PlayerView(FactionRef faction, int stress, int stressLimit, ResourceView resource, int deckCount,
+	public record PlayerView(FactionRef faction, int hp, int maxHp, ResourceView resource, int deckCount,
 			List<HandCardView> hand, List<BoardCharacterView> board, List<ActiveEventView> activeEvents,
 			int graveyardCount, PlayedEventView lastEvent) {
 
 		static PlayerView of(Match match, CardCatalog catalog, Language language, List<Move> legalMoves) {
 			MatchSide player = match.player();
-			return new PlayerView(FactionRef.of(player.faction(), language), player.stress(), MatchRules.STRESS_LIMIT,
+			return new PlayerView(FactionRef.of(player.faction(), language), player.hp(), MatchRules.MAX_HP,
 					ResourceView.of(player), player.deck().size(),
 					player.hand().stream().map(card -> HandCardView.of(card, catalog, language, legalMoves)).toList(),
 					BoardCharacterView.listOf(match, Match.Side.PLAYER, language, legalMoves),
@@ -97,14 +97,14 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	public record OpponentView(FactionRef faction, int stress, int stressLimit, ResourceView resource, int deckCount,
+	public record OpponentView(FactionRef faction, int hp, int maxHp, ResourceView resource, int deckCount,
 			int handCount, List<BoardCharacterView> board, List<ActiveEventView> activeEvents, int graveyardCount,
 			PlayedEventView lastEvent) {
 
 		static OpponentView of(Match match, Language language, List<Move> legalMoves) {
 			MatchSide opponent = match.opponent();
-			return new OpponentView(FactionRef.of(opponent.faction(), language), opponent.stress(),
-					MatchRules.STRESS_LIMIT, ResourceView.of(opponent), opponent.deck().size(), opponent.hand().size(),
+			return new OpponentView(FactionRef.of(opponent.faction(), language), opponent.hp(),
+					MatchRules.MAX_HP, ResourceView.of(opponent), opponent.deck().size(), opponent.hand().size(),
 					BoardCharacterView.listOf(match, Match.Side.OPPONENT, language, legalMoves),
 					ActiveEventView.listOf(match, Match.Side.OPPONENT, language), opponent.graveyard().size(),
 					PlayedEventView.last(match, Match.Side.OPPONENT, language));

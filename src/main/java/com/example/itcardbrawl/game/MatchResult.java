@@ -6,8 +6,8 @@ package com.example.itcardbrawl.game;
 public record MatchResult(Match.Side winner, EndReason reason) {
 
 	public enum EndReason {
-		/** Stres przegranego osiągnął {@link MatchRules#STRESS_LIMIT}. */
-		STRESS_LIMIT,
+		/** HP przegranego spadło do 0 lub niżej. */
+		HP_DEPLETED,
 		/** Przegrany musiał dobrać kartę z pustej talii. */
 		EMPTY_DECK
 	}

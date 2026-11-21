@@ -14,7 +14,8 @@ public final class MatchRules {
 
 	public static final int STARTING_HAND = 5;
 
-	public static final int STRESS_LIMIT = 30;
+	/** Startowe i maksymalne HP gracza; leczenie nie podnosi HP ponad tę wartość. */
+	public static final int MAX_HP = 30;
 
 	public static final int RESOURCE_CAP = 10;
 

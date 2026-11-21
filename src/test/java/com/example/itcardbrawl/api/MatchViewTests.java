@@ -177,7 +177,7 @@ class MatchViewTests {
 
 	// Partia z logiem złożonym z kolejnych TurnStarted (tura 1..logSize), strony bez kart.
 	private static Match match(int logSize) {
-		MatchSide side = new MatchSide(FACTION, List.of(), List.of(), 0, 0, 0, List.of(), List.of(), List.of());
+		MatchSide side = new MatchSide(FACTION, List.of(), List.of(), 30, 0, 0, List.of(), List.of(), List.of());
 		List<MatchEvent> log = IntStream.rangeClosed(1, logSize)
 			.<MatchEvent>mapToObj(turn -> new MatchEvent.TurnStarted(Side.PLAYER, turn))
 			.toList();
@@ -185,7 +185,7 @@ class MatchViewTests {
 	}
 
 	private static MatchSide side(List<CardInstance> hand, List<BoardCharacter> board, List<ActiveEvent> activeEvents) {
-		return new MatchSide(FACTION, List.of(), hand, 0, 10, 10, board, List.of(), activeEvents);
+		return new MatchSide(FACTION, List.of(), hand, 30, 10, 10, board, List.of(), activeEvents);
 	}
 
 	private static Match matchWithSides(List<CardInstance> hand, List<BoardCharacter> playerBoard,

@@ -241,11 +241,12 @@ class MatchControllerTests {
 			.andExpect(jsonPath("$.player.deckCount").isNumber())
 			.andExpect(jsonPath("$.opponent.deckCount").value(25))
 			.andExpect(jsonPath("$.opponent.handCount").isNumber())
-			// Stres gracza może już rosnąć, jeśli zaczął komputer (zdolność On play).
-			.andExpect(jsonPath("$.player.stress").isNumber())
-			.andExpect(jsonPath("$.player.stressLimit").value(30))
-			.andExpect(jsonPath("$.opponent.stress").value(0))
-			.andExpect(jsonPath("$.opponent.stressLimit").value(30))
+			// HP gracza może już spaść, jeśli zaczął komputer (zdolność On play); pełne HP sprawdza
+			// startAlwaysHandsTurnToPlayer dla tury 1.
+			.andExpect(jsonPath("$.player.hp").isNumber())
+			.andExpect(jsonPath("$.player.maxHp").value(30))
+			.andExpect(jsonPath("$.opponent.hp").value(30))
+			.andExpect(jsonPath("$.opponent.maxHp").value(30))
 			.andExpect(jsonPath("$.player.board").isArray())
 			.andExpect(jsonPath("$.player.activeEvents").isArray())
 			.andExpect(jsonPath("$.player.graveyardCount").isNumber())
@@ -271,11 +272,19 @@ class MatchControllerTests {
 		DocumentContext match = start(newPlayer(), "testers");
 
 		assertThat((String) match.read("$.turn.active")).isEqualTo("PLAYER");
+		// Kontrakt gracza zawiera tylko hp/maxHp — dawnego licznika już nie ma w JSON.
+		Map<String, Object> player = match.read("$.player");
+		assertThat(player).containsOnlyKeys("faction", "hp", "maxHp", "resource", "deckCount", "hand", "board",
+				"activeEvents", "graveyardCount", "lastEvent");
+		Map<String, Object> opponent = match.read("$.opponent");
+		assertThat(opponent).containsOnlyKeys("faction", "hp", "maxHp", "resource", "deckCount", "handCount", "board",
+				"activeEvents", "graveyardCount", "lastEvent");
 		assertThat((Integer) match.read("$.player.resource.current")).isEqualTo(1);
 		assertThat((Integer) match.read("$.player.resource.max")).isEqualTo(1);
 		int turn = match.read("$.turn.number");
 		assertThat(turn).isIn(1, 2);
 		if (turn == 1) {
+			assertThat((Integer) match.read("$.player.hp")).isEqualTo(30);
 			assertThat((Integer) match.read("$.opponent.resource.max")).isZero();
 			assertThat((List<?>) match.read("$.player.hand")).hasSize(5);
 			assertThat((Integer) match.read("$.player.deckCount")).isEqualTo(25);
@@ -539,9 +548,9 @@ class MatchControllerTests {
 			MatchSide o = m.opponent();
 			MatchSide player = new MatchSide(p.faction(), p.deck(),
 					List.of(instance(TARGETED_EVENT, "dev-force-push"), instance(UNTARGETED_EVENT, "dev-stackoverflow")),
-					0, 10, 10, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
+					30, 10, 10, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
 					p.graveyard(), List.of());
-			MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 0, o.resourceCurrent(),
+			MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 30, o.resourceCurrent(),
 					o.resourceMax(), List.of(new BoardCharacter(instance(ENEMY_CHARACTER, "tst-manual"), 0, false, false)),
 					o.graveyard(), List.of());
 			return new Match(m.id(), m.turnNumber(), m.activeSide(), player, opponent, m.status(), m.result(), m.log());
@@ -608,7 +617,7 @@ class MatchControllerTests {
 		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
 				playBody(match, TARGETED_EVENT, "{\"kind\":\"PLAYER\",\"side\":\"OPPONENT\"}"));
 
-		assertThat((Integer) after.read("$.opponent.stress")).isEqualTo(5);
+		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(25);
 		assertThat((List<Integer>) after.read("$.player.hand[*].instanceId")).doesNotContain(TARGETED_EVENT);
 	}
 
@@ -622,7 +631,7 @@ class MatchControllerTests {
 
 		// Tester manualny ma mniej niż 5 HP - pięć obrażeń go pokonuje.
 		assertThat((List<Integer>) after.read("$.opponent.board[*].instanceId")).doesNotContain(ENEMY_CHARACTER);
-		assertThat((Integer) after.read("$.opponent.stress")).isZero();
+		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(30);
 	}
 
 	@Test

@@ -47,7 +47,7 @@ class MatchLogFormatterTests {
 			}
 			events.add(new MatchEvent.Attacked(side, TECH_LEAD, null, 8, 0));
 			events.add(new MatchEvent.Attacked(side, TECH_LEAD, MANUAL_TESTER, 8, 2));
-			events.add(new MatchEvent.StressChanged(side, side.opponent(), 16, 24));
+			events.add(new MatchEvent.HpChanged(side, side.opponent(), 24, 16));
 			events.add(new MatchEvent.CharacterDefeated(side, MANUAL_TESTER));
 			events.add(new MatchEvent.EventExpired(side, TECH_LEAD));
 			events.add(new MatchEvent.TurnEnded(side));
@@ -89,31 +89,55 @@ class MatchLogFormatterTests {
 	void sentencesUsePlayerPerspective() {
 		MatchEvent played = new MatchEvent.CardPlayed(Side.OPPONENT, TECH_LEAD);
 		MatchEvent attacked = new MatchEvent.Attacked(Side.OPPONENT, TECH_LEAD, null, 8, 0);
-		MatchEvent stress = new MatchEvent.StressChanged(Side.OPPONENT, Side.PLAYER, 16, 24);
+		MatchEvent hp = new MatchEvent.HpChanged(Side.OPPONENT, Side.PLAYER, 24, 16);
+		MatchEvent opponentHp = new MatchEvent.HpChanged(Side.PLAYER, Side.OPPONENT, 2, -3);
 
 		assertThat(formatter.format(played, Language.PL)).isEqualTo("Przeciwnik zagrywa: Tech Lead");
 		assertThat(formatter.format(played, Language.EN)).isEqualTo("Opponent plays: Tech Lead");
-		assertThat(formatter.format(attacked, Language.PL)).isEqualTo("Tech Lead atakuje Twój stres: +8");
-		assertThat(formatter.format(attacked, Language.EN)).isEqualTo("Tech Lead attacks your stress: +8");
-		assertThat(formatter.format(stress, Language.PL)).isEqualTo("Twój stres: 16 → 24/30");
-		assertThat(formatter.format(stress, Language.EN)).isEqualTo("Your stress: 16 → 24/30");
+		assertThat(formatter.format(attacked, Language.PL)).isEqualTo("Tech Lead atakuje Cię: −8");
+		assertThat(formatter.format(attacked, Language.EN)).isEqualTo("Tech Lead attacks you: −8");
+		assertThat(formatter.format(hp, Language.PL)).isEqualTo("Twoje HP: 24 → 16/30");
+		assertThat(formatter.format(hp, Language.EN)).isEqualTo("Your HP: 24 → 16/30");
+		assertThat(formatter.format(opponentHp, Language.PL)).isEqualTo("HP przeciwnika: 2 → -3/30");
+		assertThat(formatter.format(opponentHp, Language.EN)).isEqualTo("Opponent HP: 2 → -3/30");
+	}
+
+	@Test
+	void abilitySentencesSpeakOfDamageAndHealing() {
+		MatchEvent damageByPlayer = new MatchEvent.AbilityTriggered(Side.PLAYER, TECH_LEAD, AbilityKeyword.ON_PLAY_DAMAGE, 4);
+		MatchEvent overtimeByOpponent = new MatchEvent.AbilityTriggered(Side.OPPONENT, TECH_LEAD, AbilityKeyword.OVERTIME,
+				1);
+		MatchEvent healByPlayer = new MatchEvent.AbilityTriggered(Side.PLAYER, TECH_LEAD, AbilityKeyword.HEAL, 3);
+		MatchEvent healByOpponent = new MatchEvent.AbilityTriggered(Side.OPPONENT, TECH_LEAD, AbilityKeyword.HEAL, 3);
+		MatchEvent attackByPlayer = new MatchEvent.Attacked(Side.PLAYER, TECH_LEAD, null, 8, 0);
+
+		assertThat(formatter.format(damageByPlayer, Language.PL)).isEqualTo("Tech Lead zadaje przeciwnikowi obrażenia: −4");
+		assertThat(formatter.format(damageByPlayer, Language.EN)).isEqualTo("Tech Lead deals the opponent damage: −4");
+		assertThat(formatter.format(overtimeByOpponent, Language.PL)).isEqualTo("Tech Lead zadaje Ci obrażenia: −1");
+		assertThat(formatter.format(overtimeByOpponent, Language.EN)).isEqualTo("Tech Lead deals you damage: −1");
+		assertThat(formatter.format(healByPlayer, Language.PL)).isEqualTo("Tech Lead leczy Twoje HP: +3");
+		assertThat(formatter.format(healByPlayer, Language.EN)).isEqualTo("Tech Lead heals your HP: +3");
+		assertThat(formatter.format(healByOpponent, Language.PL)).isEqualTo("Tech Lead leczy HP przeciwnika: +3");
+		assertThat(formatter.format(healByOpponent, Language.EN)).isEqualTo("Tech Lead heals opponent HP: +3");
+		assertThat(formatter.format(attackByPlayer, Language.PL)).isEqualTo("Tech Lead atakuje przeciwnika: −8");
+		assertThat(formatter.format(attackByPlayer, Language.EN)).isEqualTo("Tech Lead attacks the opponent: −8");
 	}
 
 	@Test
 	void effectLineNamesWhoseEventItIs() {
 		CardInstance deadline = new CardInstance(3, CATALOG.card("neu-deadline").orElseThrow());
-		com.example.itcardbrawl.game.Effect stress = deadline.card().effects().getFirst();
-		MatchEvent byOpponent = new MatchEvent.EffectApplied(Side.OPPONENT, deadline, stress, null, Side.PLAYER);
-		MatchEvent byPlayer = new MatchEvent.EffectApplied(Side.PLAYER, deadline, stress, null, Side.OPPONENT);
+		com.example.itcardbrawl.game.Effect damage = deadline.card().effects().getFirst();
+		MatchEvent byOpponent = new MatchEvent.EffectApplied(Side.OPPONENT, deadline, damage, null, Side.PLAYER);
+		MatchEvent byPlayer = new MatchEvent.EffectApplied(Side.PLAYER, deadline, damage, null, Side.OPPONENT);
 
 		assertThat(formatter.format(byOpponent, Language.PL)).startsWith("Wydarzenie przeciwnika ")
-			.endsWith(" — Twój stres");
+			.endsWith(" — Twoje HP");
 		assertThat(formatter.format(byOpponent, Language.EN)).startsWith("Opponent's event ")
-			.endsWith(" — your stress");
+			.endsWith(" — your HP");
 		assertThat(formatter.format(byPlayer, Language.PL)).startsWith("Twoje wydarzenie ")
-			.endsWith(" — stres przeciwnika");
+			.endsWith(" — HP przeciwnika");
 		assertThat(formatter.format(byPlayer, Language.EN)).startsWith("Your event ")
-			.endsWith(" — opponent stress");
+			.endsWith(" — opponent HP");
 	}
 
 	@Test
@@ -138,12 +162,16 @@ class MatchLogFormatterTests {
 
 	@Test
 	void matchEndTellsPlayerWhetherTheyWon() {
-		MatchEvent won = new MatchEvent.MatchEnded(Side.PLAYER, new MatchResult(Side.PLAYER, EndReason.STRESS_LIMIT));
+		MatchEvent won = new MatchEvent.MatchEnded(Side.PLAYER, new MatchResult(Side.PLAYER, EndReason.HP_DEPLETED));
+		MatchEvent lostOnHp = new MatchEvent.MatchEnded(Side.OPPONENT,
+				new MatchResult(Side.OPPONENT, EndReason.HP_DEPLETED));
 		MatchEvent lost = new MatchEvent.MatchEnded(Side.OPPONENT,
 				new MatchResult(Side.OPPONENT, EndReason.EMPTY_DECK));
 
-		assertThat(formatter.format(won, Language.PL)).startsWith("Wygrywasz");
-		assertThat(formatter.format(won, Language.EN)).startsWith("You win");
+		assertThat(formatter.format(won, Language.PL)).isEqualTo("Wygrywasz: HP przeciwnika spadło do 0");
+		assertThat(formatter.format(won, Language.EN)).isEqualTo("You win: opponent's HP dropped to 0");
+		assertThat(formatter.format(lostOnHp, Language.PL)).isEqualTo("Przegrywasz: Twoje HP spadło do 0");
+		assertThat(formatter.format(lostOnHp, Language.EN)).isEqualTo("You lose: your HP dropped to 0");
 		assertThat(formatter.format(lost, Language.PL)).startsWith("Przegrywasz");
 		assertThat(formatter.format(lost, Language.EN)).startsWith("You lose");
 	}

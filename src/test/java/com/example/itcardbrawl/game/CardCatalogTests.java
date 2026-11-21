@@ -539,11 +539,11 @@ class CardCatalogTests {
 	}
 
 	@Test
-	void onPlayStressWithZeroAmountIsRejected() {
-		cards.set(0, character("alpha-1", "alpha", 1, 1, 1, new Ability(AbilityKeyword.ON_PLAY_STRESS, 0)));
+	void onPlayDamageWithZeroAmountIsRejected() {
+		cards.set(0, character("alpha-1", "alpha", 1, 1, 1, new Ability(AbilityKeyword.ON_PLAY_DAMAGE, 0)));
 
 		assertThatIllegalStateException().isThrownBy(this::build)
-			.withMessageContaining("postać 'alpha-1': zdolność ON_PLAY_STRESS ma wartość 0 spoza zakresu 1–10");
+			.withMessageContaining("postać 'alpha-1': zdolność ON_PLAY_DAMAGE ma wartość 0 spoza zakresu 1–10");
 	}
 
 	@Test
@@ -580,8 +580,12 @@ class CardCatalogTests {
 				assertThat(description.in(language)).as("%s w języku %s", keyword, language).isNotBlank();
 			}
 		}
-		assertThat(AbilityKeyword.ON_PLAY_STRESS.describe(4).pl()).isEqualTo("Po zagraniu: +4 stresu przeciwnika");
-		assertThat(AbilityKeyword.HEAL.describe(3).en()).isEqualTo("On play: −3 own stress");
+		assertThat(AbilityKeyword.ON_PLAY_DAMAGE.describe(4).pl()).isEqualTo("Po zagraniu: −4 HP przeciwnika");
+		assertThat(AbilityKeyword.ON_PLAY_DAMAGE.describe(4).en()).isEqualTo("On play: −4 opponent HP");
+		assertThat(AbilityKeyword.HEAL.describe(3).pl()).isEqualTo("Po zagraniu: +3 własnego HP");
+		assertThat(AbilityKeyword.HEAL.describe(3).en()).isEqualTo("On play: +3 own HP");
+		assertThat(AbilityKeyword.OVERTIME.describe(0).pl()).isEqualTo("Nadgodziny: na koniec tury −1 HP przeciwnika");
+		assertThat(AbilityKeyword.OVERTIME.describe(0).en()).isEqualTo("Overtime: end of turn −1 opponent HP");
 	}
 
 	@Test

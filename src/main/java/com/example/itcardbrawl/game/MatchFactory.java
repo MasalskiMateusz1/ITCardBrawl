@@ -63,7 +63,7 @@ public class MatchFactory {
 		List<CardInstance> hand = deck.subList(0, MatchRules.STARTING_HAND);
 		List<CardInstance> rest = deck.subList(MatchRules.STARTING_HAND, deck.size());
 		int resource = active ? 1 : 0;
-		return new MatchSide(faction, rest, hand, 0, resource, resource, List.of(), List.of(), List.of());
+		return new MatchSide(faction, rest, hand, MatchRules.MAX_HP, resource, resource, List.of(), List.of(), List.of());
 	}
 
 }
