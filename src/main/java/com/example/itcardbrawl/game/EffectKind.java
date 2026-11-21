@@ -105,7 +105,7 @@ public enum EffectKind {
 	private static LocalizedText healDescription(EffectScope scope, int amount) {
 		return switch (scope) {
 			case TARGET -> text(
-					"Przywróć %d pkt zdrowia wybranej postaci lub przywróć graczowi %d HP".formatted(amount, amount),
+					"Przywróć %d pkt zdrowia wybranej postaci lub graczowi %d HP".formatted(amount, amount),
 					"Restore %d health to a chosen character or restore %d HP to a player".formatted(amount, amount));
 			case OWN_BOARD -> text("Przywróć własnym postaciom %d pkt zdrowia".formatted(amount),
 					"Restore %d health to your characters".formatted(amount));

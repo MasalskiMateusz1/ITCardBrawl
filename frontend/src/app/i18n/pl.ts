@@ -77,7 +77,7 @@ export const pl: Messages = {
     resultWin: 'Wygrana',
     resultLose: 'Przegrana',
     reason: {
-      HP_DEPLETED: 'Przyczyna: HP spadło do 0',
+      HP_DEPLETED: 'Przyczyna: HP spadło do 0 lub niżej',
       EMPTY_DECK: 'Przyczyna: pusta talia',
     },
     playAgain: 'Zagraj ponownie',

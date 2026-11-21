@@ -1,7 +1,7 @@
 ---
 change_id: stress-to-hp
 title: Stress to hp
-status: implemented
+status: impl_reviewed
 created: 2026-11-21
 updated: 2026-11-21
 archived_at: null

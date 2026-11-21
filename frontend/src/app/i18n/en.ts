@@ -77,7 +77,7 @@ export const en: Messages = {
     resultWin: 'Victory',
     resultLose: 'Defeat',
     reason: {
-      HP_DEPLETED: 'Reason: HP dropped to 0',
+      HP_DEPLETED: 'Reason: HP dropped to 0 or below',
       EMPTY_DECK: 'Reason: empty deck',
     },
     playAgain: 'Play again',

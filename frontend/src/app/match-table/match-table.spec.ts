@@ -1201,7 +1201,7 @@ describe('MatchTable', () => {
 
     const result = element.querySelector('.result')!;
     expect(text(result.querySelector('h2'))).toBe('Wygrana');
-    expect(text(result.querySelector('.result-reason'))).toBe('Przyczyna: HP spadło do 0');
+    expect(text(result.querySelector('.result-reason'))).toBe('Przyczyna: HP spadło do 0 lub niżej');
     const link = result.querySelector('a.play-again');
     expect(text(link)).toBe('Zagraj ponownie');
     expect(link?.getAttribute('href')).toBe('/new-match');
@@ -1222,7 +1222,7 @@ describe('MatchTable', () => {
     const element = await renderWithMatch(finishedView('OPPONENT', 'HP_DEPLETED'));
 
     expect(text(element.querySelector('.result h2'))).toBe('Defeat');
-    expect(text(element.querySelector('.result-reason'))).toBe('Reason: HP dropped to 0');
+    expect(text(element.querySelector('.result-reason'))).toBe('Reason: HP dropped to 0 or below');
     expect(text(element.querySelector('.play-again'))).toBe('Play again');
   });
 

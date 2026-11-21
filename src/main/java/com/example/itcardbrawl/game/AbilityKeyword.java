@@ -9,7 +9,7 @@ public enum AbilityKeyword {
 	/** Po zagraniu: −N HP przeciwnika. */
 	ON_PLAY_DAMAGE(true),
 
-	/** Po zagraniu: +N własnego HP (do {@link MatchRules#MAX_HP}). */
+	/** Po zagraniu: leczenie N własnego HP (do {@link MatchRules#MAX_HP}). */
 	HEAL(true),
 
 	/** Musi zostać zaatakowana pierwsza. */
@@ -45,8 +45,8 @@ public enum AbilityKeyword {
 		return switch (this) {
 			case ON_PLAY_DAMAGE -> new LocalizedText("Po zagraniu: −%d HP przeciwnika".formatted(amount),
 					"On play: −%d opponent HP".formatted(amount));
-			case HEAL -> new LocalizedText("Po zagraniu: +%d własnego HP".formatted(amount),
-					"On play: +%d own HP".formatted(amount));
+			case HEAL -> new LocalizedText("Po zagraniu: leczenie %d HP".formatted(amount),
+					"On play: heal %d HP".formatted(amount));
 			case GUARD -> new LocalizedText("Ochrona: musi zostać zaatakowana pierwsza", "Guard: must be attacked first");
 			case RUSH -> new LocalizedText("Szarża: atakuje od razu", "Rush: attacks immediately");
 			case OVERTIME -> new LocalizedText("Nadgodziny: na koniec tury −1 HP przeciwnika",

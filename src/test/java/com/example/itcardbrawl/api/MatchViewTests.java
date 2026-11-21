@@ -20,9 +20,14 @@ import com.example.itcardbrawl.game.Match;
 import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.Match.Status;
 import com.example.itcardbrawl.game.MatchEvent;
+import com.example.itcardbrawl.game.MatchResult;
+import com.example.itcardbrawl.game.MatchRules;
 import com.example.itcardbrawl.game.MatchSide;
 import com.example.itcardbrawl.game.MatchEngine;
 import com.example.itcardbrawl.game.Move;
+
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -175,9 +180,30 @@ class MatchViewTests {
 		assertThat(english.opponent().lastEvent().effects().getFirst().text()).contains("resource");
 	}
 
+	// Kontrakt JSON końca partii: HP poniżej zera widoczne w current i replay, przyczyna HP_DEPLETED.
+	@Test
+	void finishedMatchSerializesHpBelowZeroAndHpDepletedReason() {
+		MatchSide winner = new MatchSide(FACTION, List.of(), List.of(), MatchRules.MAX_HP, 0, 0, List.of(), List.of(),
+				List.of());
+		MatchSide loser = new MatchSide(FACTION, List.of(), List.of(), -3, 0, 0, List.of(), List.of(), List.of());
+		Match finished = new Match(ID, 3, Side.PLAYER, winner, loser, Status.FINISHED,
+				new MatchResult(Side.PLAYER, MatchResult.EndReason.HP_DEPLETED), List.of());
+
+		MatchView view = MatchView.of(finished, List.of(finished), CATALOG, formatter, Language.PL, List.of());
+		DocumentContext json = JsonPath.parse(JsonMapper.builder().build().writeValueAsString(view));
+
+		assertThat((String) json.read("$.result.reason")).isEqualTo("HP_DEPLETED");
+		assertThat((Integer) json.read("$.player.hp")).isEqualTo(MatchRules.MAX_HP);
+		assertThat((Integer) json.read("$.opponent.hp")).isEqualTo(-3);
+		assertThat((Integer) json.read("$.opponent.maxHp")).isEqualTo(MatchRules.MAX_HP);
+		assertThat((String) json.read("$.replay[0].result.reason")).isEqualTo("HP_DEPLETED");
+		assertThat((Integer) json.read("$.replay[0].opponent.hp")).isEqualTo(-3);
+		assertThat((Integer) json.read("$.replay[0].player.maxHp")).isEqualTo(MatchRules.MAX_HP);
+	}
+
 	// Partia z logiem złożonym z kolejnych TurnStarted (tura 1..logSize), strony bez kart.
 	private static Match match(int logSize) {
-		MatchSide side = new MatchSide(FACTION, List.of(), List.of(), 30, 0, 0, List.of(), List.of(), List.of());
+		MatchSide side = new MatchSide(FACTION, List.of(), List.of(), MatchRules.MAX_HP, 0, 0, List.of(), List.of(), List.of());
 		List<MatchEvent> log = IntStream.rangeClosed(1, logSize)
 			.<MatchEvent>mapToObj(turn -> new MatchEvent.TurnStarted(Side.PLAYER, turn))
 			.toList();
@@ -185,7 +211,7 @@ class MatchViewTests {
 	}
 
 	private static MatchSide side(List<CardInstance> hand, List<BoardCharacter> board, List<ActiveEvent> activeEvents) {
-		return new MatchSide(FACTION, List.of(), hand, 30, 10, 10, board, List.of(), activeEvents);
+		return new MatchSide(FACTION, List.of(), hand, MatchRules.MAX_HP, 10, 10, board, List.of(), activeEvents);
 	}
 
 	private static Match matchWithSides(List<CardInstance> hand, List<BoardCharacter> playerBoard,
