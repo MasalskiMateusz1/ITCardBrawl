@@ -133,6 +133,24 @@ class MatchViewTests {
 	}
 
 	@Test
+	void boardShowsAuraModifiedStatsDifferentFromBaseStats() {
+		CardInstance ownHealthAura = card(60, "tst-regression");
+		CardInstance enemyAttackAura = card(61, "dev-legacy-refactor");
+		BoardCharacter ownCharacter = character(62, "dev-tech-lead");
+		Match match = matchWithSides(List.of(), List.of(ownCharacter), List.of(), List.of(new ActiveEvent(ownHealthAura, 2)),
+				List.of(new ActiveEvent(enemyAttackAura, 2)), List.of());
+
+		MatchView view = MatchView.of(match, List.of(), CATALOG, formatter, Language.PL, List.of());
+		MatchView.BoardCharacterView ownView = view.player().board().getFirst();
+
+		// Atak −2 od wydarzenia przeciwnika, HP +2 od własnego.
+		assertThat(ownView.baseAttack()).isEqualTo(8);
+		assertThat(ownView.attack()).isEqualTo(6);
+		assertThat(ownView.baseHealth()).isEqualTo(8);
+		assertThat(ownView.health()).isEqualTo(10);
+	}
+
+	@Test
 	void lastEventIsLocalizedForBothSidesAndReplaySteps() {
 		CardInstance playerEvent = card(50, "neu-daily-standup");
 		CardInstance opponentEvent = card(51, "neu-coffee");

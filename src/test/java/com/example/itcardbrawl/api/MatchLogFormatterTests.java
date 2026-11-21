@@ -100,6 +100,35 @@ class MatchLogFormatterTests {
 	}
 
 	@Test
+	void effectLineNamesWhoseEventItIs() {
+		CardInstance deadline = new CardInstance(3, CATALOG.card("neu-deadline").orElseThrow());
+		com.example.itcardbrawl.game.Effect stress = deadline.card().effects().getFirst();
+		MatchEvent byOpponent = new MatchEvent.EffectApplied(Side.OPPONENT, deadline, stress, null, Side.PLAYER);
+		MatchEvent byPlayer = new MatchEvent.EffectApplied(Side.PLAYER, deadline, stress, null, Side.OPPONENT);
+
+		assertThat(formatter.format(byOpponent, Language.PL)).startsWith("Wydarzenie przeciwnika ")
+			.endsWith(" — Twój stres");
+		assertThat(formatter.format(byOpponent, Language.EN)).startsWith("Opponent's event ")
+			.endsWith(" — your stress");
+		assertThat(formatter.format(byPlayer, Language.PL)).startsWith("Twoje wydarzenie ")
+			.endsWith(" — stres przeciwnika");
+		assertThat(formatter.format(byPlayer, Language.EN)).startsWith("Your event ")
+			.endsWith(" — opponent stress");
+	}
+
+	@Test
+	void effectWithoutTargetHasNoTargetSuffix() {
+		CardInstance stackOverflow = new CardInstance(4, CATALOG.card("dev-stackoverflow").orElseThrow());
+		com.example.itcardbrawl.game.Effect draw = stackOverflow.card().effects().getFirst();
+		MatchEvent applied = new MatchEvent.EffectApplied(Side.PLAYER, stackOverflow, draw, null, null);
+
+		assertThat(formatter.format(applied, Language.PL)).isEqualTo("Twoje wydarzenie Kopiuj-wklej ze Stack Overflow: "
+				+ draw.describe().in(Language.PL)).doesNotContain(" — ");
+		assertThat(formatter.format(applied, Language.EN)).isEqualTo("Your event Copy-paste from Stack Overflow: "
+				+ draw.describe().in(Language.EN)).doesNotContain(" — ");
+	}
+
+	@Test
 	void cardNamesComeFromCatalogInRequestedLanguage() {
 		MatchEvent played = new MatchEvent.CardPlayed(Side.PLAYER, MANUAL_TESTER);
 

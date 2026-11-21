@@ -92,7 +92,7 @@ class RandomOpponentTests {
 		CardInstance playerCharacter = character(2, 1);
 		CardInstance opponentCharacter = character(3, 1);
 		MatchSide opponent = new MatchSide(FACTION, List.of(), List.of(targeted), 0, 1, 1,
-				List.of(new BoardCharacter(opponentCharacter, 0, true)), List.of(), List.of());
+				List.of(new BoardCharacter(opponentCharacter, 0, false, false)), List.of(), List.of());
 		Match match = opponentTurn(side(List.of(), List.of(playerCharacter), 0), opponent);
 
 		List<Match> steps = new RandomOpponent(ENGINE, new SequenceRandom(1, 0)).playTurnSteps(match);

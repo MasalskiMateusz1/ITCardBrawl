@@ -31,12 +31,16 @@ import java.util.UUID;
 
 import jakarta.servlet.http.Cookie;
 
+import com.example.itcardbrawl.game.BoardCharacter;
 import com.example.itcardbrawl.game.Card;
 import com.example.itcardbrawl.game.CardCatalog;
+import com.example.itcardbrawl.game.CardInstance;
 import com.example.itcardbrawl.game.Language;
 import com.example.itcardbrawl.game.Match;
 import com.example.itcardbrawl.game.MatchEngine;
 import com.example.itcardbrawl.game.MatchService;
+import com.example.itcardbrawl.game.MatchSide;
+import com.example.itcardbrawl.game.MatchStore;
 import com.example.itcardbrawl.game.Move;
 import com.example.itcardbrawl.game.Target;
 
@@ -74,6 +78,9 @@ class MatchControllerTests {
 
 	@Autowired
 	private MatchEngine engine;
+
+	@Autowired
+	private MatchStore store;
 
 	// Magazyn partii jest współdzielony w kontekście Springa - każdy test używa własnego gracza.
 	// oauth2Login() bierze nazwę principala z atrybutu "sub".
@@ -512,6 +519,128 @@ class MatchControllerTests {
 				new MatchController.PlayRequest(1, 1, new MatchController.TargetRequest("CHARACTER", null, null)),
 				authentication, Locale.forLanguageTag("pl")))
 				.isInstanceOf(com.example.itcardbrawl.game.IllegalMoveException.class);
+	}
+
+	// --- Wydarzenia z celem przez HTTP (stół ustawiony w magazynie, żeby nie zależeć od losowania) ---
+
+	private static final int TARGETED_EVENT = 900; // dev-force-push: DAMAGE TARGET 5
+
+	private static final int UNTARGETED_EVENT = 901; // dev-stackoverflow: DRAW SELF 2
+
+	private static final int OWN_CHARACTER = 902;
+
+	private static final int ENEMY_CHARACTER = 903;
+
+	// Startuje partię przez HTTP, potem podmienia rękę, zasób i stoły na znane karty.
+	private DocumentContext seededTable(String sub) throws Exception {
+		DocumentContext started = start(player(sub), "developers");
+		store.update("github:" + sub, m -> {
+			MatchSide p = m.player();
+			MatchSide o = m.opponent();
+			MatchSide player = new MatchSide(p.faction(), p.deck(),
+					List.of(instance(TARGETED_EVENT, "dev-force-push"), instance(UNTARGETED_EVENT, "dev-stackoverflow")),
+					0, 10, 10, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
+					p.graveyard(), List.of());
+			MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 0, o.resourceCurrent(),
+					o.resourceMax(), List.of(new BoardCharacter(instance(ENEMY_CHARACTER, "tst-manual"), 0, false, false)),
+					o.graveyard(), List.of());
+			return new Match(m.id(), m.turnNumber(), m.activeSide(), player, opponent, m.status(), m.result(), m.log());
+		});
+		return started;
+	}
+
+	private CardInstance instance(int instanceId, String cardId) {
+		return new CardInstance(instanceId, catalog.card(cardId).orElseThrow());
+	}
+
+	private static String playBody(DocumentContext match, int instanceId, String target) {
+		return "{\"turn\":" + match.read("$.turn.number") + ",\"instanceId\":" + instanceId + ",\"target\":" + target
+				+ "}";
+	}
+
+	@Test
+	void currentExposesEffectsTargetsPlayableAndAttackTargets() throws Exception {
+		String sub = "seed-" + UUID.randomUUID();
+		seededTable(sub);
+		Match stored = store.findCurrent("github:" + sub).orElseThrow();
+		long attackMoves = engine.legalMoves(stored, Match.Side.PLAYER).stream()
+			.filter(m -> m instanceof Move.Attack a && a.attackerId() == OWN_CHARACTER)
+			.count();
+
+		for (Language language : Language.values()) {
+			DocumentContext match = current(player(sub), language.name().toLowerCase(Locale.ROOT));
+			String targeted = "$.player.hand[?(@.instanceId == " + TARGETED_EVENT + ")]";
+			String untargeted = "$.player.hand[?(@.instanceId == " + UNTARGETED_EVENT + ")]";
+			List<Boolean> requiresTarget = match.read(targeted + ".requiresTarget");
+			List<Boolean> playable = match.read(targeted + ".playable");
+			List<String> effectTexts = match.read(targeted + ".effects[*].text");
+			List<Map<String, Object>> targets = match.read(targeted + ".targets[*]");
+			assertThat(requiresTarget).containsExactly(true);
+			assertThat(playable).containsExactly(true);
+			assertThat(effectTexts).containsExactly(
+					catalog.card("dev-force-push").orElseThrow().effects().getFirst().describe().in(language));
+			assertThat(targets)
+				.extracting(t -> t.get("kind") + ":" + t.get("instanceId") + ":" + t.get("side"))
+				.containsExactlyInAnyOrder("CHARACTER:" + OWN_CHARACTER + ":null",
+						"CHARACTER:" + ENEMY_CHARACTER + ":null", "PLAYER:null:PLAYER", "PLAYER:null:OPPONENT");
+
+			List<Boolean> untargetedRequires = match.read(untargeted + ".requiresTarget");
+			List<Boolean> untargetedPlayable = match.read(untargeted + ".playable");
+			List<List<?>> untargetedTargets = match.read(untargeted + ".targets");
+			assertThat(untargetedRequires).containsExactly(false);
+			assertThat(untargetedPlayable).containsExactly(true);
+			assertThat(untargetedTargets).containsExactly(List.of());
+
+			List<List<?>> attackTargets = match.read("$.player.board[?(@.instanceId == " + OWN_CHARACTER
+					+ ")].attackTargets");
+			assertThat(attackTargets).hasSize(1);
+			assertThat(attackTargets.getFirst()).hasSize((int) attackMoves).isNotEmpty();
+			List<List<?>> enemyAttackTargets = match.read("$.opponent.board[*].attackTargets");
+			assertThat(enemyAttackTargets).containsExactly(List.of());
+		}
+	}
+
+	@Test
+	void playWithPlayerTargetAppliesEffectOverHttp() throws Exception {
+		String sub = "seed-" + UUID.randomUUID();
+		DocumentContext match = seededTable(sub);
+
+		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
+				playBody(match, TARGETED_EVENT, "{\"kind\":\"PLAYER\",\"side\":\"OPPONENT\"}"));
+
+		assertThat((Integer) after.read("$.opponent.stress")).isEqualTo(5);
+		assertThat((List<Integer>) after.read("$.player.hand[*].instanceId")).doesNotContain(TARGETED_EVENT);
+	}
+
+	@Test
+	void playWithCharacterTargetAppliesEffectOverHttp() throws Exception {
+		String sub = "seed-" + UUID.randomUUID();
+		DocumentContext match = seededTable(sub);
+
+		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
+				playBody(match, TARGETED_EVENT, "{\"kind\":\"CHARACTER\",\"instanceId\":" + ENEMY_CHARACTER + "}"));
+
+		// Tester manualny ma mniej niż 5 HP - pięć obrażeń go pokonuje.
+		assertThat((List<Integer>) after.read("$.opponent.board[*].instanceId")).doesNotContain(ENEMY_CHARACTER);
+		assertThat((Integer) after.read("$.opponent.stress")).isZero();
+	}
+
+	@Test
+	void missingRequiredTargetOrUnnecessaryTargetReturns400() throws Exception {
+		String sub = "seed-" + UUID.randomUUID();
+		DocumentContext match = seededTable(sub);
+		String matchId = match.read("$.matchId");
+
+		mockMvc.perform(movePost(matchId, "play", playBody(match, TARGETED_EVENT)).with(player(sub)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").isNotEmpty());
+		mockMvc.perform(movePost(matchId, "play",
+				playBody(match, UNTARGETED_EVENT, "{\"kind\":\"PLAYER\",\"side\":\"OPPONENT\"}")).with(player(sub)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").isNotEmpty());
+
+		List<Integer> hand = current(player(sub), "pl").read("$.player.hand[*].instanceId");
+		assertThat(hand).contains(TARGETED_EVENT, UNTARGETED_EVENT);
 	}
 
 	private static Map<String, Object> affordableCharacter(DocumentContext match) {

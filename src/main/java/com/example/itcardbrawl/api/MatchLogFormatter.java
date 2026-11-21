@@ -77,7 +77,11 @@ public class MatchLogFormatter {
 				: e.targetPlayer() != null ? (mine(e.targetPlayer())
 						? text(language, " — Twój stres", " — your stress")
 						: text(language, " — stres przeciwnika", " — opponent stress")) : "";
-		return name(e.card(), language) + ": " + description + target;
+		String card = name(e.card(), language);
+		String prefix = mine(e.side())
+				? text(language, "Twoje wydarzenie " + card, "Your event " + card)
+				: text(language, "Wydarzenie przeciwnika " + card, "Opponent's event " + card);
+		return prefix + ": " + description + target;
 	}
 
 	private static String abilityTriggered(AbilityTriggered e, Language language) {
