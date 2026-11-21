@@ -14,6 +14,7 @@ import com.example.itcardbrawl.game.MatchEvent.EventExpired;
 import com.example.itcardbrawl.game.MatchEvent.EffectApplied;
 import com.example.itcardbrawl.game.MatchEvent.HpChanged;
 import com.example.itcardbrawl.game.MatchEvent.MatchEnded;
+import com.example.itcardbrawl.game.MatchEvent.MoveExplained;
 import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
 import com.example.itcardbrawl.game.MatchEvent.TurnStarted;
 import com.example.itcardbrawl.game.MatchResult;
@@ -69,6 +70,59 @@ public class MatchLogFormatter {
 					? text(language, "Kończysz turę", "You end your turn")
 					: text(language, "Przeciwnik kończy turę", "Opponent ends their turn");
 			case MatchEnded e -> matchEnded(e.result(), language);
+			case MoveExplained e -> moveExplained(e, language);
+		};
+	}
+
+	// Powód ruchu komputera: rzeczowe zdanie z prefiksem „Przeciwnik:”, oparte tylko na karcie, celu i liczbie.
+	private static String moveExplained(MoveExplained e, Language language) {
+		String card = e.card() != null ? name(e.card(), language) : "";
+		String target = e.target() != null ? name(e.target(), language) : "";
+		int amount = e.amount();
+		return switch (e.reason()) {
+			case LETHAL -> text(language,
+					"Przeciwnik: kończy partię — %s zadaje Ci %d %s".formatted(card, amount, PolishNumberForms.damage(amount)),
+					"Opponent: finishes the match — %s deals you %d damage".formatted(card, amount));
+			case REMOVE_THREAT -> text(language, "Przeciwnik: %s usuwa Twoją postać %s".formatted(card, target),
+					"Opponent: %s removes your %s".formatted(card, target));
+			case FAVORABLE_TRADE -> text(language,
+					"Przeciwnik: %s atakuje %s — wymiana jest dla niego korzystna".formatted(card, target),
+					"Opponent: %s attacks %s — the trade favours the opponent".formatted(card, target));
+			case OPEN_GUARD -> text(language,
+					"Przeciwnik: %s atakuje %s, żeby przebić się przez Ochronę".formatted(card, target),
+					"Opponent: %s attacks %s to break through Guard".formatted(card, target));
+			case PRESSURE -> text(language,
+					"Przeciwnik: naciska na Twoje HP — %s zadaje Ci %d %s".formatted(card, amount,
+							PolishNumberForms.damage(amount)),
+					"Opponent: pressures your HP — %s deals you %d damage".formatted(card, amount));
+			case DEVELOP_BOARD -> text(language, "Przeciwnik: rozbudowuje stół — wystawia %s".formatted(card),
+					"Opponent: develops the board — plays %s".formatted(card));
+			case STRENGTHEN -> e.target() != null
+					? text(language, "Przeciwnik: wzmacnia swoją postać %s — %s".formatted(target, card),
+							"Opponent: strengthens their %s — %s".formatted(target, card))
+					: text(language, "Przeciwnik: wzmacnia swoje postacie — %s".formatted(card),
+							"Opponent: strengthens their characters — %s".formatted(card));
+			case WEAKEN -> e.target() != null
+					? text(language, "Przeciwnik: osłabia Twoją postać %s — %s".formatted(target, card),
+							"Opponent: weakens your %s — %s".formatted(target, card))
+					: text(language, "Przeciwnik: osłabia Twoje postacie — %s".formatted(card),
+							"Opponent: weakens your characters — %s".formatted(card));
+			case DEFEND -> amount > 0
+					? text(language, "Przeciwnik: broni się — %s leczy jego HP o %d".formatted(card, amount),
+							"Opponent: defends — %s heals their HP by %d".formatted(card, amount))
+					: text(language, "Przeciwnik: broni się — %s".formatted(card),
+							"Opponent: defends — %s".formatted(card));
+			case DRAW_CARDS -> text(language,
+					"Przeciwnik: uzupełnia rękę — %s daje mu %d %s".formatted(card, amount,
+							PolishNumberForms.form(amount, "kartę", "karty", "kart")),
+					"Opponent: refills their hand — %s gives them %d %s".formatted(card, amount,
+							amount == 1 ? "card" : "cards"));
+			case GAIN_BUDGET -> text(language, "Przeciwnik: zwiększa budżet o %d — %s".formatted(amount, card),
+					"Opponent: increases their budget by %d — %s".formatted(amount, card));
+			case END_NO_GAIN -> text(language, "Przeciwnik: kończy turę — żaden ruch nie poprawia jego sytuacji",
+					"Opponent: ends the turn — no move improves the position");
+			case END_NO_MOVES -> text(language, "Przeciwnik: kończy turę — nie ma już żadnego ruchu",
+					"Opponent: ends the turn — no moves left");
 		};
 	}
 

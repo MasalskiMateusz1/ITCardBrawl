@@ -2,8 +2,10 @@ package com.example.itcardbrawl.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -26,6 +28,10 @@ import com.example.itcardbrawl.game.MatchRules;
 import com.example.itcardbrawl.game.MatchSide;
 import com.example.itcardbrawl.game.MatchEngine;
 import com.example.itcardbrawl.game.Move;
+import com.example.itcardbrawl.game.ComputerOpponent;
+import com.example.itcardbrawl.game.MatchFactory;
+import com.example.itcardbrawl.game.MoveReason;
+import com.example.itcardbrawl.game.PositionEvaluator;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -81,6 +87,50 @@ class MatchViewTests {
 		MatchView view = MatchView.of(last, List.of(old, last), CATALOG, formatter, Language.PL, List.of());
 
 		assertThat(view.replay().getFirst().logSize()).isZero();
+	}
+
+	@Test
+	void everyComputerReplayStepLogSizeCoversItsReason() {
+		MatchEngine engine = new MatchEngine();
+		for (long seed = 0; seed < 10; seed++) {
+			Match start = new MatchFactory(CATALOG, new SplittableRandom(seed)).create("developers");
+			if (start.activeSide() == Side.PLAYER) {
+				start = engine.apply(start, Side.PLAYER, new Move.EndTurn());
+			}
+			List<Match> replay = new ArrayList<>();
+			replay.add(start);
+			replay.addAll(new ComputerOpponent(engine, new PositionEvaluator(), new SplittableRandom(seed)).playTurnSteps(start));
+
+			MatchView view = MatchView.of(replay.getLast(), replay, CATALOG, formatter, Language.PL, List.of());
+
+			List<Integer> logSizes = view.replay().stream().map(MatchView.ReplayStepView::logSize).toList();
+			for (int i = 1; i < logSizes.size(); i++) {
+				List<MatchView.LogEntryView> stepEntries = view.log().subList(logSizes.get(i - 1), logSizes.get(i));
+				assertThat(stepEntries).as("ziarno %d, krok %d", seed, i).isNotEmpty();
+				assertThat(stepEntries.getFirst().reason()).isTrue();
+				assertThat(stepEntries.getFirst().text()).startsWith("Przeciwnik: ");
+				assertThat(stepEntries.subList(1, stepEntries.size())).noneMatch(MatchView.LogEntryView::reason);
+			}
+		}
+	}
+
+	@Test
+	void onlyMoveReasonsAreFlaggedAndSerializedAsReason() {
+		CardInstance attacker = card(70, "dev-tech-lead");
+		Match match = withLog(matchWithSides(List.of(), List.of(), List.of(), List.of(), List.of(), List.of()),
+				List.of(new MatchEvent.TurnStarted(Side.OPPONENT, 2),
+						new MatchEvent.MoveExplained(Side.OPPONENT, MoveReason.PRESSURE, attacker, null, 8),
+						new MatchEvent.Attacked(Side.OPPONENT, attacker, null, 8, 0)));
+
+		MatchView view = MatchView.of(match, List.of(), CATALOG, formatter, Language.EN, List.of());
+		DocumentContext json = JsonPath.parse(JsonMapper.builder().build().writeValueAsString(view));
+
+		assertThat(view.log()).extracting(MatchView.LogEntryView::reason).containsExactly(false, true, false);
+		List<Boolean> reasons = json.read("$.log[*].reason");
+		assertThat(reasons).containsExactly(false, true, false);
+		Map<String, Object> entry = json.read("$.log[1]");
+		assertThat(entry).containsOnlyKeys("side", "text", "reason");
+		assertThat((String) json.read("$.log[1].text")).isEqualTo("Opponent: pressures your HP — Tech Lead deals you 8 damage");
 	}
 
 	@Test

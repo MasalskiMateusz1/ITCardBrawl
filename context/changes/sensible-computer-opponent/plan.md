@@ -292,25 +292,25 @@ Brak danych do migracji: partie żyją w pamięci (`MatchStore`). Po wdrożeniu 
 
 #### Automated
 
-- [x] 1.1 Testy strategii przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,PositionEvaluatorTests,MatchServiceTests'`
-- [x] 1.2 Symulacja 200 partii z ziarnem daje ≥ 80% wygranych komputera przeciwko losowemu graczowi (w `ComputerOpponentTests`)
-- [x] 1.3 `RandomOpponent` nie występuje w `src/main`: `grep -rn RandomOpponent src/main` zwraca pusty wynik
-- [x] 1.4 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify`
+- [x] 1.1 Testy strategii przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,PositionEvaluatorTests,MatchServiceTests'` — ffe1a5b
+- [x] 1.2 Symulacja 200 partii z ziarnem daje ≥ 80% wygranych komputera przeciwko losowemu graczowi (w `ComputerOpponentTests`) — ffe1a5b
+- [x] 1.3 `RandomOpponent` nie występuje w `src/main`: `grep -rn RandomOpponent src/main` zwraca pusty wynik — ffe1a5b
+- [x] 1.4 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify` — ffe1a5b
 
 #### Manual
 
-- [x] 1.5 W lokalnej partii komputer zagrywa postacie, wymienia się korzystnie i nie leczy gracza ani nie rani własnych postaci (kilka tur obserwacji)
+- [x] 1.5 W lokalnej partii komputer zagrywa postacie, wymienia się korzystnie i nie leczy gracza ani nie rani własnych postaci (kilka tur obserwacji) — ffe1a5b
 
 ### Phase 2: Powód ruchu w logu
 
 #### Automated
 
-- [ ] 2.1 Testy powodów i formatera przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,MatchLogFormatterTests,MatchViewTests,MatchControllerTests'`
-- [ ] 2.2 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify`
+- [x] 2.1 Testy powodów i formatera przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,MatchLogFormatterTests,MatchViewTests,MatchControllerTests'`
+- [x] 2.2 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify`
 
 #### Manual
 
-- [ ] 2.3 W lokalnej partii log pokazuje przed każdym ruchem komputera zrozumiały powód po polsku i po angielsku (przełącznik języka)
+- [x] 2.3 W lokalnej partii log pokazuje przed każdym ruchem komputera zrozumiały powód po polsku i po angielsku (przełącznik języka)
 
 ### Phase 3: Podpis powodu w SPA
 

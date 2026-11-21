@@ -53,4 +53,14 @@ public sealed interface MatchEvent {
 	record MatchEnded(Match.Side side, MatchResult result) implements MatchEvent {
 	}
 
+	/**
+	 * Powód ruchu komputera, wpisany do logu tuż przed zdarzeniami tego ruchu. {@code card} to zagrywana karta
+	 * albo atakująca postać ({@code null} dla końca tury), {@code target} — postać docelowa ({@code null}, gdy
+	 * celem jest gracz lub brak celu), {@code amount} — liczba do zdania (np. obrażenia w HP) albo 0. Powód
+	 * odwołuje się wyłącznie do faktów jawnych dla gracza.
+	 */
+	record MoveExplained(Match.Side side, MoveReason reason, CardInstance card, CardInstance target, int amount)
+			implements MatchEvent {
+	}
+
 }

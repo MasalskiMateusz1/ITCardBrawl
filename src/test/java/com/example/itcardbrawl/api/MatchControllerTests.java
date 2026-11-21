@@ -824,6 +824,26 @@ class MatchControllerTests {
 		}
 	}
 
+	// Każdy krok tury komputera zaczyna się od powodu; pole reason jest w każdym wpisie, true tylko dla powodów.
+	@Test
+	void endTurnLogFlagsOneReasonPerComputerStep() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext after = endTurn(player, start(player, "developers"));
+
+		List<Map<String, Object>> log = after.read("$.log");
+		assertThat(log).allSatisfy(entry -> assertThat(entry).containsKey("reason"));
+		List<Integer> logSizes = after.read("$.replay[*].logSize");
+		List<Boolean> flags = after.read("$.log[*].reason");
+		assertThat(flags.stream().filter(Boolean::booleanValue).count()).isGreaterThanOrEqualTo(logSizes.size() - 1);
+		for (int i = 1; i < logSizes.size(); i++) {
+			Map<String, Object> first = log.get(logSizes.get(i - 1));
+			assertThat(first).containsEntry("reason", true).containsEntry("side", "OPPONENT");
+			assertThat((String) first.get("text")).startsWith("Przeciwnik: ");
+			assertThat(log.subList(logSizes.get(i - 1) + 1, logSizes.get(i)))
+				.allSatisfy(entry -> assertThat(entry).containsEntry("reason", false));
+		}
+	}
+
 	@Test
 	void playAndCurrentReturnEmptyReplay() throws Exception {
 		RequestPostProcessor player = newPlayer();
