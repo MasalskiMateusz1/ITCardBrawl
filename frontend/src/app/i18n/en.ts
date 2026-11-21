@@ -49,7 +49,6 @@ export const en: Messages = {
     endTurn: 'End turn',
     cancelAttack: 'Cancel attack',
     opponentMoving: 'Opponent is moving…',
-    moveReason: (reason) => `Why: ${reason}`,
     board: 'Board',
     activeEvents: 'Active events',
     graveyard: 'Graveyard',

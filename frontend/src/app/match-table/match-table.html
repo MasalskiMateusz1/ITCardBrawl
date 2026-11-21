@@ -155,7 +155,7 @@
       @if (replaying()) {
         <p class="opponent-moving" role="status">{{ texts().matchTable.opponentMoving }}</p>
         @if (moveReason(); as reason) {
-          <p class="move-reason" role="status">{{ texts().matchTable.moveReason(reason) }}</p>
+          <p class="move-reason" role="status">{{ reason }}</p>
         }
       } @else {
         <button type="button" class="end-turn" [disabled]="busy() || !myTurn()" (click)="endTurn()">

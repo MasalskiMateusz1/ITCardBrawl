@@ -110,8 +110,33 @@ class MatchViewTests {
 				assertThat(stepEntries.getFirst().reason()).isTrue();
 				assertThat(stepEntries.getFirst().text()).startsWith("Przeciwnik: ");
 				assertThat(stepEntries.subList(1, stepEntries.size())).noneMatch(MatchView.LogEntryView::reason);
+				assertThat(view.replay().get(i).reason()).as("ziarno %d, krok %d", seed, i)
+					.isEqualTo(stepEntries.getFirst().text());
 			}
 		}
+	}
+
+	@Test
+	void firstReplayStepHasNoReasonEvenWhenItsLogEndsWithAnEarlierOne() {
+		MatchEngine engine = new MatchEngine();
+		Match start = new MatchFactory(CATALOG, new SplittableRandom(3)).create("developers");
+		ComputerOpponent opponent = new ComputerOpponent(engine, new PositionEvaluator(), new SplittableRandom(3));
+		if (start.activeSide() == Side.PLAYER) {
+			start = engine.apply(start, Side.PLAYER, new Move.EndTurn());
+		}
+		// Pełna tura komputera, potem koniec tury gracza: log kroku startowego zawiera powody poprzedniej tury.
+		Match playerTurn = opponent.playTurn(start);
+		Match secondTurn = engine.apply(playerTurn, Side.PLAYER, new Move.EndTurn());
+		assertThat(secondTurn.log()).anyMatch(MatchEvent.MoveExplained.class::isInstance);
+		List<Match> replay = new ArrayList<>();
+		replay.add(secondTurn);
+		replay.addAll(opponent.playTurnSteps(secondTurn));
+
+		MatchView view = MatchView.of(replay.getLast(), replay, CATALOG, formatter, Language.PL, List.of());
+
+		assertThat(view.replay().getFirst().reason()).isNull();
+		assertThat(view.replay().subList(1, view.replay().size()))
+			.allSatisfy(step -> assertThat(step.reason()).startsWith("Przeciwnik: "));
 	}
 
 	@Test

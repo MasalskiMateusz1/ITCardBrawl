@@ -60,6 +60,8 @@ public class ComputerOpponent {
 		Match current = match;
 		int moves = 0;
 		while (current.status() == Status.IN_PROGRESS && current.activeSide() == SIDE) {
+			// Bezpiecznik opisujemy jak brak korzystnego ruchu (END_NO_GAIN): w praktyce nie zadziała, a osobny
+			// rodzaj powodu dla stanu nieosiągalnego tylko by zaciemnił log.
 			Decision decision = moves >= MAX_MOVES_PER_TURN
 					? endTurn(current, MoveReason.END_NO_GAIN) : decide(current);
 			// Powód stoi w logu przed zdarzeniami swojego ruchu, więc krok odtwarzania obejmuje i jedno, i drugie.
@@ -147,7 +149,7 @@ public class ComputerOpponent {
 		double cards = scoreAfter.cards() - scoreBefore.cards();
 		double resources = scoreAfter.resources() - scoreBefore.resources();
 		return switch (move) {
-			case Move.Attack attack -> attackReason(before, after, attack, card);
+			case Move.Attack attack -> attackReason(before, after, attack, card, enemyBoard + ownBoard);
 			case Move.PlayCard play when card.card().type() == CardType.CHARACTER -> {
 				if (enemyHp > ownBoard) {
 					yield explained(MoveReason.PRESSURE, card, null, playerHpLoss(before, after));
@@ -170,7 +172,10 @@ public class ComputerOpponent {
 							: explained(MoveReason.WEAKEN, card, target, 0);
 				}
 				if (top == ownBoard) {
-					yield explained(MoveReason.STRENGTHEN, card, target, 0);
+					// Przy niskim własnym HP wzmocnienie stołu (np. Ochrona) to obrona, nie rozbudowa.
+					yield before.side(SIDE).hp() < PositionEvaluator.OWN_HP_LOW
+							? explained(MoveReason.DEFEND, card, null, ownHpGain(before, after))
+							: explained(MoveReason.STRENGTHEN, card, target, 0);
 				}
 				if (top == ownHp) {
 					yield explained(MoveReason.DEFEND, card, null, ownHpGain(before, after));
@@ -184,8 +189,12 @@ public class ComputerOpponent {
 		};
 	}
 
+	/**
+	 * {@code boardSwing} to łączna zmiana ocen obu stołów: wymiana jest korzystna, gdy stół gracza traci
+	 * więcej niż własny. Atak w postać bez takiej przewagi tylko osłabia cel.
+	 */
 	private static MatchEvent.MoveExplained attackReason(Match before, Match after, Move.Attack attack,
-			CardInstance attacker) {
+			CardInstance attacker, double boardSwing) {
 		if (attack.targetId() == null) {
 			return explained(MoveReason.PRESSURE, attacker, null, playerHpLoss(before, after));
 		}
@@ -197,7 +206,11 @@ public class ComputerOpponent {
 		}
 		boolean guard = CharacterStats.of(board(before, SIDE.opponent(), attack.targetId()), SIDE.opponent(),
 				before.player().activeEvents(), before.opponent().activeEvents()).has(AbilityKeyword.GUARD);
-		return explained(guard ? MoveReason.OPEN_GUARD : MoveReason.FAVORABLE_TRADE, attacker, target, damage);
+		if (guard) {
+			return explained(MoveReason.OPEN_GUARD, attacker, target, damage);
+		}
+		return boardSwing > MIN_GAIN ? explained(MoveReason.FAVORABLE_TRADE, attacker, target, damage)
+				: explained(MoveReason.WEAKEN, attacker, target, 0);
 	}
 
 	private static MatchEvent.MoveExplained explained(MoveReason reason, CardInstance card, CardInstance target,
@@ -209,7 +222,7 @@ public class ComputerOpponent {
 	private static CardInstance actingCard(Match match, Move move) {
 		return switch (move) {
 			case Move.PlayCard play -> match.side(SIDE).hand().stream()
-				.filter(card -> card.instanceId() == play.instanceId()).findFirst().orElse(null);
+				.filter(card -> card.instanceId() == play.instanceId()).findFirst().orElseThrow();
 			case Move.Attack attack -> board(match, SIDE, attack.attackerId()).instance();
 			case Move.EndTurn endTurn -> null;
 		};
