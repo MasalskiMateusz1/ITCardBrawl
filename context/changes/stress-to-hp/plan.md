@@ -291,23 +291,23 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify`
-- [x] 2.4 Brak „stres” we froncie: `grep -rni "stres" frontend/src` zwraca pusty wynik
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — 9cc4fb8
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 9cc4fb8
+- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify` — 9cc4fb8
+- [x] 2.4 Brak „stres” we froncie: `grep -rni "stres" frontend/src` zwraca pusty wynik — 9cc4fb8
 
 #### Manual
 
-- [ ] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem
-- [ ] 2.6 Na wdrożonej wersji partia startuje z 30/30 po obu stronach, atak i wydarzenie obniżają HP, leczenie nie przekracza 30, a spadek do 0 lub poniżej kończy partię komunikatem o HP (pl i en)
+- [x] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem — 9cc4fb8
+- [x] 2.6 Na wdrożonej wersji partia startuje z 30/30 po obu stronach, atak i wydarzenie obniżają HP, leczenie nie przekracza 30, a spadek do 0 lub poniżej kończy partię komunikatem o HP (pl i en) — 9cc4fb8
 
 ### Phase 3: PRD i kontrola resztek
 
 #### Automated
 
-- [ ] 3.1 Brak „stres” w PRD: `grep -ni "stres" context/foundation/prd.md` zwraca pusty wynik
-- [ ] 3.2 Brak „stres” w kodzie: `grep -rni "stres" src frontend/src` zwraca pusty wynik
+- [x] 3.1 Brak „stres” w PRD: `grep -ni "stres" context/foundation/prd.md` zwraca pusty wynik
+- [x] 3.2 Brak „stres” w kodzie: `grep -rni "stres" src frontend/src` zwraca pusty wynik
 
 #### Manual
 
-- [ ] 3.3 Przegląd PRD: reguła wygranej/przegranej odpowiada zachowaniu silnika (start 30, sufit 30, HP ≤ 0, wartość ujemna widoczna)
+- [x] 3.3 Przegląd PRD: reguła wygranej/przegranej odpowiada zachowaniu silnika (start 30, sufit 30, HP ≤ 0, wartość ujemna widoczna)

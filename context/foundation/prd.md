@@ -39,11 +39,11 @@ Pierwszy przepływ MVP (zablokowany):
 2. Wybiera jedną z 2 frakcji.
 3. Rozpoczyna partię przeciwko przeciwnikowi komputerowemu.
 4. Gracz i przeciwnik na zmianę zagrywają karty: postacie (np. Junior Dev, Senior) oraz wydarzenia/spelle (np. „Nagła zmiana założeń projektowych”).
-5. Karty podnoszą poziom stresu przeciwnika (zamiast zadawania obrażeń życiu).
-6. Kto osiągnie limit stresu albo nie może dobrać karty z pustej talii — przegrywa; gracz widzi wynik partii.
+5. Karty zadają obrażenia HP przeciwnika (albo leczą własne HP).
+6. Ten, czyje HP spadnie do 0, albo kto nie może dobrać karty z pustej talii — przegrywa; gracz widzi wynik partii.
 
 ### Primary
-- Zalogowany gracz rozgrywa pełną partię dowolną z 2 frakcji przeciwko przeciwnikowi komputerowemu, od wyboru frakcji do wyniku (wygrana/przegrana rozstrzygnięta przez limit stresu albo koniec kart w talii).
+- Zalogowany gracz rozgrywa pełną partię dowolną z 2 frakcji przeciwko przeciwnikowi komputerowemu, od wyboru frakcji do wyniku (wygrana/przegrana rozstrzygnięta przez spadek HP do 0 albo koniec kart w talii).
 
 ### Secondary
 - Znajomi z IT grają i śmieją się z kart — rozpoznają żarty bez tłumaczenia.
@@ -63,11 +63,11 @@ Pierwszy przepływ MVP (zablokowany):
 
 - **Given** zalogowany gracz
 - **When** wybiera jedną z 2 frakcji i rozpoczyna partię
-- **Then** na zmianę z komputerem zagrywa karty postaci i wydarzeń, a partia kończy się, gdy któraś strona osiągnie limit stresu albo nie może dobrać karty z pustej talii; gracz widzi wynik
+- **Then** na zmianę z komputerem zagrywa karty postaci i wydarzeń, a partia kończy się, gdy HP którejś strony spadnie do 0 albo nie może ona dobrać karty z pustej talii; gracz widzi wynik
 
 #### Acceptance Criteria
 - Gracz widzi zagrania komputera i ich skutek (FR-006).
-- Poziom stresu obu stron jest widoczny przez całą partię (FR-007).
+- HP obu stron jest widoczne przez całą partię (FR-007).
 - Ekran wyniku pozwala od razu zagrać ponownie (FR-008).
 
 ## Functional Requirements
@@ -95,7 +95,7 @@ Pierwszy przepływ MVP (zablokowany):
 - FR-006: Przeciwnik komputerowy może rozgrywać własne tury, a gracz widzi, co komputer zagrał i dlaczego zmienił się stan gry. Priority: must-have
   > Socrates: Counter-argument considered: "długie lub niezrozumiałe tury komputera spowalniają partię (guardrail czasu partii)."
   > Resolution: modified — dodano wymóg, że gracz widzi zagrania komputera i ich skutek.
-- FR-007: Gracz może w każdej chwili widzieć poziom stresu swój i przeciwnika. Priority: must-have
+- FR-007: Gracz może w każdej chwili widzieć HP swoje i przeciwnika. Priority: must-have
   > Socrates: Counter-argument considered: "ukryty stan przeciwnika dodałby napięcia."
   > Resolution: kept — przy grze taktycznej jawność stanu jest ważniejsza.
 - FR-008: Gracz może zobaczyć wynik partii (wygrana/przegrana) i od razu zagrać ponownie. Priority: must-have
@@ -110,13 +110,13 @@ Pierwszy przepływ MVP (zablokowany):
 
 ## Business Logic
 
-Wygrywa ten, kto doprowadzi stres przeciwnika do limitu albo sprawi, że przeciwnik nie będzie mógł dobrać karty, bo jego talia jest pusta.
+Wygrywa ten, kto doprowadzi HP przeciwnika do 0 (lub poniżej) albo sprawi, że przeciwnik nie będzie mógł dobrać karty, bo jego talia jest pusta.
 
-Dane wejściowe reguły widoczne dla gracza: wybrana frakcja z gotową talią, karty postaci i wydarzeń zagrywane na zmianę przez gracza i przeciwnika komputerowego oraz bieżący poziom stresu obu stron. Stres zastępuje klasyczne „życie” — karty podnoszą stres przeciwnika.
+Dane wejściowe reguły widoczne dla gracza: wybrana frakcja z gotową talią, karty postaci i wydarzeń zagrywane na zmianę przez gracza i przeciwnika komputerowego oraz bieżące HP obu stron. Każda strona zaczyna z 30 HP; obrażenia obniżają HP, a leczenie podnosi je najwyżej do 30.
 
-Wynik: partia kończy się w chwili, gdy któraś strona osiągnie limit stresu albo musi dobrać kartę z pustej talii; ta strona przegrywa. Gracz spotyka regułę przez cały przebieg partii (stale widoczny stres obu stron, widoczne skutki zagrań) i na ekranie wyniku.
+Wynik: partia kończy się w chwili, gdy któraś strona ma HP ≤ 0 albo musi dobrać kartę z pustej talii; ta strona przegrywa. HP może spaść poniżej zera i ta wartość jest pokazywana (np. −3/30). Gracz spotyka regułę przez cały przebieg partii (stale widoczne HP obu stron, widoczne skutki zagrań) i na ekranie wyniku.
 
-W v1 jedynym zasobem przegranej jest stres; dług techniczny nie jest częścią pierwszej wersji. Limit stresu wynosi 30, a talia każdej frakcji liczy 30 kart.
+W v1 jedynym zasobem przegranej jest HP; dług techniczny nie jest częścią pierwszej wersji. Maksymalne (i startowe) HP wynosi 30, a talia każdej frakcji liczy 30 kart.
 
 ## Access Control
 
