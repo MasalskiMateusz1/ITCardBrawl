@@ -1,7 +1,7 @@
-# Produkcja: aplikacja (Spring + SPA w jednym obrazie) za reverse proxy Caddy z TLS (Let's Encrypt).
-# Na serwerze w /opt/itcardbrawl obok tego pliku (nie w repo, zob. deploy/README.md):
-#   .env    - APP_TAG (ustawia deploy.sh) i APP_DOMAIN
-#   app.env - SPRING_PROFILES_ACTIVE=prod i sekrety OAuth2 (chmod 600)
+# Production: the app (Spring + SPA in one image) behind the Caddy reverse proxy with TLS (Let's Encrypt).
+# On the server in /opt/itcardbrawl next to this file (not in the repo, see deploy/README.md):
+#   .env    - APP_TAG (set by deploy.sh) and APP_DOMAIN
+#   app.env - SPRING_PROFILES_ACTIVE=prod and the OAuth2 secrets (chmod 600)
 name: itcardbrawl
 
 services:
@@ -9,12 +9,12 @@ services:
     image: ghcr.io/masalskimateusz1/itcardbrawl:${APP_TAG:?APP_TAG nie ustawiony w .env}
     env_file: app.env
     restart: unless-stopped
-    # Healthcheck z obrazu (HEALTHCHECK w Dockerfile, /api/ping). Brak publikowanych portow:
-    # ruch z zewnatrz tylko przez Caddy w sieci compose (app:8080).
+    # Healthcheck from the image (HEALTHCHECK in the Dockerfile, /api/ping). No published ports:
+    # outside traffic only through Caddy on the compose network (app:8080).
 
   caddy:
-    # Wersja przypieta (linia minor): deploy.sh pobiera tylko app, Caddy aktualizujemy recznie
-    # (zob. deploy/README.md, "Aktualizacja Caddy").
+    # Pinned version (minor line): deploy.sh pulls only app, Caddy is updated by hand
+    # (see deploy/README.md, "Aktualizacja Caddy").
     image: caddy:2.11
     restart: unless-stopped
     ports:

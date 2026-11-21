@@ -1,16 +1,16 @@
 # syntax=docker/dockerfile:1
 
-# --- Etap 1: build SPA (Angular) ---
+# --- Stage 1: build the SPA (Angular) ---
 FROM node:24 AS frontend
 WORKDIR /build/frontend
-# Wersja npm zgodna z "packageManager" w frontend/package.json
+# npm version matching "packageManager" in frontend/package.json
 RUN npm install -g npm@12.1.0
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
-# --- Etap 2: build jara (Spring Boot) z SPA w static/ ---
+# --- Stage 2: build the jar (Spring Boot) with the SPA in static/ ---
 FROM eclipse-temurin:21-jdk AS backend
 WORKDIR /build
 COPY .mvn/ .mvn/
@@ -18,11 +18,11 @@ COPY mvnw pom.xml ./
 RUN chmod +x mvnw && ./mvnw -B -q dependency:go-offline
 COPY src/ src/
 COPY --from=frontend /build/frontend/dist/itcardbrawl/browser/ src/main/resources/static/
-# Testy biegna w osobnym jobie CI
+# Tests run in a separate CI job
 RUN ./mvnw -B package -DskipTests \
     && cp target/*.jar /build/app.jar
 
-# --- Etap 3: obraz uruchomieniowy ---
+# --- Stage 3: runtime image ---
 FROM eclipse-temurin:21-jre
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \

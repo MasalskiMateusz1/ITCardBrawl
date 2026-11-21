@@ -1,8 +1,8 @@
-# Domena z APP_DOMAIN (plik .env obok compose.yaml). Caddy sam pobiera i odnawia certyfikat
-# Let's Encrypt oraz ustawia X-Forwarded-Proto/Host/For - Spring (profil prod) buduje z nich adresy https://.
+# Domain from APP_DOMAIN (the .env file next to compose.yaml). Caddy obtains and renews the
+# Let's Encrypt certificate itself and sets X-Forwarded-Proto/Host/For - Spring (prod profile) builds https:// addresses from them.
 {$APP_DOMAIN} {
 	reverse_proxy app:8080 {
-		# Spring honoruje tez te naglowki, a Caddy ich nie nadpisuje - usuwamy wartosci od klienta
+		# Spring also honours these headers and Caddy does not overwrite them - we strip the client's values
 		header_up -Forwarded
 		header_up -X-Forwarded-Prefix
 		header_up -X-Forwarded-Port
