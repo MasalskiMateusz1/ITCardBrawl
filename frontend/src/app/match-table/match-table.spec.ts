@@ -161,8 +161,8 @@ function matchView(active: Side = 'PLAYER'): MatchView {
     turn: { number: 1, active },
     player: {
       faction: { id: 'developers', name: 'Developerzy' },
-      stress: 0,
-      stressLimit: 30,
+      hp: 30,
+      maxHp: 30,
       resource: { current: 1, max: 1 },
       deckCount: 25,
       hand: hand(1, active),
@@ -173,8 +173,8 @@ function matchView(active: Side = 'PLAYER'): MatchView {
     },
     opponent: {
       faction: { id: 'testers', name: 'Testerzy' },
-      stress: 0,
-      stressLimit: 30,
+      hp: 30,
+      maxHp: 30,
       resource: { current: 0, max: 0 },
       deckCount: 24,
       handCount: 6,
@@ -189,8 +189,8 @@ function matchView(active: Side = 'PLAYER'): MatchView {
   };
 }
 
-const OPPONENT_STRESS: Target = { kind: 'PLAYER', instanceId: null, side: 'OPPONENT' };
-const PLAYER_STRESS: Target = { kind: 'PLAYER', instanceId: null, side: 'PLAYER' };
+const OPPONENT_PLAYER: Target = { kind: 'PLAYER', instanceId: null, side: 'OPPONENT' };
+const PLAYER_SELF: Target = { kind: 'PLAYER', instanceId: null, side: 'PLAYER' };
 
 function characterTarget(instanceId: number): Target {
   return { kind: 'CHARACTER', instanceId, side: null };
@@ -216,7 +216,7 @@ function boardView(opponentGuard = false, eventTargets: Target[] = []): MatchVie
           damage: 2,
           attackTargets: opponentGuard
             ? [characterTarget(21)]
-            : [OPPONENT_STRESS, characterTarget(20), characterTarget(21)],
+            : [OPPONENT_PLAYER, characterTarget(20), characterTarget(21)],
         }),
       ],
     },
@@ -236,7 +236,7 @@ function boardView(opponentGuard = false, eventTargets: Target[] = []): MatchVie
 
 /** boardView() with the "Hotfix" event (instance 3) targeting Tech Lead, QA Lead or the opponent. */
 function targetView(): MatchView {
-  return boardView(false, [characterTarget(10), characterTarget(21), OPPONENT_STRESS]);
+  return boardView(false, [characterTarget(10), characterTarget(21), OPPONENT_PLAYER]);
 }
 
 const HOTFIX_PLAYED: PlayedEvent = { instanceId: 3, name: 'Hotfix', effects: [BUFF] };
@@ -246,7 +246,7 @@ function finishedView(winner: Side, reason: EndReason): MatchView {
   return {
     ...match,
     status: 'FINISHED',
-    player: { ...match.player, stress: winner === 'PLAYER' ? 4 : 33 },
+    player: { ...match.player, hp: winner === 'PLAYER' ? 26 : -3 },
     result: { winner, reason },
   };
 }
@@ -323,18 +323,18 @@ describe('MatchTable', () => {
     expect(text(cards[2].querySelector('.card-type'))).toBe('Wydarzenie');
   });
 
-  it('shows the stress of both sides, opponent card counts and resources', async () => {
+  it('shows the HP of both sides, opponent card counts and resources', async () => {
     const element = await renderWithMatch();
 
     const opponent = element.querySelector('.opponent')!;
     const player = element.querySelector('.player')!;
     expect(text(opponent)).toContain('Testerzy');
-    expect(text(opponent.querySelector('.stress dd'))).toBe('0/30');
+    expect(text(opponent.querySelector('.hp dd'))).toBe('30/30');
     expect(text(opponent.querySelector('.resource dd'))).toBe('0/0');
     expect(text(opponent.querySelector('.hand-count dd'))).toBe('6');
     expect(text(opponent.querySelector('.deck-count dd'))).toBe('24');
     expect(text(player)).toContain('Developerzy');
-    expect(text(player.querySelector('.stress dd'))).toBe('0/30');
+    expect(text(player.querySelector('.hp dd'))).toBe('30/30');
     expect(text(player.querySelector('.resource dd'))).toBe('1/1');
     expect(text(player.querySelector('.deck-count dd'))).toBe('25');
   });
@@ -408,7 +408,7 @@ describe('MatchTable', () => {
     expect(element.querySelector('.player')?.getAttribute('aria-label')).toBe('You');
     expect(text(element.querySelector('.opponent h2'))).toBe('Opponent: Testers');
     expect(text(element.querySelector('.player h2'))).toBe('You: Developers');
-    expect(text(element.querySelector('.opponent .stress dt'))).toBe('Stress');
+    expect(text(element.querySelector('.opponent .hp dt'))).toBe('HP');
     expect(text(element.querySelector('.opponent .resource dt'))).toBe('Resource');
     expect(text(element.querySelector('.opponent .hand-count dt'))).toBe('Cards in hand');
     expect(text(element.querySelector('.opponent .deck-count dt'))).toBe('Cards in deck');
@@ -604,13 +604,13 @@ describe('MatchTable', () => {
     );
   });
 
-  it('renders boards with remaining HP, active events, graveyard and real stress', async () => {
+  it('renders boards with remaining HP, active events, graveyard and negative player HP', async () => {
     const match = boardView();
     const element = await renderWithMatch({
       ...match,
       player: {
         ...match.player,
-        stress: 33,
+        hp: -3,
         graveyardCount: 2,
         activeEvents: [
           {
@@ -643,7 +643,7 @@ describe('MatchTable', () => {
 
     const player = element.querySelector('.player')!;
     const opponent = element.querySelector('.opponent')!;
-    expect(text(player.querySelector('.stress dd'))).toBe('33/30');
+    expect(text(player.querySelector('.hp dd'))).toBe('-3/30');
     expect(text(player.querySelector('.character-stats'))).toBe('Atak 4 / HP 3');
     expect(text(player.querySelector('.graveyard dd'))).toBe('2');
     expect(text(opponent.querySelector('.graveyard dd'))).toBe('4');
@@ -658,10 +658,10 @@ describe('MatchTable', () => {
     expect(text(player.querySelector('.events-heading'))).toBe('Aktywne wydarzenia');
   });
 
-  it("attacks the opponent's stress after choosing an attacker", async () => {
+  it("attacks the opponent player after choosing an attacker", async () => {
     const fixture = await renderFixture(boardView());
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('.attack-stress')).toBeNull();
+    expect(element.querySelector('.attack-player')).toBeNull();
     expect(element.querySelector('.opponent .target')).toBeNull();
 
     const attackButton = button(element, '.player .character button.attack');
@@ -669,11 +669,11 @@ describe('MatchTable', () => {
     attackButton.click();
     await fixture.whenStable();
 
-    const stress = button(element, '.attack-stress');
-    expect(text(stress)).toBe('Atakuj stres');
-    expect(stress.disabled).toBe(false);
+    const attackPlayer = button(element, '.attack-player');
+    expect(text(attackPlayer)).toBe('Atakuj gracza');
+    expect(attackPlayer.disabled).toBe(false);
     expect(element.querySelectorAll('.opponent .target').length).toBe(2);
-    stress.click();
+    attackPlayer.click();
     await fixture.whenStable();
 
     const request = httpTesting.expectOne({
@@ -684,7 +684,7 @@ describe('MatchTable', () => {
     request.flush(boardView());
     await fixture.whenStable();
 
-    expect(element.querySelector('.attack-stress')).toBeNull();
+    expect(element.querySelector('.attack-player')).toBeNull();
   });
 
   it('attacks a character target and allows cancelling the selection', async () => {
@@ -720,7 +720,7 @@ describe('MatchTable', () => {
     button(element, '.player .character button.attack').click();
     await fixture.whenStable();
 
-    expect(button(element, '.attack-stress').disabled).toBe(true);
+    expect(button(element, '.attack-player').disabled).toBe(true);
     const targets = Array.from(element.querySelectorAll<HTMLButtonElement>('.opponent .target'));
     expect(targets[0].disabled).toBe(true);
     expect(targets[1].disabled).toBe(false);
@@ -730,7 +730,7 @@ describe('MatchTable', () => {
     const fixture = await renderFixture(targetView());
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('.event-target')).toBeNull();
-    expect(element.querySelector('.target-stress')).toBeNull();
+    expect(element.querySelector('.target-player')).toBeNull();
 
     playButtons(element)[2].click();
     await fixture.whenStable();
@@ -745,12 +745,12 @@ describe('MatchTable', () => {
     expect(own.map((b) => b.disabled)).toEqual([false]);
     expect(enemy.map((b) => b.disabled)).toEqual([true, false]);
     expect(text(enemy[0])).toBe('Cel');
-    const opponentStress = button(element, '.opponent .target-stress');
-    const playerStress = button(element, '.player .target-stress');
-    expect(text(opponentStress)).toBe('Cel: stres przeciwnika');
-    expect(text(playerStress)).toBe('Cel: Twój stres');
-    expect(opponentStress.disabled).toBe(false);
-    expect(playerStress.disabled).toBe(true);
+    const opponentHp = button(element, '.opponent .target-player');
+    const playerHp = button(element, '.player .target-player');
+    expect(text(opponentHp)).toBe('Cel: HP przeciwnika');
+    expect(text(playerHp)).toBe('Cel: Twoje HP');
+    expect(opponentHp.disabled).toBe(false);
+    expect(playerHp.disabled).toBe(true);
     // Attack targets are not offered in target mode.
     expect(element.querySelector('.opponent .target')).toBeNull();
 
@@ -775,7 +775,7 @@ describe('MatchTable', () => {
 
     playButtons(element)[2].click();
     await fixture.whenStable();
-    button(element, '.opponent .target-stress').click();
+    button(element, '.opponent .target-player').click();
     await fixture.whenStable();
 
     const request = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
@@ -821,14 +821,14 @@ describe('MatchTable', () => {
 
     playButtons(element)[2].click();
     await fixture.whenStable();
-    button(element, '.opponent .target-stress').click();
+    button(element, '.opponent .target-player').click();
     await fixture.whenStable();
 
     expect(playButtons(element).every((b) => b.disabled)).toBe(true);
     const targets = Array.from(element.querySelectorAll<HTMLButtonElement>('.event-target'));
     expect(targets.length).toBe(3);
     expect(targets.every((b) => b.disabled)).toBe(true);
-    expect(button(element, '.opponent .target-stress').disabled).toBe(true);
+    expect(button(element, '.opponent .target-player').disabled).toBe(true);
     expect(button(element, '.cancel-target').disabled).toBe(true);
 
     httpTesting
@@ -919,10 +919,10 @@ describe('MatchTable', () => {
     await fixture.whenStable();
     expect(text(element.querySelector('.choose-target'))).toBe('Choose the event target');
     expect(text(element.querySelector('.cancel-target'))).toBe('Cancel');
-    expect(text(element.querySelector('.opponent .target-stress'))).toBe(
-      "Target: opponent's stress",
+    expect(text(element.querySelector('.opponent .target-player'))).toBe(
+      "Target: opponent's HP",
     );
-    expect(text(element.querySelector('.player .target-stress'))).toBe('Target: your stress');
+    expect(text(element.querySelector('.player .target-player'))).toBe('Target: your HP');
     expect(text(element.querySelector('.event-target'))).toBe('Target');
   });
 
@@ -1107,7 +1107,7 @@ describe('MatchTable', () => {
       expect(text(element.querySelector('.opponent-moving'))).toBe('Ruch przeciwnika…');
       expect(element.querySelector('.end-turn')).toBeNull();
       expect(text(element.querySelector('.turn'))).toBe('Tura 6 — tura przeciwnika');
-      expect(text(element.querySelector('.player .stress dd'))).toBe('0/30');
+      expect(text(element.querySelector('.player .hp dd'))).toBe('30/30');
       expect(logTexts(element)).toEqual(LOG.slice(0, 2).map((entry) => entry.text));
       expect(playButtons(element).every((candidate) => candidate.disabled)).toBe(true);
       expect(attackButton(element).disabled).toBe(true);
@@ -1115,7 +1115,7 @@ describe('MatchTable', () => {
       advance(fixture, STEP_MS - 1);
       expect(logTexts(element).length).toBe(2);
       advance(fixture, 1);
-      expect(text(element.querySelector('.player .stress dd'))).toBe('4/30');
+      expect(text(element.querySelector('.player .hp dd'))).toBe('26/30');
       expect(logTexts(element)).toEqual(LOG.slice(0, 3).map((entry) => entry.text));
       expect(element.querySelectorAll('.opponent .board .character').length).toBe(3);
       expect(text(element.querySelector('.opponent-moving'))).toBe('Ruch przeciwnika…');
@@ -1141,7 +1141,7 @@ describe('MatchTable', () => {
       advance(fixture, STEP_MS);
       expect(text(element.querySelector('.opponent .last-played-name'))).toBe('Code Review');
       expect(text(element.querySelector('.opponent .last-played .effect'))).toBe(
-        'Zadaj przeciwnikowi 4 stresu',
+        'Zadaj przeciwnikowi 4 obrażenia',
       );
 
       advance(fixture, STEP_MS);
@@ -1197,32 +1197,32 @@ describe('MatchTable', () => {
   });
 
   it('shows the win with its reason and a link to /new-match, without move buttons', async () => {
-    const element = await renderWithMatch(finishedView('PLAYER', 'STRESS_LIMIT'));
+    const element = await renderWithMatch(finishedView('PLAYER', 'HP_DEPLETED'));
 
     const result = element.querySelector('.result')!;
     expect(text(result.querySelector('h2'))).toBe('Wygrana');
-    expect(text(result.querySelector('.result-reason'))).toBe('Przyczyna: limit stresu');
+    expect(text(result.querySelector('.result-reason'))).toBe('Przyczyna: HP spadło do 0');
     const link = result.querySelector('a.play-again');
     expect(text(link)).toBe('Zagraj ponownie');
     expect(link?.getAttribute('href')).toBe('/new-match');
     expect(element.querySelector('button')).toBeNull();
   });
 
-  it('shows the loss and the real stress over the limit', async () => {
+  it('shows the loss and the real HP below zero', async () => {
     const element = await renderWithMatch(finishedView('OPPONENT', 'EMPTY_DECK'));
 
     expect(text(element.querySelector('.result h2'))).toBe('Przegrana');
     expect(text(element.querySelector('.result-reason'))).toBe('Przyczyna: pusta talia');
-    expect(text(element.querySelector('.player .stress dd'))).toBe('33/30');
+    expect(text(element.querySelector('.player .hp dd'))).toBe('-3/30');
   });
 
   it('shows the result in English', async () => {
     TestBed.inject(LanguageService).setLanguage('en');
 
-    const element = await renderWithMatch(finishedView('OPPONENT', 'STRESS_LIMIT'));
+    const element = await renderWithMatch(finishedView('OPPONENT', 'HP_DEPLETED'));
 
     expect(text(element.querySelector('.result h2'))).toBe('Defeat');
-    expect(text(element.querySelector('.result-reason'))).toBe('Reason: stress limit');
+    expect(text(element.querySelector('.result-reason'))).toBe('Reason: HP dropped to 0');
     expect(text(element.querySelector('.play-again'))).toBe('Play again');
   });
 
@@ -1232,7 +1232,7 @@ describe('MatchTable', () => {
       log: [
         { side: 'PLAYER', text: 'Zagrywasz: Junior Dev' },
         { side: 'OPPONENT', text: 'Przeciwnik zagrywa: Tech Lead' },
-        { side: 'OPPONENT', text: 'Tech Lead atakuje Twój stres: +8 (24/30)' },
+        { side: 'OPPONENT', text: 'Tech Lead atakuje Cię: −8' },
       ],
     });
 
@@ -1240,7 +1240,7 @@ describe('MatchTable', () => {
     expect(entries).toEqual([
       'Zagrywasz: Junior Dev',
       'Przeciwnik zagrywa: Tech Lead',
-      'Tech Lead atakuje Twój stres: +8 (24/30)',
+      'Tech Lead atakuje Cię: −8',
     ]);
     expect(text(element.querySelector('.log h2'))).toBe('Przebieg partii');
   });
@@ -1256,7 +1256,7 @@ const LOG: LogEntry[] = [
 
 /**
  * End turn from boardView(): step 1 is the state after the player's end of turn, step 2 the
- * opponent's play (+4 stress for the player), step 3 the final state after the opponent ends its turn.
+ * opponent's play (4 damage to the player), step 3 the final state after the opponent ends its turn.
  */
 function endTurnResponse(): MatchView {
   const before = boardView();
@@ -1268,11 +1268,11 @@ function endTurnResponse(): MatchView {
       instanceId: 40,
       name: 'Code Review',
       effects: [
-        { kind: 'STRESS', scope: 'OPPONENT', amount: 4, text: 'Zadaj przeciwnikowi 4 stresu' },
+        { kind: 'PLAYER_DAMAGE', scope: 'OPPONENT', amount: 4, text: 'Zadaj przeciwnikowi 4 obrażenia' },
       ],
     } satisfies PlayedEvent,
   };
-  const player = { ...before.player, stress: 4 };
+  const player = { ...before.player, hp: 26 };
   const step = (overrides: Partial<ReplayStep>): ReplayStep => ({
     turn: opponentTurn,
     status: 'IN_PROGRESS',

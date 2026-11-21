@@ -152,7 +152,7 @@ export class MatchTable {
     this.selectedEvent.set(null);
   }
 
-  /** `targetId === null` is the opponent's stress. */
+  /** `targetId === null` is the opponent player. */
   protected canAttackTarget(targetId: number | null): boolean {
     return this.attackTargets().some((target) => sameTarget(target, targetId, 'OPPONENT'));
   }
@@ -171,7 +171,7 @@ export class MatchTable {
     this.selectedAttacker.set(null);
   }
 
-  /** `targetId === null` attacks the opponent's stress. */
+  /** `targetId === null` attacks the opponent player. */
   protected attack(targetId: number | null): void {
     const match = this.match();
     const attackerId = this.selectedAttacker();

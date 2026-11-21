@@ -279,22 +279,22 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify`
-- [x] 1.2 Brak „stres” w backendzie: `grep -rni "stres" src` zwraca pusty wynik
-- [x] 1.3 Kontrola celowego uszkodzenia: usunięcie sufitu w `changeHp` łamie `healIsCappedAtMaxHp` (przywrócone przed commitem)
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — bf1bc14
+- [x] 1.2 Brak „stres” w backendzie: `grep -rni "stres" src` zwraca pusty wynik — bf1bc14
+- [x] 1.3 Kontrola celowego uszkodzenia: usunięcie sufitu w `changeHp` łamie `healIsCappedAtMaxHp` (przywrócone przed commitem) — bf1bc14
 
 #### Manual
 
-- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 3 `kind` i 5 `keyword`, żadnych innych pól
+- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 3 `kind` i 5 `keyword`, żadnych innych pól — bf1bc14
 
 ### Phase 2: SPA — HP w typach, stole i i18n
 
 #### Automated
 
-- [ ] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [ ] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [ ] 2.3 Testy backendu dalej zielone: `./mvnw -B verify`
-- [ ] 2.4 Brak „stres” we froncie: `grep -rni "stres" frontend/src` zwraca pusty wynik
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
+- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify`
+- [x] 2.4 Brak „stres” we froncie: `grep -rni "stres" frontend/src` zwraca pusty wynik
 
 #### Manual
 

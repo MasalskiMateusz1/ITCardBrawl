@@ -51,7 +51,7 @@ export class GameService {
     });
   }
 
-  /** `targetId === null` attacks the opponent's stress. */
+  /** `targetId === null` attacks the opponent player. */
   attack(
     matchId: string,
     turn: number,

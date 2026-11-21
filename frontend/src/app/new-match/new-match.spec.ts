@@ -23,8 +23,8 @@ const MATCH: MatchView = {
   turn: { number: 1, active: 'PLAYER' },
   player: {
     faction: { id: 'developers', name: 'Developerzy' },
-    stress: 0,
-    stressLimit: 30,
+    hp: 30,
+    maxHp: 30,
     resource: { current: 1, max: 1 },
     deckCount: 25,
     hand: [],
@@ -35,8 +35,8 @@ const MATCH: MatchView = {
   },
   opponent: {
     faction: { id: 'testers', name: 'Testerzy' },
-    stress: 0,
-    stressLimit: 30,
+    hp: 30,
+    maxHp: 30,
     resource: { current: 0, max: 0 },
     deckCount: 25,
     handCount: 5,

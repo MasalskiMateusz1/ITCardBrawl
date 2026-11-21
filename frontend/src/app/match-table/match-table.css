@@ -106,8 +106,8 @@
   margin-block: 1rem 0.5rem;
 }
 
-.attack-stress,
-.target-stress {
+.attack-player,
+.target-player {
   margin-block-start: 0.75rem;
 }
 
