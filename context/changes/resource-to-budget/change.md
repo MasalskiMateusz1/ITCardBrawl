@@ -1,7 +1,7 @@
 ---
 change_id: resource-to-budget
 title: Zasób na zagrywanie kart → budżet
-status: implementing
+status: implemented
 created: 2026-11-21
 updated: 2026-11-21
 archived_at: null
