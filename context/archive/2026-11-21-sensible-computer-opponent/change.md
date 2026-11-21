@@ -1,7 +1,8 @@
 ---
 change_id: sensible-computer-opponent
 title: Sensible computer opponent
-status: impl_reviewed
+status: archived
+archived_at: 2026-11-21T20:37:05Z
 created: 2026-11-21
 updated: 2026-11-21
 ---
