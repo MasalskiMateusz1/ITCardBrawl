@@ -98,8 +98,8 @@ class MatchLogFormatterTests {
 		assertThat(formatter.format(attacked, Language.EN)).isEqualTo("Tech Lead attacks you: −8");
 		assertThat(formatter.format(hp, Language.PL)).isEqualTo("Twoje HP: 24 → 16/30");
 		assertThat(formatter.format(hp, Language.EN)).isEqualTo("Your HP: 24 → 16/30");
-		assertThat(formatter.format(opponentHp, Language.PL)).isEqualTo("HP przeciwnika: 2 → -3/30");
-		assertThat(formatter.format(opponentHp, Language.EN)).isEqualTo("Opponent HP: 2 → -3/30");
+		assertThat(formatter.format(opponentHp, Language.PL)).isEqualTo("HP przeciwnika: 2 → −3/30");
+		assertThat(formatter.format(opponentHp, Language.EN)).isEqualTo("Opponent HP: 2 → −3/30");
 	}
 
 	@Test
@@ -112,13 +112,13 @@ class MatchLogFormatterTests {
 		MatchEvent attackByPlayer = new MatchEvent.Attacked(Side.PLAYER, TECH_LEAD, null, 8, 0);
 
 		assertThat(formatter.format(damageByPlayer, Language.PL)).isEqualTo("Tech Lead zadaje przeciwnikowi obrażenia: −4");
-		assertThat(formatter.format(damageByPlayer, Language.EN)).isEqualTo("Tech Lead deals the opponent damage: −4");
+		assertThat(formatter.format(damageByPlayer, Language.EN)).isEqualTo("Tech Lead damages the opponent: −4");
 		assertThat(formatter.format(overtimeByOpponent, Language.PL)).isEqualTo("Tech Lead zadaje Ci obrażenia: −1");
-		assertThat(formatter.format(overtimeByOpponent, Language.EN)).isEqualTo("Tech Lead deals you damage: −1");
-		assertThat(formatter.format(healByPlayer, Language.PL)).isEqualTo("Tech Lead leczy Twoje HP: +3");
-		assertThat(formatter.format(healByPlayer, Language.EN)).isEqualTo("Tech Lead heals your HP: +3");
-		assertThat(formatter.format(healByOpponent, Language.PL)).isEqualTo("Tech Lead leczy HP przeciwnika: +3");
-		assertThat(formatter.format(healByOpponent, Language.EN)).isEqualTo("Tech Lead heals opponent HP: +3");
+		assertThat(formatter.format(overtimeByOpponent, Language.EN)).isEqualTo("Tech Lead damages you: −1");
+		assertThat(formatter.format(healByPlayer, Language.PL)).isEqualTo("Tech Lead leczy Twoje HP o 3");
+		assertThat(formatter.format(healByPlayer, Language.EN)).isEqualTo("Tech Lead heals your HP by 3");
+		assertThat(formatter.format(healByOpponent, Language.PL)).isEqualTo("Tech Lead leczy HP przeciwnika o 3");
+		assertThat(formatter.format(healByOpponent, Language.EN)).isEqualTo("Tech Lead heals opponent HP by 3");
 		assertThat(formatter.format(attackByPlayer, Language.PL)).isEqualTo("Tech Lead atakuje przeciwnika: −8");
 		assertThat(formatter.format(attackByPlayer, Language.EN)).isEqualTo("Tech Lead attacks the opponent: −8");
 	}
@@ -168,10 +168,10 @@ class MatchLogFormatterTests {
 		MatchEvent lost = new MatchEvent.MatchEnded(Side.OPPONENT,
 				new MatchResult(Side.OPPONENT, EndReason.EMPTY_DECK));
 
-		assertThat(formatter.format(won, Language.PL)).isEqualTo("Wygrywasz: HP przeciwnika spadło do 0");
-		assertThat(formatter.format(won, Language.EN)).isEqualTo("You win: opponent's HP dropped to 0");
-		assertThat(formatter.format(lostOnHp, Language.PL)).isEqualTo("Przegrywasz: Twoje HP spadło do 0");
-		assertThat(formatter.format(lostOnHp, Language.EN)).isEqualTo("You lose: your HP dropped to 0");
+		assertThat(formatter.format(won, Language.PL)).isEqualTo("Wygrywasz: HP przeciwnika spadło do 0 lub niżej");
+		assertThat(formatter.format(won, Language.EN)).isEqualTo("You win: opponent's HP dropped to 0 or below");
+		assertThat(formatter.format(lostOnHp, Language.PL)).isEqualTo("Przegrywasz: Twoje HP spadło do 0 lub niżej");
+		assertThat(formatter.format(lostOnHp, Language.EN)).isEqualTo("You lose: your HP dropped to 0 or below");
 		assertThat(formatter.format(lost, Language.PL)).startsWith("Przegrywasz");
 		assertThat(formatter.format(lost, Language.EN)).startsWith("You lose");
 	}

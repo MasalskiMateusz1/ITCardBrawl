@@ -38,6 +38,7 @@ import com.example.itcardbrawl.game.CardInstance;
 import com.example.itcardbrawl.game.Language;
 import com.example.itcardbrawl.game.Match;
 import com.example.itcardbrawl.game.MatchEngine;
+import com.example.itcardbrawl.game.MatchRules;
 import com.example.itcardbrawl.game.MatchService;
 import com.example.itcardbrawl.game.MatchSide;
 import com.example.itcardbrawl.game.MatchStore;
@@ -804,7 +805,11 @@ class MatchControllerTests {
 				.doesNotContainKeys("log", "replay", "matchId");
 			@SuppressWarnings("unchecked")
 			Map<String, Object> opponent = (Map<String, Object>) step.get("opponent");
-			assertThat(opponent).containsKey("handCount").doesNotContainKeys("hand", "deck");
+			assertThat(opponent).containsKeys("handCount", "hp").containsEntry("maxHp", MatchRules.MAX_HP)
+				.doesNotContainKeys("hand", "deck");
+			@SuppressWarnings("unchecked")
+			Map<String, Object> stepPlayer = (Map<String, Object>) step.get("player");
+			assertThat(stepPlayer).containsKey("hp").containsEntry("maxHp", MatchRules.MAX_HP);
 		}
 	}
 

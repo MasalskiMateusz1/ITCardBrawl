@@ -50,10 +50,10 @@ public class MatchLogFormatter {
 			case AbilityTriggered e -> abilityTriggered(e, language);
 			case Attacked e -> attacked(e, language);
 			case HpChanged e -> mine(e.affected())
-					? text(language, "Twoje HP: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP),
-							"Your HP: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP))
-					: text(language, "HP przeciwnika: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP),
-							"Opponent HP: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP));
+					? text(language, "Twoje HP: %s → %s/%d".formatted(hp(e.from()), hp(e.to()), MatchRules.MAX_HP),
+							"Your HP: %s → %s/%d".formatted(hp(e.from()), hp(e.to()), MatchRules.MAX_HP))
+					: text(language, "HP przeciwnika: %s → %s/%d".formatted(hp(e.from()), hp(e.to()), MatchRules.MAX_HP),
+							"Opponent HP: %s → %s/%d".formatted(hp(e.from()), hp(e.to()), MatchRules.MAX_HP));
 			case CharacterDefeated e -> mine(e.side())
 					? text(language, "Twoja postać pokonana: " + name(e.card(), language),
 							"Your character is defeated: " + name(e.card(), language))
@@ -90,14 +90,14 @@ public class MatchLogFormatter {
 		return switch (e.keyword()) {
 			case ON_PLAY_DAMAGE, OVERTIME -> mine(e.side())
 					? text(language, "%s zadaje przeciwnikowi obrażenia: −%d".formatted(card, amount),
-							"%s deals the opponent damage: −%d".formatted(card, amount))
+							"%s damages the opponent: −%d".formatted(card, amount))
 					: text(language, "%s zadaje Ci obrażenia: −%d".formatted(card, amount),
-							"%s deals you damage: −%d".formatted(card, amount));
+							"%s damages you: −%d".formatted(card, amount));
 			case HEAL -> mine(e.side())
-					? text(language, "%s leczy Twoje HP: +%d".formatted(card, amount),
-							"%s heals your HP: +%d".formatted(card, amount))
-					: text(language, "%s leczy HP przeciwnika: +%d".formatted(card, amount),
-							"%s heals opponent HP: +%d".formatted(card, amount));
+					? text(language, "%s leczy Twoje HP o %d".formatted(card, amount),
+							"%s heals your HP by %d".formatted(card, amount))
+					: text(language, "%s leczy HP przeciwnika o %d".formatted(card, amount),
+							"%s heals opponent HP by %d".formatted(card, amount));
 			// Zdolności stałe nie wyzwalają się jako zdarzenie, ale przełącznik musi być kompletny.
 			case GUARD, RUSH -> card + ": " + e.keyword().describe(amount).in(language);
 		};
@@ -130,12 +130,17 @@ public class MatchLogFormatter {
 		boolean won = mine(result.winner());
 		return switch (result.reason()) {
 			case HP_DEPLETED -> won
-					? text(language, "Wygrywasz: HP przeciwnika spadło do 0", "You win: opponent's HP dropped to 0")
-					: text(language, "Przegrywasz: Twoje HP spadło do 0", "You lose: your HP dropped to 0");
+					? text(language, "Wygrywasz: HP przeciwnika spadło do 0 lub niżej", "You win: opponent's HP dropped to 0 or below")
+					: text(language, "Przegrywasz: Twoje HP spadło do 0 lub niżej", "You lose: your HP dropped to 0 or below");
 			case EMPTY_DECK -> won
 					? text(language, "Wygrywasz: przeciwnikowi skończyła się talia", "You win: opponent ran out of cards")
 					: text(language, "Przegrywasz: skończyła się Twoja talia", "You lose: your deck ran out");
 		};
+	}
+
+	// Ujemne HP z typograficznym minusem (U+2212), jak kwoty obrażeń w logu.
+	private static String hp(int value) {
+		return value < 0 ? "−" + -value : Integer.toString(value);
 	}
 
 	private static boolean mine(Side side) {
