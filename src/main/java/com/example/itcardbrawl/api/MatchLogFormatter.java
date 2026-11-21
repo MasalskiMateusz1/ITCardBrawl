@@ -12,8 +12,8 @@ import com.example.itcardbrawl.game.MatchEvent.CardPlayed;
 import com.example.itcardbrawl.game.MatchEvent.CharacterDefeated;
 import com.example.itcardbrawl.game.MatchEvent.EventExpired;
 import com.example.itcardbrawl.game.MatchEvent.EffectApplied;
+import com.example.itcardbrawl.game.MatchEvent.HpChanged;
 import com.example.itcardbrawl.game.MatchEvent.MatchEnded;
-import com.example.itcardbrawl.game.MatchEvent.StressChanged;
 import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
 import com.example.itcardbrawl.game.MatchEvent.TurnStarted;
 import com.example.itcardbrawl.game.MatchResult;
@@ -49,11 +49,11 @@ public class MatchLogFormatter {
 			case EffectApplied e -> effectApplied(e, language);
 			case AbilityTriggered e -> abilityTriggered(e, language);
 			case Attacked e -> attacked(e, language);
-			case StressChanged e -> mine(e.affected())
-					? text(language, "Twój stres: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.STRESS_LIMIT),
-							"Your stress: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.STRESS_LIMIT))
-					: text(language, "Stres przeciwnika: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.STRESS_LIMIT),
-							"Opponent stress: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.STRESS_LIMIT));
+			case HpChanged e -> mine(e.affected())
+					? text(language, "Twoje HP: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP),
+							"Your HP: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP))
+					: text(language, "HP przeciwnika: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP),
+							"Opponent HP: %d → %d/%d".formatted(e.from(), e.to(), MatchRules.MAX_HP));
 			case CharacterDefeated e -> mine(e.side())
 					? text(language, "Twoja postać pokonana: " + name(e.card(), language),
 							"Your character is defeated: " + name(e.card(), language))
@@ -75,8 +75,8 @@ public class MatchLogFormatter {
 		String description = e.effect().describe().in(language);
 		String target = e.targetCharacter() != null ? " — " + name(e.targetCharacter(), language)
 				: e.targetPlayer() != null ? (mine(e.targetPlayer())
-						? text(language, " — Twój stres", " — your stress")
-						: text(language, " — stres przeciwnika", " — opponent stress")) : "";
+						? text(language, " — Twoje HP", " — your HP")
+						: text(language, " — HP przeciwnika", " — opponent HP")) : "";
 		String card = name(e.card(), language);
 		String prefix = mine(e.side())
 				? text(language, "Twoje wydarzenie " + card, "Your event " + card)
@@ -88,16 +88,16 @@ public class MatchLogFormatter {
 		String card = name(e.card(), language);
 		int amount = e.amount();
 		return switch (e.keyword()) {
-			case ON_PLAY_STRESS, OVERTIME -> mine(e.side())
-					? text(language, "%s dodaje przeciwnikowi stresu: +%d".formatted(card, amount),
-							"%s adds opponent stress: +%d".formatted(card, amount))
-					: text(language, "%s dodaje Ci stresu: +%d".formatted(card, amount),
-							"%s adds to your stress: +%d".formatted(card, amount));
+			case ON_PLAY_DAMAGE, OVERTIME -> mine(e.side())
+					? text(language, "%s zadaje przeciwnikowi obrażenia: −%d".formatted(card, amount),
+							"%s deals the opponent damage: −%d".formatted(card, amount))
+					: text(language, "%s zadaje Ci obrażenia: −%d".formatted(card, amount),
+							"%s deals you damage: −%d".formatted(card, amount));
 			case HEAL -> mine(e.side())
-					? text(language, "%s zmniejsza Twój stres: −%d".formatted(card, amount),
-							"%s reduces your stress: −%d".formatted(card, amount))
-					: text(language, "%s zmniejsza stres przeciwnika: −%d".formatted(card, amount),
-							"%s reduces opponent stress: −%d".formatted(card, amount));
+					? text(language, "%s leczy Twoje HP: +%d".formatted(card, amount),
+							"%s heals your HP: +%d".formatted(card, amount))
+					: text(language, "%s leczy HP przeciwnika: +%d".formatted(card, amount),
+							"%s heals opponent HP: +%d".formatted(card, amount));
 			// Zdolności stałe nie wyzwalają się jako zdarzenie, ale przełącznik musi być kompletny.
 			case GUARD, RUSH -> card + ": " + e.keyword().describe(amount).in(language);
 		};
@@ -107,10 +107,10 @@ public class MatchLogFormatter {
 		String attacker = name(e.attacker(), language);
 		if (e.target() == null) {
 			return mine(e.side())
-					? text(language, "%s atakuje stres przeciwnika: +%d".formatted(attacker, e.damageDealt()),
-							"%s attacks opponent stress: +%d".formatted(attacker, e.damageDealt()))
-					: text(language, "%s atakuje Twój stres: +%d".formatted(attacker, e.damageDealt()),
-							"%s attacks your stress: +%d".formatted(attacker, e.damageDealt()));
+					? text(language, "%s atakuje przeciwnika: −%d".formatted(attacker, e.damageDealt()),
+							"%s attacks the opponent: −%d".formatted(attacker, e.damageDealt()))
+					: text(language, "%s atakuje Cię: −%d".formatted(attacker, e.damageDealt()),
+							"%s attacks you: −%d".formatted(attacker, e.damageDealt()));
 		}
 		String target = name(e.target(), language);
 		return mine(e.side())
@@ -129,10 +129,9 @@ public class MatchLogFormatter {
 	private static String matchEnded(MatchResult result, Language language) {
 		boolean won = mine(result.winner());
 		return switch (result.reason()) {
-			case STRESS_LIMIT -> won
-					? text(language, "Wygrywasz: stres przeciwnika osiągnął limit",
-							"You win: opponent's stress reached the limit")
-					: text(language, "Przegrywasz: Twój stres osiągnął limit", "You lose: your stress reached the limit");
+			case HP_DEPLETED -> won
+					? text(language, "Wygrywasz: HP przeciwnika spadło do 0", "You win: opponent's HP dropped to 0")
+					: text(language, "Przegrywasz: Twoje HP spadło do 0", "You lose: your HP dropped to 0");
 			case EMPTY_DECK -> won
 					? text(language, "Wygrywasz: przeciwnikowi skończyła się talia", "You win: opponent ran out of cards")
 					: text(language, "Przegrywasz: skończyła się Twoja talia", "You lose: your deck ran out");

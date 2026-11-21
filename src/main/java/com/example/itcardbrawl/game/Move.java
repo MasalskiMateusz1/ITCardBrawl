@@ -13,7 +13,7 @@ public sealed interface Move {
 
 	}
 
-	/** Atak postaci; {@code targetId == null} oznacza atak w stres przeciwnika. */
+	/** Atak postaci; {@code targetId == null} oznacza atak w gracza (HP przeciwnika). */
 	record Attack(int attackerId, Integer targetId) implements Move {
 	}
 

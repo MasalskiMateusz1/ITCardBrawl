@@ -91,7 +91,7 @@ class RandomOpponentTests {
 				List.of(new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 1))));
 		CardInstance playerCharacter = character(2, 1);
 		CardInstance opponentCharacter = character(3, 1);
-		MatchSide opponent = new MatchSide(FACTION, List.of(), List.of(targeted), 0, 1, 1,
+		MatchSide opponent = new MatchSide(FACTION, List.of(), List.of(targeted), MatchRules.MAX_HP, 1, 1,
 				List.of(new BoardCharacter(opponentCharacter, 0, false, false)), List.of(), List.of());
 		Match match = opponentTurn(side(List.of(), List.of(playerCharacter), 0), opponent);
 
@@ -173,7 +173,7 @@ class RandomOpponentTests {
 	}
 
 	private static MatchSide side(List<CardInstance> hand, List<CardInstance> deck, int resource) {
-		return new MatchSide(FACTION, deck, hand, 0, resource, resource, List.of(), List.of(), List.of());
+		return new MatchSide(FACTION, deck, hand, MatchRules.MAX_HP, resource, resource, List.of(), List.of(), List.of());
 	}
 
 	private static final class SequenceRandom implements RandomGenerator {

@@ -18,8 +18,8 @@ import com.example.itcardbrawl.game.MatchEvent.CardPlayed;
 import com.example.itcardbrawl.game.MatchEvent.CharacterDefeated;
 import com.example.itcardbrawl.game.MatchEvent.EventExpired;
 import com.example.itcardbrawl.game.MatchEvent.EffectApplied;
+import com.example.itcardbrawl.game.MatchEvent.HpChanged;
 import com.example.itcardbrawl.game.MatchEvent.MatchEnded;
-import com.example.itcardbrawl.game.MatchEvent.StressChanged;
 import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
 import com.example.itcardbrawl.game.MatchEvent.TurnStarted;
 import com.example.itcardbrawl.game.MatchResult.EndReason;
@@ -102,14 +102,14 @@ class MatchEngineTests {
 		CardInstance guard = character(2, 1, 1, 5, ability(AbilityKeyword.GUARD));
 		CardInstance own = character(3, 1, 1, 5, null);
 		Match match = match(side().hand(spell).resource(2).board(onBoard(own, false)),
-				side().board(onBoard(guard, false)).stress(4));
+				side().board(onBoard(guard, false)).hp(26));
 
 		assertThat(ENGINE.legalMoves(match, Side.PLAYER)).contains(new Move.PlayCard(1, new Target.Character(2)),
 				new Move.PlayCard(1, new Target.Character(3)), new Move.PlayCard(1, new Target.Player(Side.PLAYER)),
 				new Move.PlayCard(1, new Target.Player(Side.OPPONENT)));
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1, new Target.Player(Side.OPPONENT)));
 
-		assertThat(after.opponent().stress()).isEqualTo(7);
+		assertThat(after.opponent().hp()).isEqualTo(23);
 		assertThat(after.log()).contains(new EffectApplied(Side.PLAYER, spell,
 				new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 3), null, Side.OPPONENT));
 	}
@@ -128,7 +128,7 @@ class MatchEngineTests {
 	@Test
 	void targetedEventRequiresTargetAndRejectsTargetWhenNoneIsNeeded() {
 		CardInstance targeted = event(1, 1, 0, new Effect(EffectKind.HEAL, EffectScope.TARGET, 2));
-		CardInstance untargeted = event(2, 1, 0, new Effect(EffectKind.STRESS, EffectScope.OPPONENT, 2));
+		CardInstance untargeted = event(2, 1, 0, new Effect(EffectKind.PLAYER_DAMAGE, EffectScope.OPPONENT, 2));
 		Match match = match(side().hand(targeted, untargeted).resource(3), side());
 
 		assertIllegal(match, Side.PLAYER, new Move.PlayCard(1));
@@ -153,15 +153,15 @@ class MatchEngineTests {
 	}
 
 	@Test
-	void healsStressAndCharacterDamageWithoutGoingBelowZero() {
-		CardInstance stressHeal = event(1, 1, 0, new Effect(EffectKind.HEAL, EffectScope.TARGET, 5));
+	void healsHpAndCharacterDamageWithoutExceedingMaximum() {
+		CardInstance hpHeal = event(1, 1, 0, new Effect(EffectKind.HEAL, EffectScope.TARGET, 5));
 		CardInstance damaged = character(2, 1, 1, 5, null);
-		Match match = match(side().hand(stressHeal).resource(2).stress(2)
+		Match match = match(side().hand(hpHeal).resource(2).hp(28)
 				.board(new BoardCharacter(damaged, 3, true, false)), side());
 
-		Match stressAfter = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1, new Target.Player(Side.PLAYER)));
-		assertThat(stressAfter.player().stress()).isZero();
-		assertThat(stressAfter.player().board().getFirst().damage()).isEqualTo(3);
+		Match hpAfter = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1, new Target.Player(Side.PLAYER)));
+		assertThat(hpAfter.player().hp()).isEqualTo(MatchRules.MAX_HP);
+		assertThat(hpAfter.player().board().getFirst().damage()).isEqualTo(3);
 
 		CardInstance characterHeal = event(3, 1, 0, new Effect(EffectKind.HEAL, EffectScope.TARGET, 5));
 		Match characterAfter = ENGINE.apply(match(side().hand(characterHeal).resource(2)
@@ -172,10 +172,10 @@ class MatchEngineTests {
 
 	@Test
 	void everyImmediateScopeAppliesToExpectedState() {
-		CardInstance stress = event(1, 1, 0, new Effect(EffectKind.STRESS, EffectScope.OPPONENT, 2));
-		Match stressed = ENGINE.apply(match(side().hand(stress).resource(2), side()), Side.PLAYER,
+		CardInstance playerDamage = event(1, 1, 0, new Effect(EffectKind.PLAYER_DAMAGE, EffectScope.OPPONENT, 2));
+		Match damaged = ENGINE.apply(match(side().hand(playerDamage).resource(2), side()), Side.PLAYER,
 				new Move.PlayCard(1));
-		assertThat(stressed.opponent().stress()).isEqualTo(2);
+		assertThat(damaged.opponent().hp()).isEqualTo(28);
 
 		CardInstance draw = event(2, 1, 0, new Effect(EffectKind.DRAW, EffectScope.SELF, 2));
 		CardInstance first = character(10, 1, 1, 1, null);
@@ -206,7 +206,7 @@ class MatchEngineTests {
 		Match enemyAllHit = ENGINE.apply(match(side().hand(enemyAll).resource(2),
 				side().board(onBoard(enemyUnit, false))), Side.PLAYER, new Move.PlayCard(6));
 		assertThat(enemyAllHit.opponent().board().getFirst().damage()).isEqualTo(2);
-		assertThat(enemyAllHit.opponent().stress()).isEqualTo(2);
+		assertThat(enemyAllHit.opponent().hp()).isEqualTo(28);
 
 		CardInstance healOwn = event(7, 1, 0, new Effect(EffectKind.HEAL, EffectScope.OWN_BOARD, 2));
 		CardInstance ownUnit = character(21, 1, 1, 5, null);
@@ -215,10 +215,10 @@ class MatchEngineTests {
 		assertThat(ownHealed.player().board().getFirst().damage()).isZero();
 
 		CardInstance healOwnAll = event(8, 1, 0, new Effect(EffectKind.HEAL, EffectScope.OWN_ALL, 2));
-		Match ownAllHealed = ENGINE.apply(match(side().hand(healOwnAll).resource(2).stress(2)
+		Match ownAllHealed = ENGINE.apply(match(side().hand(healOwnAll).resource(2).hp(28)
 				.board(new BoardCharacter(ownUnit, 2, true, false)), side()), Side.PLAYER, new Move.PlayCard(8));
 		assertThat(ownAllHealed.player().board().getFirst().damage()).isZero();
-		assertThat(ownAllHealed.player().stress()).isZero();
+		assertThat(ownAllHealed.player().hp()).isEqualTo(30);
 
 		CardInstance healAll = event(9, 1, 0, new Effect(EffectKind.HEAL, EffectScope.ALL_BOARDS, 1));
 		Match allHealed = ENGINE.apply(match(side().hand(healAll).resource(2)
@@ -240,25 +240,26 @@ class MatchEngineTests {
 		assertThat(full.log()).contains(new CardBurned(Side.PLAYER, top));
 
 		CardInstance empty = event(2, 1, 0, new Effect(EffectKind.DRAW, EffectScope.SELF, 1),
-				new Effect(EffectKind.STRESS, EffectScope.OPPONENT, 3));
+				new Effect(EffectKind.PLAYER_DAMAGE, EffectScope.OPPONENT, 3));
 		Match lost = ENGINE.apply(match(side().hand(empty).resource(2), side()), Side.PLAYER,
 				new Move.PlayCard(2));
 		assertThat(lost.status()).isEqualTo(Status.FINISHED);
 		assertThat(lost.result()).isEqualTo(new MatchResult(Side.OPPONENT, EndReason.EMPTY_DECK));
-		assertThat(lost.opponent().stress()).isZero();
+		assertThat(lost.opponent().hp()).isEqualTo(MatchRules.MAX_HP);
 		assertThat(lost.log()).noneMatch(e -> e instanceof EffectApplied applied
-				&& applied.effect().kind() == EffectKind.STRESS);
+				&& applied.effect().kind() == EffectKind.PLAYER_DAMAGE);
 	}
 
 	@Test
-	void ownStressDamageAtLimitLosesAndStopsRemainingEffects() {
+	void ownPlayerDamageToZeroHpLosesAndStopsRemainingEffects() {
 		CardInstance spell = event(1, 1, 0, new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 2),
 				new Effect(EffectKind.RESOURCE, EffectScope.SELF, 2));
-		Match match = match(side().hand(spell).resource(2).stress(MatchRules.STRESS_LIMIT - 1), side());
+		Match match = match(side().hand(spell).resource(2).hp(1), side());
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1, new Target.Player(Side.PLAYER)));
 
-		assertThat(after.result()).isEqualTo(new MatchResult(Side.OPPONENT, EndReason.STRESS_LIMIT));
+		assertThat(after.player().hp()).isEqualTo(-1);
+		assertThat(after.result()).isEqualTo(new MatchResult(Side.OPPONENT, EndReason.HP_DEPLETED));
 		assertThat(after.player().resourceCurrent()).isEqualTo(1);
 		assertThat(after.log()).noneMatch(e -> e instanceof EffectApplied applied
 				&& applied.effect().kind() == EffectKind.RESOURCE);
@@ -271,11 +272,11 @@ class MatchEngineTests {
 				new Effect(EffectKind.ATTACK, EffectScope.ENEMY_BOARD, -1));
 		CardInstance enemy = character(2, 1, 1, 2, null);
 		Match match = match(side().hand(spell).resource(1),
-				side().stress(MatchRules.STRESS_LIMIT - 2).board(onBoard(enemy, false)));
+				side().hp(2).board(onBoard(enemy, false)));
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1));
 
-		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.STRESS_LIMIT));
+		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.HP_DEPLETED));
 		assertThat(after.log().getLast()).isInstanceOf(MatchEnded.class);
 		assertThat(after.log()).noneMatch(CharacterDefeated.class::isInstance);
 	}
@@ -293,7 +294,7 @@ class MatchEngineTests {
 
 		assertIllegal(after, Side.PLAYER, new Move.Attack(1, null));
 		Match attacked = ENGINE.apply(after, Side.PLAYER, new Move.Attack(2, null));
-		assertThat(attacked.opponent().stress()).isEqualTo(2);
+		assertThat(attacked.opponent().hp()).isEqualTo(28);
 	}
 
 	@Test
@@ -336,7 +337,7 @@ class MatchEngineTests {
 	}
 
 	@Test
-	void guardBlocksStressAndNonGuardTargets() {
+	void guardBlocksPlayerAttackAndNonGuardTargets() {
 		CardInstance guard = character(2, 1, 1, 5, ability(AbilityKeyword.GUARD));
 		CardInstance other = character(3, 1, 1, 1, null);
 		Match match = match(side().board(onBoard(character(1, 1, 2, 5, null), true)),
@@ -349,50 +350,76 @@ class MatchEngineTests {
 	}
 
 	@Test
-	void attackOnStressCanExceedLimitAndEndsMatch() {
-		Match match = match(side().board(onBoard(character(1, 1, 5, 5, null), true)), side().stress(28));
+	void attackCanTakeHpBelowZeroAndEndsMatch() {
+		Match match = match(side().board(onBoard(character(1, 1, 5, 5, null), true)), side().hp(2));
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.Attack(1, null));
 
-		assertThat(after.opponent().stress()).isEqualTo(33);
+		assertThat(after.opponent().hp()).isEqualTo(-3);
+		assertThat(after.log()).contains(new HpChanged(Side.PLAYER, Side.OPPONENT, 2, -3));
 		assertThat(after.status()).isEqualTo(Status.FINISHED);
-		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.STRESS_LIMIT));
+		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.HP_DEPLETED));
 		assertThat(after.log().getLast()).isEqualTo(new MatchEnded(Side.PLAYER, after.result()));
 	}
 
 	// ---- Zdolności ----
 
 	@Test
-	void onPlayStressEndsMatchWhenLimitReached() {
-		Match match = match(side().hand(character(1, 2, 1, 1, ability(AbilityKeyword.ON_PLAY_STRESS, 3))).resource(2),
-				side().stress(27));
+	void onPlayDamageEndsMatchWhenHpReachesZero() {
+		Match match = match(side().hand(character(1, 2, 1, 1, ability(AbilityKeyword.ON_PLAY_DAMAGE, 3))).resource(2),
+				side().hp(3));
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1));
 
-		assertThat(after.opponent().stress()).isEqualTo(30);
+		assertThat(after.opponent().hp()).isZero();
 		assertThat(after.status()).isEqualTo(Status.FINISHED);
-		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.STRESS_LIMIT));
+		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.HP_DEPLETED));
 	}
 
 	@Test
-	void healDoesNotGoBelowZero() {
-		Match match = match(side().hand(character(1, 1, 1, 1, ability(AbilityKeyword.HEAL, 4))).resource(1).stress(3),
+	void healDoesNotExceedMaxHp() {
+		Match match = match(side().hand(character(1, 1, 1, 1, ability(AbilityKeyword.HEAL, 4))).resource(1).hp(27),
 				side());
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1));
 
-		assertThat(after.player().stress()).isZero();
+		assertThat(after.player().hp()).isEqualTo(MatchRules.MAX_HP);
 		assertThat(after.status()).isEqualTo(Status.IN_PROGRESS);
 	}
 
 	@Test
-	void overtimeAddsStressAtEndOfTurn() {
+	void healIsCappedAtMaxHp() {
+		CardInstance heal = event(1, 1, 0, new Effect(EffectKind.HEAL, EffectScope.TARGET, 5));
+		Match match = match(side().hand(heal).resource(1).hp(28), side());
+
+		Match after = ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1, new Target.Player(Side.PLAYER)));
+
+		assertThat(after.player().hp()).isEqualTo(30);
+		assertThat(after.log()).contains(new HpChanged(Side.PLAYER, Side.PLAYER, 28, 30));
+	}
+
+	@Test
+	void healAtMaxHpLogsNoHpChange() {
+		CardInstance heal = event(1, 1, 0, new Effect(EffectKind.HEAL, EffectScope.TARGET, 5));
+		CardInstance healer = character(2, 1, 1, 1, ability(AbilityKeyword.HEAL, 3));
+		Match match = match(side().hand(heal, healer).resource(2).hp(MatchRules.MAX_HP), side());
+
+		Match after = ENGINE.apply(ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1, new Target.Player(Side.PLAYER))),
+				Side.PLAYER, new Move.PlayCard(2));
+
+		assertThat(after.player().hp()).isEqualTo(MatchRules.MAX_HP);
+		assertThat(after.log()).noneMatch(HpChanged.class::isInstance);
+		assertThat(after.status()).isEqualTo(Status.IN_PROGRESS);
+	}
+
+	@Test
+	void overtimeDealsDamageAtEndOfTurn() {
 		CardInstance worker = character(1, 1, 1, 1, ability(AbilityKeyword.OVERTIME));
-		Match match = match(side().board(onBoard(worker, false)), side().stress(4).deck(filler(200, 1)));
+		Match match = match(side().board(onBoard(worker, false)), side().hp(26).deck(filler(200, 1)));
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.EndTurn());
 
-		assertThat(after.opponent().stress()).isEqualTo(5);
+		assertThat(after.opponent().hp()).isEqualTo(25);
 		assertThat(after.activeSide()).isEqualTo(Side.OPPONENT);
 	}
 
@@ -401,13 +428,13 @@ class MatchEngineTests {
 		CardInstance first = character(1, 1, 1, 1, ability(AbilityKeyword.OVERTIME));
 		CardInstance second = character(2, 1, 1, 1, ability(AbilityKeyword.OVERTIME));
 		Match match = match(side().board(onBoard(first, false), onBoard(second, false)),
-				side().stress(29).deck(filler(200, 1)));
+				side().hp(1).deck(filler(200, 1)));
 
 		Match after = ENGINE.apply(match, Side.PLAYER, new Move.EndTurn());
 
-		assertThat(after.opponent().stress()).isEqualTo(30);
+		assertThat(after.opponent().hp()).isZero();
 		assertThat(after.status()).isEqualTo(Status.FINISHED);
-		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.STRESS_LIMIT));
+		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.HP_DEPLETED));
 		// Druga Nadgodzina, zmiana tury i dobranie przeciwnika już się nie wykonują.
 		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
 		assertThat(after.turnNumber()).isEqualTo(1);
@@ -539,7 +566,7 @@ class MatchEngineTests {
 				&& play.target() instanceof Target.Character target && target.instanceId() == 2);
 		assertIllegal(afterTrap, Side.PLAYER, new Move.Attack(1, 2));
 		Match withSecondTrap = new Match(afterTrap.id(), afterTrap.turnNumber(), afterTrap.activeSide(),
-				new MatchSide(FACTION, afterTrap.player().deck(), List.of(trapOwnAttacker, area), afterTrap.player().stress(),
+				new MatchSide(FACTION, afterTrap.player().deck(), List.of(trapOwnAttacker, area), afterTrap.player().hp(),
 						afterTrap.player().resourceCurrent(), afterTrap.player().resourceMax(),
 						afterTrap.player().board(), afterTrap.player().graveyard(), afterTrap.player().activeEvents()),
 				afterTrap.opponent(), afterTrap.status(), afterTrap.result(), afterTrap.log());
@@ -631,7 +658,7 @@ class MatchEngineTests {
 	@Test
 	void everyMoveIsRejectedAfterMatchFinished() {
 		Match match = match(side().board(onBoard(character(1, 1, 5, 5, null), true)).hand(event(2, 1, 0)).resource(5),
-				side().stress(28));
+				side().hp(2));
 		Match finished = ENGINE.apply(match, Side.PLAYER, new Move.Attack(1, null));
 
 		assertIllegal(finished, Side.PLAYER, new Move.PlayCard(2));
@@ -687,7 +714,7 @@ class MatchEngineTests {
 		after = ENGINE.apply(after, Side.PLAYER, new Move.EndTurn());
 
 		assertThat(after.log()).containsExactly(new TurnStarted(Side.PLAYER, 1), new CardPlayed(Side.PLAYER, rusher),
-				new Attacked(Side.PLAYER, rusher, null, 3, 0), new StressChanged(Side.PLAYER, Side.OPPONENT, 0, 3),
+				new Attacked(Side.PLAYER, rusher, null, 3, 0), new HpChanged(Side.PLAYER, Side.OPPONENT, 30, 27),
 				new TurnEnded(Side.PLAYER), new TurnStarted(Side.OPPONENT, 2), new CardDrawn(Side.OPPONENT, top));
 	}
 
@@ -708,17 +735,17 @@ class MatchEngineTests {
 	@Test
 	void onPlayAbilityResolvesBeforeNegativeHealthAuraDefeatsNewCharacter() {
 		CardInstance aura = event(1, 1, 3, new Effect(EffectKind.HEALTH, EffectScope.OWN_BOARD, -1));
-		CardInstance fragile = character(2, 1, 1, 1, ability(AbilityKeyword.ON_PLAY_STRESS, 2));
+		CardInstance fragile = character(2, 1, 1, 1, ability(AbilityKeyword.ON_PLAY_DAMAGE, 2));
 		Match match = match(side().hand(aura, fragile).resource(2), side());
 
 		Match after = ENGINE.apply(ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1)), Side.PLAYER,
 				new Move.PlayCard(2));
 
 		// Zdolność ON_PLAY działa, zanim aura −HP pokona postać.
-		assertThat(after.opponent().stress()).isEqualTo(2);
+		assertThat(after.opponent().hp()).isEqualTo(28);
 		assertThat(after.log()).containsSubsequence(new CardPlayed(Side.PLAYER, fragile),
-				new AbilityTriggered(Side.PLAYER, fragile, AbilityKeyword.ON_PLAY_STRESS, 2),
-				new StressChanged(Side.PLAYER, Side.OPPONENT, 0, 2), new CharacterDefeated(Side.PLAYER, fragile));
+				new AbilityTriggered(Side.PLAYER, fragile, AbilityKeyword.ON_PLAY_DAMAGE, 2),
+				new HpChanged(Side.PLAYER, Side.OPPONENT, 30, 28), new CharacterDefeated(Side.PLAYER, fragile));
 		assertThat(after.player().board()).isEmpty();
 		assertThat(after.player().graveyard()).containsExactly(fragile);
 	}
@@ -727,8 +754,8 @@ class MatchEngineTests {
 	void legalMovesSkipTargetedEventWithoutLegalTargetButOfferUntargetedOne() {
 		CardInstance trap = event(1, 1, 3, new Effect(EffectKind.TRAP, EffectScope.TARGET, 0));
 		CardInstance buff = event(2, 1, 2, new Effect(EffectKind.ATTACK, EffectScope.TARGET, 2));
-		CardInstance stress = event(3, 1, 0, new Effect(EffectKind.STRESS, EffectScope.OPPONENT, 1));
-		Match match = match(side().hand(trap, buff, stress).resource(3), side());
+		CardInstance playerDamage = event(3, 1, 0, new Effect(EffectKind.PLAYER_DAMAGE, EffectScope.OPPONENT, 1));
+		Match match = match(side().hand(trap, buff, playerDamage).resource(3), side());
 
 		// Puste stoły: pułapka i wzmocnienie celowane nie mają dozwolonego celu.
 		assertThat(ENGINE.legalMoves(match, Side.PLAYER)).containsExactly(new Move.PlayCard(3, null));
@@ -875,7 +902,7 @@ class MatchEngineTests {
 
 		private final List<BoardCharacter> board = new ArrayList<>();
 
-		private int stress;
+		private int hp = MatchRules.MAX_HP;
 
 		private int resourceCurrent;
 
@@ -896,8 +923,8 @@ class MatchEngineTests {
 			return this;
 		}
 
-		SideBuilder stress(int stress) {
-			this.stress = stress;
+		SideBuilder hp(int hp) {
+			this.hp = hp;
 			return this;
 		}
 
@@ -913,7 +940,7 @@ class MatchEngineTests {
 		}
 
 		MatchSide build() {
-			return new MatchSide(FACTION, deck, hand, stress, resourceCurrent, resourceMax, board, List.of(), List.of());
+			return new MatchSide(FACTION, deck, hand, hp, resourceCurrent, resourceMax, board, List.of(), List.of());
 		}
 
 	}

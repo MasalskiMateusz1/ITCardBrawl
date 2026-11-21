@@ -155,7 +155,7 @@ public class MatchController {
 		throw new IllegalMoveException("Nieprawidłowy cel wydarzenia");
 	}
 
-	/** {@code targetId == null} oznacza atak w stres przeciwnika. */
+	/** {@code targetId == null} oznacza atak w gracza (HP przeciwnika). */
 	public record AttackRequest(int turn, int attackerId, Integer targetId) {
 	}
 

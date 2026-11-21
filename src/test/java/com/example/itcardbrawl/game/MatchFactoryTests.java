@@ -46,10 +46,19 @@ class MatchFactoryTests {
 		for (MatchSide side : List.of(match.player(), match.opponent())) {
 			assertThat(side.hand()).hasSize(MatchRules.STARTING_HAND);
 			assertThat(side.deck()).hasSize(MatchRules.DECK_SIZE - MatchRules.STARTING_HAND);
-			assertThat(side.stress()).isZero();
 		}
 		assertThat(match.turnNumber()).isEqualTo(1);
 		assertThat(match.id()).isNotNull();
+	}
+
+	@Test
+	void factoryStartsBothSidesAtMaxHp() {
+		for (boolean playerStarts : List.of(true, false)) {
+			Match match = create("developers", 1, playerStarts);
+
+			assertThat(match.player().hp()).isEqualTo(MatchRules.MAX_HP).isEqualTo(30);
+			assertThat(match.opponent().hp()).isEqualTo(MatchRules.MAX_HP).isEqualTo(30);
+		}
 	}
 
 	@Test

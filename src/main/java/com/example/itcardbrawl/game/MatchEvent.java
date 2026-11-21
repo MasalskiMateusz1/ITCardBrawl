@@ -31,14 +31,14 @@ public sealed interface MatchEvent {
 	}
 
 	/**
-	 * Atak postaci; {@code target == null} oznacza atak w stres przeciwnika. {@code damageDealt} to obrażenia
-	 * (albo stres) zadane przez atakującego, {@code damageTaken} — obrażenia otrzymane w odwecie.
+	 * Atak postaci; {@code target == null} oznacza atak w gracza (HP przeciwnika). {@code damageDealt} to
+	 * obrażenia zadane przez atakującego, {@code damageTaken} — obrażenia otrzymane w odwecie.
 	 */
 	record Attacked(Match.Side side, CardInstance attacker, CardInstance target, int damageDealt, int damageTaken)
 			implements MatchEvent {
 	}
 
-	record StressChanged(Match.Side side, Match.Side affected, int from, int to) implements MatchEvent {
+	record HpChanged(Match.Side side, Match.Side affected, int from, int to) implements MatchEvent {
 	}
 
 	record CharacterDefeated(Match.Side side, CardInstance card) implements MatchEvent {

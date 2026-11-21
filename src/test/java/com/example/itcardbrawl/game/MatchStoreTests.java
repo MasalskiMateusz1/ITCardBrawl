@@ -114,7 +114,7 @@ class MatchStoreTests {
 	}
 
 	private static Match match(int turnNumber) {
-		MatchSide side = new MatchSide(FACTION, List.of(), List.of(), 0, 0, 0, List.of(), List.of(), List.of());
+		MatchSide side = new MatchSide(FACTION, List.of(), List.of(), MatchRules.MAX_HP, 0, 0, List.of(), List.of(), List.of());
 		return new Match(UUID.randomUUID(), turnNumber, Side.PLAYER, side, side, Status.IN_PROGRESS, null, List.of());
 	}
 
