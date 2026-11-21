@@ -172,8 +172,8 @@ class RandomOpponentTests {
 				List.of(new TurnStarted(Side.OPPONENT, 1)));
 	}
 
-	private static MatchSide side(List<CardInstance> hand, List<CardInstance> deck, int resource) {
-		return new MatchSide(FACTION, deck, hand, MatchRules.MAX_HP, resource, resource, List.of(), List.of(), List.of());
+	private static MatchSide side(List<CardInstance> hand, List<CardInstance> deck, int budget) {
+		return new MatchSide(FACTION, deck, hand, MatchRules.MAX_HP, budget, budget, List.of(), List.of(), List.of());
 	}
 
 	private static final class SequenceRandom implements RandomGenerator {

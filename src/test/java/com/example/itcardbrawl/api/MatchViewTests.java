@@ -3,6 +3,7 @@ package com.example.itcardbrawl.api;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -177,13 +178,13 @@ class MatchViewTests {
 		assertThat(polish.replay().getLast().opponent().lastEvent().name()).isEqualTo("Kawa z automatu");
 		assertThat(english.player().lastEvent().name()).isEqualTo("Daily standup");
 		assertThat(english.player().lastEvent().effects().getFirst().text()).contains("opponent");
-		assertThat(english.opponent().lastEvent().effects().getFirst().text()).contains("resource");
+		assertThat(english.opponent().lastEvent().effects().getFirst().text()).contains("budget");
 	}
 
 	// Kontrakt JSON końca partii: HP poniżej zera widoczne w current i replay, przyczyna HP_DEPLETED.
 	@Test
 	void finishedMatchSerializesHpBelowZeroAndHpDepletedReason() {
-		MatchSide winner = new MatchSide(FACTION, List.of(), List.of(), MatchRules.MAX_HP, 0, 0, List.of(), List.of(),
+		MatchSide winner = new MatchSide(FACTION, List.of(), List.of(), MatchRules.MAX_HP, 2, 4, List.of(), List.of(),
 				List.of());
 		MatchSide loser = new MatchSide(FACTION, List.of(), List.of(), -3, 0, 0, List.of(), List.of(), List.of());
 		Match finished = new Match(ID, 3, Side.PLAYER, winner, loser, Status.FINISHED,
@@ -199,6 +200,12 @@ class MatchViewTests {
 		assertThat((String) json.read("$.replay[0].result.reason")).isEqualTo("HP_DEPLETED");
 		assertThat((Integer) json.read("$.replay[0].opponent.hp")).isEqualTo(-3);
 		assertThat((Integer) json.read("$.replay[0].player.maxHp")).isEqualTo(MatchRules.MAX_HP);
+		// Kontrakt budżetu: pole budget z current/max; pełna lista kluczy wyklucza dawną nazwę.
+		assertThat((Integer) json.read("$.player.budget.current")).isEqualTo(2);
+		assertThat((Integer) json.read("$.player.budget.max")).isEqualTo(4);
+		Map<String, Object> player = json.read("$.player");
+		assertThat(player).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
+				"activeEvents", "graveyardCount", "lastEvent");
 	}
 
 	// Partia z logiem złożonym z kolejnych TurnStarted (tura 1..logSize), strony bez kart.

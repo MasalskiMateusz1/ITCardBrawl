@@ -73,22 +73,22 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	public record ResourceView(int current, int max) {
+	public record BudgetView(int current, int max) {
 
-		static ResourceView of(MatchSide side) {
-			return new ResourceView(side.resourceCurrent(), side.resourceMax());
+		static BudgetView of(MatchSide side) {
+			return new BudgetView(side.budgetCurrent(), side.budgetMax());
 		}
 
 	}
 
-	public record PlayerView(FactionRef faction, int hp, int maxHp, ResourceView resource, int deckCount,
+	public record PlayerView(FactionRef faction, int hp, int maxHp, BudgetView budget, int deckCount,
 			List<HandCardView> hand, List<BoardCharacterView> board, List<ActiveEventView> activeEvents,
 			int graveyardCount, PlayedEventView lastEvent) {
 
 		static PlayerView of(Match match, CardCatalog catalog, Language language, List<Move> legalMoves) {
 			MatchSide player = match.player();
 			return new PlayerView(FactionRef.of(player.faction(), language), player.hp(), MatchRules.MAX_HP,
-					ResourceView.of(player), player.deck().size(),
+					BudgetView.of(player), player.deck().size(),
 					player.hand().stream().map(card -> HandCardView.of(card, catalog, language, legalMoves)).toList(),
 					BoardCharacterView.listOf(match, Match.Side.PLAYER, language, legalMoves),
 					ActiveEventView.listOf(match, Match.Side.PLAYER, language), player.graveyard().size(),
@@ -97,14 +97,14 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	public record OpponentView(FactionRef faction, int hp, int maxHp, ResourceView resource, int deckCount,
+	public record OpponentView(FactionRef faction, int hp, int maxHp, BudgetView budget, int deckCount,
 			int handCount, List<BoardCharacterView> board, List<ActiveEventView> activeEvents, int graveyardCount,
 			PlayedEventView lastEvent) {
 
 		static OpponentView of(Match match, Language language, List<Move> legalMoves) {
 			MatchSide opponent = match.opponent();
 			return new OpponentView(FactionRef.of(opponent.faction(), language), opponent.hp(),
-					MatchRules.MAX_HP, ResourceView.of(opponent), opponent.deck().size(), opponent.hand().size(),
+					MatchRules.MAX_HP, BudgetView.of(opponent), opponent.deck().size(), opponent.hand().size(),
 					BoardCharacterView.listOf(match, Match.Side.OPPONENT, language, legalMoves),
 					ActiveEventView.listOf(match, Match.Side.OPPONENT, language), opponent.graveyard().size(),
 					PlayedEventView.last(match, Match.Side.OPPONENT, language));

@@ -62,8 +62,8 @@ public class MatchFactory {
 	private static MatchSide deal(Faction faction, List<CardInstance> deck, boolean active) {
 		List<CardInstance> hand = deck.subList(0, MatchRules.STARTING_HAND);
 		List<CardInstance> rest = deck.subList(MatchRules.STARTING_HAND, deck.size());
-		int resource = active ? 1 : 0;
-		return new MatchSide(faction, rest, hand, MatchRules.MAX_HP, resource, resource, List.of(), List.of(), List.of());
+		int budget = active ? 1 : 0;
+		return new MatchSide(faction, rest, hand, MatchRules.MAX_HP, budget, budget, List.of(), List.of(), List.of());
 	}
 
 }

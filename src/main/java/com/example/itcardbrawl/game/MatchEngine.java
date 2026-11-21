@@ -81,7 +81,7 @@ public class MatchEngine {
 	}
 
 	private static boolean canPlay(SideState side, CardInstance card) {
-		return card.card().cost() <= side.resourceCurrent
+		return card.card().cost() <= side.budgetCurrent
 				&& (card.card().type() != CardType.CHARACTER || side.board.size() < MatchRules.BOARD_LIMIT);
 	}
 
@@ -112,7 +112,7 @@ public class MatchEngine {
 	}
 
 	private static boolean supportsCharacter(EffectKind kind) {
-		return kind != EffectKind.RESOURCE && kind != EffectKind.RESOURCE_MAX && kind != EffectKind.DRAW
+		return kind != EffectKind.BUDGET_GAIN && kind != EffectKind.BUDGET_MAX && kind != EffectKind.DRAW
 				&& kind != EffectKind.PLAYER_DAMAGE;
 	}
 
@@ -136,13 +136,13 @@ public class MatchEngine {
 					drawOne(state, actor);
 				}
 			}
-			case RESOURCE -> {
+			case BUDGET_GAIN -> {
 				SideState own = state.side(actor);
-				own.resourceCurrent = Math.min(own.resourceCurrent + amount, MatchRules.RESOURCE_CAP);
+				own.budgetCurrent = Math.min(own.budgetCurrent + amount, MatchRules.BUDGET_CAP);
 			}
-			case RESOURCE_MAX -> {
+			case BUDGET_MAX -> {
 				SideState own = state.side(actor);
-				own.resourceMax = Math.min(own.resourceMax + amount, MatchRules.RESOURCE_CAP);
+				own.budgetMax = Math.min(own.budgetMax + amount, MatchRules.BUDGET_CAP);
 			}
 			case ATTACK, HEALTH, GUARD, RUSH, TRAP -> {
 				// Modyfikatory zaczynają działać w fazie efektów trwających.
@@ -284,8 +284,8 @@ public class MatchEngine {
 			.findFirst()
 			.orElseThrow(() -> new IllegalMoveException("Karty nie ma na ręce"));
 		Card definition = card.card();
-		if (definition.cost() > own.resourceCurrent) {
-			throw new IllegalMoveException("Za mało zasobu na zagranie karty");
+		if (definition.cost() > own.budgetCurrent) {
+			throw new IllegalMoveException("Za mało budżetu na zagranie karty");
 		}
 		boolean character = definition.type() == CardType.CHARACTER;
 		if (character && target != null) {
@@ -302,7 +302,7 @@ public class MatchEngine {
 		}
 
 		own.hand.remove(card);
-		own.resourceCurrent -= definition.cost();
+		own.budgetCurrent -= definition.cost();
 		state.log(new MatchEvent.CardPlayed(actor, card));
 
 		if (!character) {
@@ -444,8 +444,8 @@ public class MatchEngine {
 			return;
 		}
 
-		own.resourceMax = Math.min(own.resourceMax + 1, MatchRules.RESOURCE_CAP);
-		own.resourceCurrent = own.resourceMax;
+		own.budgetMax = Math.min(own.budgetMax + 1, MatchRules.BUDGET_CAP);
+		own.budgetCurrent = own.budgetMax;
 		own.board.replaceAll(c -> c.withAttackReady(true));
 	}
 
@@ -565,9 +565,9 @@ public class MatchEngine {
 
 		private int hp;
 
-		private int resourceCurrent;
+		private int budgetCurrent;
 
-		private int resourceMax;
+		private int budgetMax;
 
 		SideState(MatchSide side) {
 			this.faction = side.faction();
@@ -577,12 +577,12 @@ public class MatchEngine {
 			this.graveyard = new ArrayList<>(side.graveyard());
 			this.activeEvents = new ArrayList<>(side.activeEvents());
 			this.hp = side.hp();
-			this.resourceCurrent = side.resourceCurrent();
-			this.resourceMax = side.resourceMax();
+			this.budgetCurrent = side.budgetCurrent();
+			this.budgetMax = side.budgetMax();
 		}
 
 		MatchSide toMatchSide() {
-			return new MatchSide(faction, deck, hand, hp, resourceCurrent, resourceMax, board, graveyard,
+			return new MatchSide(faction, deck, hand, hp, budgetCurrent, budgetMax, board, graveyard,
 					activeEvents);
 		}
 

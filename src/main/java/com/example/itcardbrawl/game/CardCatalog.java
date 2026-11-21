@@ -15,7 +15,7 @@ public final class CardCatalog {
 
 	static final int MIN_CARD_COST = 1;
 
-	static final int MAX_CARD_COST = MatchRules.RESOURCE_CAP;
+	static final int MAX_CARD_COST = MatchRules.BUDGET_CAP;
 
 	static final int MIN_ATTACK = 1;
 

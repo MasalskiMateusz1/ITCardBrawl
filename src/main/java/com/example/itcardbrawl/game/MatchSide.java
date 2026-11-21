@@ -7,7 +7,7 @@ import java.util.List;
  * w kolejności wejścia.
  */
 public record MatchSide(Faction faction, List<CardInstance> deck, List<CardInstance> hand, int hp,
-		int resourceCurrent, int resourceMax, List<BoardCharacter> board, List<CardInstance> graveyard,
+		int budgetCurrent, int budgetMax, List<BoardCharacter> board, List<CardInstance> graveyard,
 		List<ActiveEvent> activeEvents) {
 
 	public MatchSide {
