@@ -1,10 +1,10 @@
 ---
 change_id: event-cards
 title: Event cards
-status: impl_reviewed
+status: archived
 created: 2026-11-20
 updated: 2026-11-21
-archived_at: null
+archived_at: 2026-11-21T14:54:26Z
 ---
 
 ## Notes
