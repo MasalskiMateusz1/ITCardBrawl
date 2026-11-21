@@ -22,11 +22,11 @@ public class MatchService {
 
 	private final MatchEngine engine;
 
-	private final RandomOpponent opponent;
+	private final ComputerOpponent opponent;
 
 	private final MatchStore store;
 
-	public MatchService(MatchFactory factory, MatchEngine engine, RandomOpponent opponent, MatchStore store) {
+	public MatchService(MatchFactory factory, MatchEngine engine, ComputerOpponent opponent, MatchStore store) {
 		this.factory = factory;
 		this.engine = engine;
 		this.opponent = opponent;
