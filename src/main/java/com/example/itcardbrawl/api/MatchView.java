@@ -3,6 +3,7 @@ package com.example.itcardbrawl.api;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import com.example.itcardbrawl.game.Ability;
 import com.example.itcardbrawl.game.AbilityKeyword;
@@ -43,16 +44,37 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 				PlayerView.of(match, catalog, language, legalMoves), OpponentView.of(match, language, legalMoves),
 				ResultView.of(match.result()), fullLog.subList(dropped, fullLog.size()).stream()
 					.map(event -> LogEntryView.of(event, formatter, language)).toList(),
-				replay.stream().map(step -> ReplayStepView.of(step, dropped, catalog, language)).toList());
+				IntStream.range(0, replay.size())
+					.mapToObj(i -> ReplayStepView.of(replay.get(i), i == 0 ? null : replay.get(i - 1), dropped, catalog,
+							formatter, language))
+					.toList());
 	}
 
+	/**
+	 * Stan stołu po jednym ruchu komputera. {@code reason} to powód ruchu, który doprowadził do tego kroku
+	 * (wpis {@code MoveExplained} z fragmentu logu dodanego w tym kroku), albo {@code null} dla kroku
+	 * startowego — jego log kończy się na poprzedniej turze, więc nie ma w nim powodu bieżącego ruchu.
+	 */
 	public record ReplayStepView(TurnView turn, Match.Status status, ResultView result, PlayerView player,
-			OpponentView opponent, int logSize) {
+			OpponentView opponent, int logSize, String reason) {
 
-		static ReplayStepView of(Match step, int droppedLog, CardCatalog catalog, Language language) {
+		static ReplayStepView of(Match step, Match previous, int droppedLog, CardCatalog catalog,
+				MatchLogFormatter formatter, Language language) {
 			return new ReplayStepView(TurnView.of(step), step.status(), ResultView.of(step.result()),
 					PlayerView.of(step, catalog, language, List.of()), OpponentView.of(step, language, List.of()),
-						Math.max(0, step.log().size() - droppedLog));
+						Math.max(0, step.log().size() - droppedLog), reason(step, previous, formatter, language));
+		}
+
+		private static String reason(Match step, Match previous, MatchLogFormatter formatter, Language language) {
+			if (previous == null) {
+				return null;
+			}
+			List<MatchEvent> log = step.log();
+			return log.subList(Math.min(previous.log().size(), log.size()), log.size()).stream()
+				.filter(MatchEvent.MoveExplained.class::isInstance)
+				.reduce((first, second) -> second)
+				.map(event -> formatter.format(event, language))
+				.orElse(null);
 		}
 
 	}

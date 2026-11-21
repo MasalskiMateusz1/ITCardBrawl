@@ -77,20 +77,13 @@ export class MatchTable {
     const match = this.match();
     return match !== null && match.status === 'IN_PROGRESS' && match.turn.active === 'PLAYER';
   });
+  /** The reason of the playback step currently shown, as sent by the backend. */
+  private readonly replayReason = signal<string | null>(null);
   /**
-   * The computer's reason for the move shown in the current playback step: the last reason entry
-   * of the visible log, which is already cut to the step's `logSize`. Null outside playback.
+   * The computer's reason for the move shown in the current playback step. Taken from the step,
+   * not from the log: the first step's log still ends with the previous turn's reasons.
    */
-  protected readonly moveReason = computed(() => {
-    if (!this.replaying()) {
-      return null;
-    }
-    return (
-      this.match()
-        ?.log.filter((entry) => entry.reason)
-        .at(-1)?.text ?? null
-    );
-  });
+  protected readonly moveReason = computed(() => (this.replaying() ? this.replayReason() : null));
   /** The legal attack targets of the selected attacker, as sent by the backend. */
   private readonly attackTargets = computed(() => {
     const attackerId = this.selectedAttacker();
@@ -275,6 +268,7 @@ export class MatchTable {
         return;
       }
       this.match.set(stepView(match, steps[index]));
+      this.replayReason.set(steps[index].reason);
       this.replayTimer = setTimeout(() => playStep(index + 1), this.replayStepMs);
     };
     playStep(0);
@@ -283,6 +277,7 @@ export class MatchTable {
   private finishReplay(match: MatchView): void {
     this.match.set(match);
     this.replaying.set(false);
+    this.replayReason.set(null);
     if (this.reloadAfterReplay) {
       this.reloadAfterReplay = false;
       this.loadMatch();
@@ -295,6 +290,7 @@ export class MatchTable {
       this.replayTimer = null;
     }
     this.replaying.set(false);
+    this.replayReason.set(null);
   }
 
   private loadMatch(): void {

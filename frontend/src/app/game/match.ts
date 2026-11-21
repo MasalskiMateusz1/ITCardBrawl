@@ -176,7 +176,8 @@ export type TurnView = { number: number; active: Side };
 
 /**
  * The table after one computer move. The log is sent once, in the final state:
- * the step's log is `final.log.slice(0, logSize)`.
+ * the step's log is `final.log.slice(0, logSize)`. `reason` is the computer's reason for the move
+ * that led to this step; null for the first step (the state before the computer's first move).
  */
 export type ReplayStep = {
   turn: TurnView;
@@ -185,6 +186,7 @@ export type ReplayStep = {
   player: PlayerView;
   opponent: OpponentView;
   logSize: number;
+  reason: string | null;
 };
 
 /** `replay` lists the computer's moves to play back before the final state; usually empty. */

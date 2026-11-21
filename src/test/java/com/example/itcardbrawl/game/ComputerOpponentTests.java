@@ -222,6 +222,21 @@ class ComputerOpponentTests {
 	}
 
 	@Test
+	void guardAtLowOwnHpIsExplainedAsDefence() {
+		CardInstance guardAll = event(1, 1, 2, new Effect(EffectKind.GUARD, EffectScope.OWN_BOARD, 0));
+		CardInstance own = character(2, 1, 1, 6);
+		Match match = opponentTurn(side(MatchRules.MAX_HP, List.of(), List.of(ready(character(3, 1, 4, 4))), 0),
+				side(PositionEvaluator.OWN_HP_LOW - 6, List.of(guardAll), List.of(fresh(own)), 1));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed).playTurnSteps(match);
+
+			assertThat(reasons(match, steps)).as("ziarno %d", seed).first()
+				.isEqualTo(new MoveExplained(Side.OPPONENT, MoveReason.DEFEND, guardAll, null, 0));
+		}
+	}
+
+	@Test
 	void everyMoveHasExactlyOneReasonDirectlyBeforeItsEvents() {
 		for (long seed = 0; seed < SEEDS; seed++) {
 			Match previous = midgame(seed);

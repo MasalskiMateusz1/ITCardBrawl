@@ -75,6 +75,7 @@ public class MatchLogFormatter {
 	}
 
 	// Powód ruchu komputera: rzeczowe zdanie z prefiksem „Przeciwnik:”, oparte tylko na karcie, celu i liczbie.
+	// Strona zdarzenia nie jest sprawdzana: MoveExplained wpisuje wyłącznie ComputerOpponent (strona OPPONENT).
 	private static String moveExplained(MoveExplained e, Language language) {
 		String card = e.card() != null ? name(e.card(), language) : "";
 		String target = e.target() != null ? name(e.target(), language) : "";

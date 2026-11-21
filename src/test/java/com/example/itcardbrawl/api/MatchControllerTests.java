@@ -801,7 +801,7 @@ class MatchControllerTests {
 		assertThat(logSizes.getLast()).isLessThanOrEqualTo(log.size());
 		assertThat((String) after.read("$.replay[0].turn.active")).isEqualTo("OPPONENT");
 		for (Map<String, Object> step : steps) {
-			assertThat(step).containsKeys("turn", "status", "result", "player", "opponent", "logSize")
+			assertThat(step).containsKeys("turn", "status", "result", "player", "opponent", "logSize", "reason")
 				.doesNotContainKeys("log", "replay", "matchId");
 			@SuppressWarnings("unchecked")
 			Map<String, Object> opponent = (Map<String, Object>) step.get("opponent");
@@ -835,10 +835,12 @@ class MatchControllerTests {
 		List<Integer> logSizes = after.read("$.replay[*].logSize");
 		List<Boolean> flags = after.read("$.log[*].reason");
 		assertThat(flags.stream().filter(Boolean::booleanValue).count()).isGreaterThanOrEqualTo(logSizes.size() - 1);
+		assertThat((String) after.read("$.replay[0].reason")).isNull();
 		for (int i = 1; i < logSizes.size(); i++) {
 			Map<String, Object> first = log.get(logSizes.get(i - 1));
 			assertThat(first).containsEntry("reason", true).containsEntry("side", "OPPONENT");
 			assertThat((String) first.get("text")).startsWith("Przeciwnik: ");
+			assertThat((String) after.read("$.replay[" + i + "].reason")).isEqualTo(first.get("text"));
 			assertThat(log.subList(logSizes.get(i - 1) + 1, logSizes.get(i)))
 				.allSatisfy(entry -> assertThat(entry).containsEntry("reason", false));
 		}

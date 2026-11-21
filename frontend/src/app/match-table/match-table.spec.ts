@@ -1149,7 +1149,7 @@ describe('MatchTable', () => {
       expect(text(element.querySelector('.opponent .last-played-name'))).toBe('Code Review');
     });
 
-    it("captions each playback step with the computer's reason and drops it afterwards", async () => {
+    it("captions each playback step with its own reason, never the previous turn's", async () => {
       const fixture = await renderBoardThenFakeClock();
       const element = fixture.nativeElement as HTMLElement;
 
@@ -1159,21 +1159,29 @@ describe('MatchTable', () => {
         .flush(reasonResponse());
       fixture.detectChanges();
 
+      // Step 0: the log ends with the previous turn's reason, but no move of this turn is shown yet.
+      expect(text(element.querySelector('.opponent-moving'))).toBe('Ruch przeciwnika…');
+      expect(element.querySelector('.move-reason')).toBeNull();
+      expect(element.querySelectorAll('.log .log-entry.reason').length).toBe(1);
+
+      advance(fixture, STEP_MS);
       const caption = element.querySelector('.move-reason');
       expect(caption?.getAttribute('role')).toBe('status');
-      expect(text(caption)).toBe('Dlaczego: Wystawia postać, bo stół jest pusty');
-      const reasonEntries = element.querySelectorAll('.log .log-entry.reason');
-      expect(Array.from(reasonEntries).map(text)).toEqual(['Wystawia postać, bo stół jest pusty']);
+      expect(text(caption)).toBe('Przeciwnik: rozbudowuje stół — wystawia QA Senior');
+      expect(Array.from(element.querySelectorAll('.log .log-entry.reason')).map(text)).toEqual([
+        'Przeciwnik: kończy turę — żaden ruch nie poprawia jego sytuacji',
+        'Przeciwnik: rozbudowuje stół — wystawia QA Senior',
+      ]);
 
       advance(fixture, STEP_MS);
       expect(text(element.querySelector('.move-reason'))).toBe(
-        'Dlaczego: Atakuje gracza, bo może wygrać',
+        'Przeciwnik: naciska — QA Senior zadaje Ci 4 obrażenia',
       );
 
       advance(fixture, STEP_MS);
       expect(element.querySelector('.opponent-moving')).toBeNull();
       expect(element.querySelector('.move-reason')).toBeNull();
-      expect(element.querySelectorAll('.log .log-entry.reason').length).toBe(2);
+      expect(element.querySelectorAll('.log .log-entry.reason').length).toBe(3);
       expect(element.querySelectorAll('.log .log-entry:not(.reason)').length).toBe(5);
     });
 
@@ -1315,6 +1323,7 @@ function endTurnResponse(): MatchView {
     player: before.player,
     opponent: before.opponent,
     logSize: 0,
+    reason: null,
     ...overrides,
   });
   return {
@@ -1332,17 +1341,22 @@ function endTurnResponse(): MatchView {
 }
 
 /**
- * endTurnResponse() with a reason before each computer move: step 1 shows the first reason,
- * step 2 the second, the final state ends the playback.
+ * endTurnResponse() shaped like a real second computer turn: the first step's log still ends with
+ * the previous turn's reason, step 1 and step 2 carry the reasons of their moves, the final state
+ * ends the playback.
  */
 function reasonResponse(): MatchView {
   const response = endTurnResponse();
+  const previousTurn = 'Przeciwnik: kończy turę — żaden ruch nie poprawia jego sytuacji';
+  const develop = 'Przeciwnik: rozbudowuje stół — wystawia QA Senior';
+  const pressure = 'Przeciwnik: naciska — QA Senior zadaje Ci 4 obrażenia';
   const log: LogEntry[] = [
+    { side: 'OPPONENT', text: previousTurn, reason: true },
     { side: 'PLAYER', text: 'Kończysz turę', reason: false },
     { side: 'OPPONENT', text: 'Tura przeciwnika 6', reason: false },
-    { side: 'OPPONENT', text: 'Wystawia postać, bo stół jest pusty', reason: true },
+    { side: 'OPPONENT', text: develop, reason: true },
     { side: 'OPPONENT', text: 'Przeciwnik zagrywa: QA Senior', reason: false },
-    { side: 'OPPONENT', text: 'Atakuje gracza, bo może wygrać', reason: true },
+    { side: 'OPPONENT', text: pressure, reason: true },
     { side: 'OPPONENT', text: 'QA Senior atakuje Cię i zadaje 4 obrażenia', reason: false },
     { side: 'PLAYER', text: 'Twoja tura 7', reason: false },
   ];
@@ -1351,9 +1365,10 @@ function reasonResponse(): MatchView {
     ...response,
     log,
     replay: [
-      { ...first, logSize: 4 },
-      { ...second, logSize: 6 },
-      { ...last, logSize: 7 },
+      { ...first, logSize: 3, reason: null },
+      { ...first, logSize: 5, reason: develop },
+      { ...second, logSize: 7, reason: pressure },
+      { ...last, logSize: 8, reason: previousTurn },
     ],
   };
 }
