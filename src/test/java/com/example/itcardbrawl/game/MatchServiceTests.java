@@ -165,7 +165,7 @@ class MatchServiceTests {
 	void playCardHasEmptyReplay() {
 		MatchService service = service(true);
 		Match match = service.start(KEY, "developers").match();
-		// Zasób rośnie co turę - kończymy tury, aż gracz będzie mógł zagrać kartę.
+		// Budżet rośnie co turę - kończymy tury, aż gracz będzie mógł zagrać kartę.
 		while (playCard(match) == null) {
 			assertThat(match.status()).isEqualTo(Status.IN_PROGRESS);
 			match = service.move(KEY, match.id(), match.turnNumber(), new Move.EndTurn()).orElseThrow().match();

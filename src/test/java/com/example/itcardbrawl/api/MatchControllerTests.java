@@ -275,23 +275,23 @@ class MatchControllerTests {
 		assertThat((String) match.read("$.turn.active")).isEqualTo("PLAYER");
 		// Kontrakt gracza zawiera tylko hp/maxHp — dawnego licznika już nie ma w JSON.
 		Map<String, Object> player = match.read("$.player");
-		assertThat(player).containsOnlyKeys("faction", "hp", "maxHp", "resource", "deckCount", "hand", "board",
+		assertThat(player).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
 				"activeEvents", "graveyardCount", "lastEvent");
 		Map<String, Object> opponent = match.read("$.opponent");
-		assertThat(opponent).containsOnlyKeys("faction", "hp", "maxHp", "resource", "deckCount", "handCount", "board",
+		assertThat(opponent).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "handCount", "board",
 				"activeEvents", "graveyardCount", "lastEvent");
-		assertThat((Integer) match.read("$.player.resource.current")).isEqualTo(1);
-		assertThat((Integer) match.read("$.player.resource.max")).isEqualTo(1);
+		assertThat((Integer) match.read("$.player.budget.current")).isEqualTo(1);
+		assertThat((Integer) match.read("$.player.budget.max")).isEqualTo(1);
 		int turn = match.read("$.turn.number");
 		assertThat(turn).isIn(1, 2);
 		if (turn == 1) {
 			assertThat((Integer) match.read("$.player.hp")).isEqualTo(30);
-			assertThat((Integer) match.read("$.opponent.resource.max")).isZero();
+			assertThat((Integer) match.read("$.opponent.budget.max")).isZero();
 			assertThat((List<?>) match.read("$.player.hand")).hasSize(5);
 			assertThat((Integer) match.read("$.player.deckCount")).isEqualTo(25);
 		}
 		else {
-			assertThat((Integer) match.read("$.opponent.resource.max")).isEqualTo(1);
+			assertThat((Integer) match.read("$.opponent.budget.max")).isEqualTo(1);
 			assertThat((List<?>) match.read("$.player.hand")).hasSize(6);
 			assertThat((Integer) match.read("$.player.deckCount")).isEqualTo(24);
 		}
@@ -447,12 +447,12 @@ class MatchControllerTests {
 		return "{\"turn\":" + match.read("$.turn.number") + ",\"instanceId\":" + instanceId + "}";
 	}
 
-	// Pierwsza karta z ręki, która jest (albo nie jest) do opłacenia bieżącym zasobem gracza; null, gdy brak.
+	// Pierwsza karta z ręki, która jest (albo nie jest) do opłacenia bieżącym budżetem gracza; null, gdy brak.
 	private static Map<String, Object> handCard(DocumentContext match, boolean affordable) {
-		int resource = match.read("$.player.resource.current");
+		int budget = match.read("$.player.budget.current");
 		List<Map<String, Object>> hand = match.read("$.player.hand");
 		return hand.stream()
-			.filter(card -> ((Integer) card.get("cost") <= resource) == affordable)
+			.filter(card -> ((Integer) card.get("cost") <= budget) == affordable)
 			.findFirst()
 			.orElse(null);
 	}
@@ -541,7 +541,7 @@ class MatchControllerTests {
 
 	private static final int ENEMY_CHARACTER = 903;
 
-	// Startuje partię przez HTTP, potem podmienia rękę, zasób i stoły na znane karty.
+	// Startuje partię przez HTTP, potem podmienia rękę, budżet i stoły na znane karty.
 	private DocumentContext seededTable(String sub) throws Exception {
 		DocumentContext started = start(player(sub), "developers");
 		store.update("github:" + sub, m -> {
@@ -551,8 +551,8 @@ class MatchControllerTests {
 					List.of(instance(TARGETED_EVENT, "dev-force-push"), instance(UNTARGETED_EVENT, "dev-stackoverflow")),
 					30, 10, 10, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
 					p.graveyard(), List.of());
-			MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 30, o.resourceCurrent(),
-					o.resourceMax(), List.of(new BoardCharacter(instance(ENEMY_CHARACTER, "tst-manual"), 0, false, false)),
+			MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 30, o.budgetCurrent(),
+					o.budgetMax(), List.of(new BoardCharacter(instance(ENEMY_CHARACTER, "tst-manual"), 0, false, false)),
 					o.graveyard(), List.of());
 			return new Match(m.id(), m.turnNumber(), m.activeSide(), player, opponent, m.status(), m.result(), m.log());
 		});
@@ -654,10 +654,10 @@ class MatchControllerTests {
 	}
 
 	private static Map<String, Object> affordableCharacter(DocumentContext match) {
-		int resource = match.read("$.player.resource.current");
+		int budget = match.read("$.player.budget.current");
 		List<Map<String, Object>> hand = match.read("$.player.hand");
 		return hand.stream()
-			.filter(card -> "CHARACTER".equals(card.get("type")) && (Integer) card.get("cost") <= resource)
+			.filter(card -> "CHARACTER".equals(card.get("type")) && (Integer) card.get("cost") <= budget)
 			.findFirst()
 			.orElse(null);
 	}
@@ -666,7 +666,7 @@ class MatchControllerTests {
 	void unaffordableCardReturns400AndLeavesStateUnchanged() throws Exception {
 		RequestPostProcessor player = newPlayer();
 		DocumentContext match = start(player, "developers");
-		// Na starcie zasób to 1, a talia ma najwyżej 3 karty za 1 - na ręce zawsze jest karta za droga.
+		// Na starcie budżet to 1, a talia ma najwyżej 3 karty za 1 - na ręce zawsze jest karta za droga.
 		Map<String, Object> card = handCard(match, false);
 		assertThat(card).isNotNull();
 		int instanceId = (Integer) card.get("instanceId");
@@ -810,6 +810,17 @@ class MatchControllerTests {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> stepPlayer = (Map<String, Object>) step.get("player");
 			assertThat(stepPlayer).containsKey("hp").containsEntry("maxHp", MatchRules.MAX_HP);
+			// Pełna lista kluczy: budżet jest pod budget, dawnej nazwy pola już nie ma.
+			assertThat(stepPlayer).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
+					"activeEvents", "graveyardCount", "lastEvent");
+			assertThat(opponent).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "handCount",
+					"board", "activeEvents", "graveyardCount", "lastEvent");
+			@SuppressWarnings("unchecked")
+			Map<String, Object> playerBudget = (Map<String, Object>) stepPlayer.get("budget");
+			assertThat(playerBudget).containsOnlyKeys("current", "max");
+			@SuppressWarnings("unchecked")
+			Map<String, Object> opponentBudget = (Map<String, Object>) opponent.get("budget");
+			assertThat(opponentBudget).containsOnlyKeys("current", "max");
 		}
 	}
 

@@ -12,8 +12,8 @@ public enum EffectKind {
 	HEAL(true, 1, 10, EffectScope.TARGET, EffectScope.OWN_BOARD, EffectScope.OWN_ALL,
 			EffectScope.ALL_BOARDS),
 	DRAW(true, 1, 5, EffectScope.SELF),
-	RESOURCE(true, 1, 10, EffectScope.SELF),
-	RESOURCE_MAX(true, 1, 10, EffectScope.SELF),
+	BUDGET_GAIN(true, 1, 10, EffectScope.SELF),
+	BUDGET_MAX(true, 1, 10, EffectScope.SELF),
 	ATTACK(false, -10, 10, EffectScope.TARGET, EffectScope.OWN_BOARD, EffectScope.ENEMY_BOARD,
 			EffectScope.ALL_BOARDS),
 	HEALTH(false, -10, 10, EffectScope.TARGET, EffectScope.OWN_BOARD, EffectScope.ENEMY_BOARD,
@@ -74,9 +74,9 @@ public enum EffectKind {
 			case HEAL -> healDescription(scope, amount);
 			case DRAW -> text("Dobierz %d %s".formatted(amount, PolishNumberForms.form(amount, "kartę", "karty", "kart")),
 					"Draw %d %s".formatted(amount, amount == 1 ? "card" : "cards"));
-			case RESOURCE -> text("Zyskaj %d pkt zasobu".formatted(amount), "Gain %d resource".formatted(amount));
-			case RESOURCE_MAX -> text("Zwiększ maksymalny zasób o %d".formatted(amount),
-					"Increase maximum resource by %d".formatted(amount));
+			case BUDGET_GAIN -> text("Zwiększ budżet o %d".formatted(amount), "Increase budget by %d".formatted(amount));
+			case BUDGET_MAX -> text("Zwiększ maksymalny budżet o %d".formatted(amount),
+					"Increase maximum budget by %d".formatted(amount));
 			case ATTACK -> modifierDescription(scope, amount, "ataku", "attack");
 			case HEALTH -> modifierDescription(scope, amount, "zdrowia", "health");
 			case GUARD -> keywordDescription(scope, "Ochrona", "Guard");

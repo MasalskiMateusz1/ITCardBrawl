@@ -97,25 +97,25 @@ class MatchFactoryTests {
 	}
 
 	@Test
-	void playerStartsWithOneResourceAndOpponentWithNone() {
+	void playerStartsWithOneBudgetAndOpponentWithNone() {
 		Match match = create("developers", 1, true);
 
 		assertThat(match.activeSide()).isEqualTo(Match.Side.PLAYER);
-		assertThat(match.player().resourceCurrent()).isEqualTo(1);
-		assertThat(match.player().resourceMax()).isEqualTo(1);
-		assertThat(match.opponent().resourceCurrent()).isZero();
-		assertThat(match.opponent().resourceMax()).isZero();
+		assertThat(match.player().budgetCurrent()).isEqualTo(1);
+		assertThat(match.player().budgetMax()).isEqualTo(1);
+		assertThat(match.opponent().budgetCurrent()).isZero();
+		assertThat(match.opponent().budgetMax()).isZero();
 	}
 
 	@Test
-	void opponentStartsWithOneResourceAndPlayerWithNone() {
+	void opponentStartsWithOneBudgetAndPlayerWithNone() {
 		Match match = create("developers", 1, false);
 
 		assertThat(match.activeSide()).isEqualTo(Match.Side.OPPONENT);
-		assertThat(match.opponent().resourceCurrent()).isEqualTo(1);
-		assertThat(match.opponent().resourceMax()).isEqualTo(1);
-		assertThat(match.player().resourceCurrent()).isZero();
-		assertThat(match.player().resourceMax()).isZero();
+		assertThat(match.opponent().budgetCurrent()).isEqualTo(1);
+		assertThat(match.opponent().budgetMax()).isEqualTo(1);
+		assertThat(match.player().budgetCurrent()).isZero();
+		assertThat(match.player().budgetMax()).isZero();
 	}
 
 	@Test
