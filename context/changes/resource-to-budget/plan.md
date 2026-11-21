@@ -279,9 +279,9 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [ ] 3.1 Brak „zasób” w PRD: `grep -niE "zas[oó]b|zasob" context/foundation/prd.md` zwraca pusty wynik
-- [ ] 3.2 Brak nazw zasobu w kodzie: grep z wykluczeniami (Testing Strategy) po `src frontend/src` zwraca pusty wynik
+- [x] 3.1 Brak „zasób” w PRD: `grep -niE "zas[oó]b|zasob" context/foundation/prd.md` zwraca pusty wynik
+- [x] 3.2 Brak nazw zasobu w kodzie: grep z wykluczeniami (Testing Strategy) po `src frontend/src` zwraca pusty wynik
 
 #### Manual
 
-- [ ] 3.3 Przegląd PRD: opis budżetu odpowiada zachowaniu silnika (start 1/1 i 0/0, +1 na własną turę do 10, koszt karty)
+- [x] 3.3 Przegląd PRD: opis budżetu odpowiada zachowaniu silnika (start 1/1 i 0/0, +1 na własną turę do 10, koszt karty)
