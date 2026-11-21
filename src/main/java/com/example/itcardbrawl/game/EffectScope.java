@@ -1,6 +1,6 @@
 package com.example.itcardbrawl.game;
 
-/** Zasięg efektu liczony względem właściciela wydarzenia. */
+/** Effect scope, relative to the owner of the event. */
 public enum EffectScope {
 
 	TARGET,

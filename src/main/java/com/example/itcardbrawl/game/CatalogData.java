@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Surowa zawartość pliku katalogu ({@code game/factions.json}) przed walidacją.
+ * Raw contents of the catalog file ({@code game/factions.json}) before validation.
  */
 record CatalogData(List<Faction> factions, List<Card> cards, Map<String, List<DeckEntry>> decks) {
 }

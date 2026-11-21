@@ -8,37 +8,37 @@ import com.example.itcardbrawl.game.Match.Status;
 import org.springframework.stereotype.Component;
 
 /**
- * Liczbowa ocena stanu partii z perspektywy jednej strony, rozbita na nazwane składniki ({@link Score}).
- * Czyta wyłącznie dane jawne dla obu graczy: HP, budżety, stoły z aktywnymi wydarzeniami (przez
- * {@link CharacterStats}) oraz liczby kart na ręce i w talii — nigdy zawartość ręki ani kolejność talii.
+ * A numeric evaluation of the match state from one side's perspective, split into named components ({@link Score}). It
+ * reads only data that is public to both players: HP, budgets, boards with active events (via {@link CharacterStats})
+ * and the number of cards in hand and in the deck — never the hand contents or the deck order.
  *
- * <p>Styl zrównoważony: punkt HP przeciwnika i punkt wartości stołu ważą podobnie. Gdy HP przeciwnika
- * spada poniżej {@link #ENEMY_HP_LOW}, rośnie waga obrażeń w HP; gdy własne HP spada poniżej
- * {@link #OWN_HP_LOW}, rośnie waga własnego HP, Ochrony i zagrożenia ze stołu przeciwnika.
+ * <p>Balanced style: a point of opponent HP and a point of board value weigh about the same. When the opponent's
+ * HP drops below {@link #ENEMY_HP_LOW}, the weight of HP damage grows; when own HP drops below
+ * {@link #OWN_HP_LOW}, the weight of own HP, Guard and the threat from the opponent's board grows.
  */
 @Component
 public class PositionEvaluator {
 
-	/** Wartość wygranej; przegrana to {@code -WIN_SCORE}. W praktyce nieskończoność. */
+	/** The value of a win; a loss is {@code -WIN_SCORE}. Effectively infinity. */
 	static final double WIN_SCORE = 1_000_000;
 
-	/** Waga punktu HP przeciwnika (każdy zabrany punkt podnosi ocenę). */
+	/** Weight of a point of opponent HP (every point taken raises the score). */
 	static final double ENEMY_HP_WEIGHT = 1.0;
 
-	/** Próg „HP przeciwnika nisko”: poniżej każdy punkt waży dodatkowo {@link #ENEMY_HP_LOW_EXTRA}. */
+	/** The "opponent HP low" threshold: below it, every point weighs an extra {@link #ENEMY_HP_LOW_EXTRA}. */
 	static final int ENEMY_HP_LOW = 10;
 
 	static final double ENEMY_HP_LOW_EXTRA = 1.0;
 
-	/** Waga punktu własnego HP. */
+	/** Weight of a point of own HP. */
 	static final double OWN_HP_WEIGHT = 0.7;
 
-	/** Próg „własne HP nisko”: poniżej każdy punkt waży dodatkowo {@link #OWN_HP_LOW_EXTRA}. */
+	/** The "own HP low" threshold: below it, every point weighs an extra {@link #OWN_HP_LOW_EXTRA}. */
 	static final int OWN_HP_LOW = 12;
 
 	static final double OWN_HP_LOW_EXTRA = 1.0;
 
-	/** Stała wartość obecności postaci na stole. */
+	/** Fixed value of a character being on the board. */
 	static final double CHARACTER_BASE = 1.0;
 
 	static final double ATTACK_WEIGHT = 1.0;
@@ -46,42 +46,42 @@ public class PositionEvaluator {
 	static final double HEALTH_WEIGHT = 0.7;
 
 	/**
-	 * Obrażenia postaci znikają na koniec tury, więc liczą się tylko częściowo: zdrowie postaci to
+	 * Character damage clears at the end of the turn, so it counts only partially: a character's health is
 	 * {@code health - DAMAGE_DISCOUNT * damage}.
 	 */
 	static final double DAMAGE_DISCOUNT = 0.5;
 
-	/** Uwięziona postać nie atakuje i nie blokuje — zachowuje tylko taki ułamek wartości. */
+	/** A trapped character neither attacks nor blocks — it keeps only this fraction of its value. */
 	static final double TRAPPED_FACTOR = 0.3;
 
 	static final double GUARD_VALUE = 1.0;
 
-	/** Dodatkowa wartość własnej Ochrony przy niskim własnym HP. */
+	/** Extra value of own Guard when own HP is low. */
 	static final double GUARD_LOW_HP_EXTRA = 2.0;
 
 	static final double OVERTIME_VALUE = 1.5;
 
-	/** Mnożnik wartości stołu przeciwnika (zagrożenia) przy niskim własnym HP. */
+	/** Multiplier of the opponent's board value (the threat) when own HP is low. */
 	static final double ENEMY_BOARD_THREAT_FACTOR = 1.3;
 
-	/** Wartość karty na ręce (liczy się tylko liczba kart). */
+	/** Value of a card in hand (only the number of cards counts). */
 	static final double HAND_CARD_VALUE = 1.0;
 
-	/** Kara za pustą własną talię: kolejne dobranie przegrywa partię. */
+	/** Penalty for an empty own deck: the next draw loses the match. */
 	static final double EMPTY_DECK_PENALTY = 15.0;
 
 	/**
-	 * Wartość punktu bieżącego budżetu. Budżet odnawia się na początku tury, więc waga jest mała: zagranie
-	 * karty nie może przegrywać z niewydanym budżetem.
+	 * Value of a point of current budget. The budget refills at the start of the turn, so the weight is small:
+	 * playing a card must not lose out to unspent budget.
 	 */
 	static final double BUDGET_CURRENT_WEIGHT = 0.25;
 
-	/** Wartość punktu maksymalnego budżetu (trwały zysk). */
+	/** Value of a point of maximum budget (a lasting gain). */
 	static final double BUDGET_MAX_WEIGHT = 1.0;
 
 	/**
-	 * Ocena stanu z perspektywy strony. {@link #total()} to suma składników; partia zakończona ma składnik
-	 * {@code outcome} równy {@code ±WIN_SCORE}.
+	 * The score of a state from one side's perspective. {@link #total()} is the sum of the components; a finished
+	 * match has an {@code outcome} component equal to {@code ±WIN_SCORE}.
 	 */
 	public record Score(double outcome, double ownHp, double enemyHp, double ownBoard, double enemyBoard,
 			double cards, double resources) {

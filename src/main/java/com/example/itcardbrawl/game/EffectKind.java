@@ -3,7 +3,7 @@ package com.example.itcardbrawl.game;
 import java.util.EnumSet;
 import java.util.Set;
 
-/** Rodzaje efektów wydarzeń wraz z ich kategorią, dozwolonymi zasięgami i zakresem wartości. */
+/** Event effect kinds with their category, allowed scopes and value range. */
 public enum EffectKind {
 
 	PLAYER_DAMAGE(true, 1, 10, EffectScope.OPPONENT),

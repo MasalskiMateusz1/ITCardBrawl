@@ -9,15 +9,15 @@ import java.util.function.UnaryOperator;
 import org.springframework.stereotype.Component;
 
 /**
- * Bieżąca partia każdego gracza w pamięci procesu (jedna na gracza, do restartu serwera).
- * Klucz gracza: {@code "<registrationId>:<principalName>"}.
+ * Each player's current match in process memory (one per player, until the server restarts).
+ * Player key: {@code "<registrationId>:<principalName>"}.
  */
 @Component
 public class MatchStore {
 
 	private final Map<String, Match> matches = new ConcurrentHashMap<>();
 
-	/** Zapisuje partię gracza, zastępując poprzednią. */
+	/** Saves the player's match, replacing the previous one. */
 	public void save(String playerKey, Match match) {
 		matches.put(playerKey, match);
 	}
@@ -27,13 +27,13 @@ public class MatchStore {
 	}
 
 	/**
-	 * Atomowo zastępuje bieżącą partię gracza wynikiem {@code change}. {@code change} liczy się poza blokadą
-	 * mapy (tura komputera nie blokuje innych graczy); zapis udaje się tylko wtedy, gdy partia w międzyczasie
-	 * się nie zmieniła — inaczej {@code change} jest wywoływane ponownie na nowym stanie. {@code change} musi
-	 * więc być bez trwałych skutków ubocznych poza wynikiem. Wyjątek z {@code change} zostawia poprzednią
-	 * partię bez zmian i trafia do wywołującego.
+	 * Atomically replaces the player's current match with the result of {@code change}. {@code change} is computed
+	 * outside the map lock (a computer turn does not block other players); the write succeeds only if the match has
+	 * not changed in the meantime — otherwise {@code change} is invoked again on the new state. {@code change} must
+	 * therefore have no lasting side effects beyond its result. An exception from {@code change} leaves the previous
+	 * match unchanged and propagates to the caller.
 	 *
-	 * @return nowy stan albo {@link Optional#empty()}, gdy gracz nie ma bieżącej partii
+	 * @return the new state, or {@link Optional#empty()} when the player has no current match
 	 */
 	public Optional<Match> update(String playerKey, UnaryOperator<Match> change) {
 		while (true) {

@@ -1,8 +1,8 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Ruch wysłany dla innej partii albo innej tury niż bieżąca (np. podwójne kliknięcie „Zakończ turę”).
- * Stan partii pozostaje bez zmian.
+ * A move sent for a different match or a different turn than the current one (e.g. a double click on "End turn").
+ * The match state stays unchanged.
  */
 public class StaleMoveException extends RuntimeException {
 

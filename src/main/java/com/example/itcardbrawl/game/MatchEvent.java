@@ -1,9 +1,9 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Strukturalny, niezależny od języka wpis logu partii. {@code side} to strona, której ruch lub tura
- * wywołały zdarzenie (dla {@link CharacterDefeated} — właściciel pokonanej postaci). Zdania dla gracza
- * składa dopiero widok.
+ * A structured, language-independent match log entry. {@code side} is the side whose move or turn
+ * caused the event (for {@link CharacterDefeated} — the owner of the defeated character). Player-facing
+ * sentences are composed only by the view.
  */
 public sealed interface MatchEvent {
 
@@ -15,7 +15,7 @@ public sealed interface MatchEvent {
 	record CardDrawn(Match.Side side, CardInstance card) implements MatchEvent {
 	}
 
-	/** Karta dobrana przy pełnej ręce trafia od razu na cmentarz. */
+	/** A card drawn with a full hand goes straight to the graveyard. */
 	record CardBurned(Match.Side side, CardInstance card) implements MatchEvent {
 	}
 
@@ -31,8 +31,8 @@ public sealed interface MatchEvent {
 	}
 
 	/**
-	 * Atak postaci; {@code target == null} oznacza atak w gracza (HP przeciwnika). {@code damageDealt} to
-	 * obrażenia zadane przez atakującego, {@code damageTaken} — obrażenia otrzymane w odwecie.
+	 * A character attack; {@code target == null} means an attack on the player (the opponent's HP). {@code damageDealt}
+	 * is the damage dealt by the attacker, {@code damageTaken} — the damage taken in retaliation.
 	 */
 	record Attacked(Match.Side side, CardInstance attacker, CardInstance target, int damageDealt, int damageTaken)
 			implements MatchEvent {
@@ -54,10 +54,10 @@ public sealed interface MatchEvent {
 	}
 
 	/**
-	 * Powód ruchu komputera, wpisany do logu tuż przed zdarzeniami tego ruchu. {@code card} to zagrywana karta
-	 * albo atakująca postać ({@code null} dla końca tury), {@code target} — postać docelowa ({@code null}, gdy
-	 * celem jest gracz lub brak celu), {@code amount} — liczba do zdania (np. obrażenia w HP) albo 0. Powód
-	 * odwołuje się wyłącznie do faktów jawnych dla gracza.
+	 * The reason for a computer move, written to the log right before that move's events. {@code card} is the card
+	 * being played or the attacking character ({@code null} for end of turn), {@code target} — the target character
+	 * ({@code null} when the target is the player or there is no target), {@code amount} — the number for the
+	 * sentence (e.g. HP damage) or 0. The reason refers only to facts that are public to the player.
 	 */
 	record MoveExplained(Match.Side side, MoveReason reason, CardInstance card, CardInstance target, int amount)
 			implements MatchEvent {

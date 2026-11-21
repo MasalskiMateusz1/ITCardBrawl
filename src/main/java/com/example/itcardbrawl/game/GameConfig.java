@@ -12,13 +12,13 @@ import tools.jackson.databind.json.JsonMapper;
 @Configuration
 public class GameConfig {
 
-	// Katalog wczytywany przy starcie: niepoprawny plik zatrzymuje aplikację.
+	// The catalog is loaded at startup: an invalid file stops the application.
 	@Bean
 	public CardCatalog cardCatalog(JsonMapper jsonMapper) {
 		return CardCatalogLoader.load(jsonMapper, new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION));
 	}
 
-	// SecureRandom jest bezpieczny wątkowo - jeden bean obsługuje równoległe żądania.
+	// SecureRandom is thread-safe - a single bean serves concurrent requests.
 	@Bean
 	public RandomGenerator gameRandom() {
 		return new SecureRandom();

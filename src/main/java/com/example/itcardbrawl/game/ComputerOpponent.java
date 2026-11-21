@@ -10,22 +10,22 @@ import com.example.itcardbrawl.game.Match.Status;
 import org.springframework.stereotype.Component;
 
 /**
- * Komputer grający przez {@link MatchEngine} z oceną 1 ruchu wprzód: każdy poprawny ruch jest symulowany
- * i oceniany przez {@link PositionEvaluator}. Ruch wygrywający partię jest brany od razu; ruchy, które nie
- * poprawiają oceny, odpadają; spośród pozostałych losuje z wagą {@code exp((score - best) / TEMPERATURE)}.
- * Gdy nic nie zostaje, kończy turę. Przed zdarzeniami każdego ruchu (także końca tury) komputer wpisuje do
- * logu jego powód ({@link MatchEvent.MoveExplained}), wyprowadzony z ruchu i składników oceny przed/po.
+ * A computer player acting through {@link MatchEngine} with a 1-move lookahead: every legal move is simulated and
+ * scored by {@link PositionEvaluator}. A move that wins the match is taken immediately; moves that do not improve the
+ * score are dropped; among the rest it picks at random with weight {@code exp((score - best) / TEMPERATURE)}. When
+ * nothing remains, it ends the turn. Before the events of each move (including end of turn) the computer writes its
+ * reason to the log ({@link MatchEvent.MoveExplained}), derived from the move and the score components before/after.
  */
 @Component
 public class ComputerOpponent {
 
-	/** Bezpiecznik: po tylu ruchach w jednej turze komputer kończy ją bez względu na dostępne ruchy. */
+	/** Safety valve: after this many moves in one turn the computer ends it regardless of the available moves. */
 	static final int MAX_MOVES_PER_TURN = 100;
 
-	/** Temperatura losowania: im mniejsza, tym częściej wybierany jest ruch o najlepszej ocenie. */
+	/** Sampling temperature: the lower it is, the more often the best-scoring move is chosen. */
 	static final double TEMPERATURE = 1.0;
 
-	/** Minimalna poprawa oceny, by ruch nie był uznany za bezcelowy (chroni przed szumem zmiennoprzecinkowym). */
+	/** Minimum score improvement for a move not to count as pointless (guards against floating-point noise). */
 	private static final double MIN_GAIN = 1e-9;
 
 	private static final Side SIDE = Side.OPPONENT;
@@ -43,8 +43,8 @@ public class ComputerOpponent {
 	}
 
 	/**
-	 * Rozgrywa turę komputera. Zwraca partię z aktywnym graczem albo zakończoną; gdy nie jest tura komputera,
-	 * zwraca partię bez zmian.
+	 * Plays the computer's turn. Returns the match with the player active, or finished; when it is not the computer's
+	 * turn, returns the match unchanged.
 	 */
 	public Match playTurn(Match match) {
 		List<Match> steps = playTurnSteps(match);
@@ -52,19 +52,19 @@ public class ComputerOpponent {
 	}
 
 	/**
-	 * Rozgrywa turę komputera i zwraca stan po każdym jego ruchu (zagranie, atak, koniec tury); ostatni element
-	 * to stan końcowy. Gdy nie jest tura komputera, zwraca pustą listę.
+	 * Plays the computer's turn and returns the state after each of its moves (play, attack, end of turn); the last
+	 * element is the final state. When it is not the computer's turn, returns an empty list.
 	 */
 	public List<Match> playTurnSteps(Match match) {
 		List<Match> steps = new ArrayList<>();
 		Match current = match;
 		int moves = 0;
 		while (current.status() == Status.IN_PROGRESS && current.activeSide() == SIDE) {
-			// Bezpiecznik opisujemy jak brak korzystnego ruchu (END_NO_GAIN): w praktyce nie zadziała, a osobny
-			// rodzaj powodu dla stanu nieosiągalnego tylko by zaciemnił log.
+			// The safety valve is explained as having no beneficial move (END_NO_GAIN): in practice it never fires,
+			// and a separate reason kind for an unreachable state would only clutter the log.
 			Decision decision = moves >= MAX_MOVES_PER_TURN
 					? endTurn(current, MoveReason.END_NO_GAIN) : decide(current);
-			// Powód stoi w logu przed zdarzeniami swojego ruchu, więc krok odtwarzania obejmuje i jedno, i drugie.
+			// The reason sits in the log before the events of its move, so the replay step covers both.
 			current = decision.after().withEventAt(current.log().size(), decision.reason());
 			steps.add(current);
 			moves++;
@@ -72,12 +72,12 @@ public class ComputerOpponent {
 		return List.copyOf(steps);
 	}
 
-	/** Wybiera następny ruch komputera w bieżącym stanie; {@link Move.EndTurn}, gdy żaden ruch nie pomaga. */
+	/** Picks the computer's next move in the current state; {@link Move.EndTurn} when no move helps. */
 	Move chooseMove(Match current) {
 		return decide(current).move();
 	}
 
-	/** Wybrany ruch, stan po nim (bez powodu w logu) i powód ruchu. */
+	/** The chosen move, the state after it (without the reason in the log) and the reason for the move. */
 	private record Decision(Move move, Match after, MatchEvent.MoveExplained reason) {
 	}
 
@@ -135,9 +135,9 @@ public class ComputerOpponent {
 	}
 
 	/**
-	 * Powód ruchu, który poprawia ocenę (wygrana i koniec tury mają powód ustalony wcześniej). Atak wynika z
-	 * celu i skutku; zagranie postaci to rozbudowa stołu, chyba że zdolność przy zagraniu daje więcej;
-	 * wydarzenie — składnik {@link PositionEvaluator.Score} o największym przyroście.
+	 * The reason for a move that improves the score (a win and end of turn have their reason set earlier). An attack
+	 * follows from its target and outcome; playing a character is board development, unless its on-play ability gives
+	 * more; an event — the {@link PositionEvaluator.Score} component with the largest gain.
 	 */
 	private static MatchEvent.MoveExplained reason(Match before, Move move, Match after,
 			PositionEvaluator.Score scoreBefore, PositionEvaluator.Score scoreAfter) {
@@ -172,7 +172,7 @@ public class ComputerOpponent {
 							: explained(MoveReason.WEAKEN, card, target, 0);
 				}
 				if (top == ownBoard) {
-					// Przy niskim własnym HP wzmocnienie stołu (np. Ochrona) to obrona, nie rozbudowa.
+					// With low own HP, strengthening the board (e.g. Guard) is defense, not development.
 					yield before.side(SIDE).hp() < PositionEvaluator.OWN_HP_LOW
 							? explained(MoveReason.DEFEND, card, null, ownHpGain(before, after))
 							: explained(MoveReason.STRENGTHEN, card, target, 0);
@@ -190,8 +190,8 @@ public class ComputerOpponent {
 	}
 
 	/**
-	 * {@code boardSwing} to łączna zmiana ocen obu stołów: wymiana jest korzystna, gdy stół gracza traci
-	 * więcej niż własny. Atak w postać bez takiej przewagi tylko osłabia cel.
+	 * {@code boardSwing} is the combined change in the scores of both boards: a trade is favorable when the player's
+	 * board loses more than its own. An attack on a character without such an advantage only weakens the target.
 	 */
 	private static MatchEvent.MoveExplained attackReason(Match before, Match after, Move.Attack attack,
 			CardInstance attacker, double boardSwing) {
@@ -218,7 +218,7 @@ public class ComputerOpponent {
 		return new MatchEvent.MoveExplained(SIDE, reason, card, target, amount);
 	}
 
-	/** Zagrywana karta z ręki albo atakująca postać; {@code null} dla końca tury. */
+	/** The card being played from the hand or the attacking character; {@code null} for end of turn. */
 	private static CardInstance actingCard(Match match, Move move) {
 		return switch (move) {
 			case Move.PlayCard play -> match.side(SIDE).hand().stream()
@@ -244,7 +244,7 @@ public class ComputerOpponent {
 		return null;
 	}
 
-	/** Pierwsza postać gracza pokonana przez ruch (zdarzenia dopisane do logu przez ten ruch). */
+	/** The first player character defeated by the move (events appended to the log by this move). */
 	private static CardInstance firstDefeated(Match before, Match after) {
 		return after.log().subList(before.log().size(), after.log().size()).stream()
 			.filter(MatchEvent.CharacterDefeated.class::isInstance).map(MatchEvent.CharacterDefeated.class::cast)
@@ -260,7 +260,7 @@ public class ComputerOpponent {
 		return Math.max(0, after.side(SIDE).hp() - before.side(SIDE).hp());
 	}
 
-	// Liczba dobranych kart (także spalonych przy pełnej ręce) — bez ich zawartości.
+	// The number of cards drawn (including those burned with a full hand) — without their contents.
 	private static int drawnCards(Match before, Match after) {
 		return (int) after.log().subList(before.log().size(), after.log().size()).stream()
 			.filter(event -> event.side() == SIDE

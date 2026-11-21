@@ -1,6 +1,6 @@
 package com.example.itcardbrawl.game;
 
-/** Dobiera polską formę rzeczownika po liczbie całkowitej. */
+/** Picks the Polish form of a noun that follows an integer. */
 public final class PolishNumberForms {
 
 	private PolishNumberForms() {
@@ -16,7 +16,7 @@ public final class PolishNumberForms {
 		return last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14) ? plural : genitivePlural;
 	}
 
-	/** Forma „obrażenie / obrażenia / obrażeń” dla podanej liczby. */
+	/** The form of the Polish noun for "damage" (singular / plural / genitive plural) for the given number. */
 	public static String damage(int value) {
 		return form(value, "obrażenie", "obrażenia", "obrażeń");
 	}

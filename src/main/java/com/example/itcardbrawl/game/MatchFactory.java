@@ -9,8 +9,8 @@ import java.util.random.RandomGenerator;
 import org.springframework.stereotype.Component;
 
 /**
- * Tworzy partię w stanie startowym według {@link MatchRules}. Tasowanie talii i wybór zaczynającego
- * idą przez ten sam wstrzyknięty {@link RandomGenerator}.
+ * Creates a match in its starting state according to {@link MatchRules}. Deck shuffling and the choice of the
+ * starting side both go through the same injected {@link RandomGenerator}.
  */
 @Component
 public class MatchFactory {
@@ -25,7 +25,7 @@ public class MatchFactory {
 	}
 
 	/**
-	 * @throws IllegalArgumentException gdy frakcja nie istnieje albo nie jest grywalna
+	 * @throws IllegalArgumentException when the faction does not exist or is not playable
 	 */
 	public Match create(String playerFactionId) {
 		Faction playerFaction = catalog.faction(playerFactionId)
@@ -41,7 +41,8 @@ public class MatchFactory {
 		List<CardInstance> opponentDeck = shuffledDeck(opponentFaction, nextInstanceId);
 		Match.Side activeSide = random.nextBoolean() ? Match.Side.PLAYER : Match.Side.OPPONENT;
 
-		// Stan startowy to już początek tury 1: zaczynający nie dobiera, więc log ma tylko TurnStarted.
+		// The starting state is already the start of turn 1: the starting side does not draw,
+		// so the log has only TurnStarted.
 		return new Match(UUID.randomUUID(), 1, activeSide,
 				deal(playerFaction, playerDeck, activeSide == Match.Side.PLAYER),
 				deal(opponentFaction, opponentDeck, activeSide == Match.Side.OPPONENT), Match.Status.IN_PROGRESS,
@@ -49,7 +50,7 @@ public class MatchFactory {
 	}
 
 	private List<CardInstance> shuffledDeck(Faction faction, int[] nextInstanceId) {
-		// Najpierw tasowanie, potem numeracja: instanceId zdradza tylko pozycję w talii, nie kartę.
+		// Shuffle first, then number: instanceId reveals only the position in the deck, not the card.
 		List<Card> cards = new ArrayList<>(catalog.deck(faction.id()));
 		Collections.shuffle(cards, random);
 		List<CardInstance> deck = new ArrayList<>(MatchRules.DECK_SIZE);

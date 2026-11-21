@@ -1,7 +1,7 @@
 package com.example.itcardbrawl.game;
 
 /**
- * Konkretny egzemplarz karty w partii; {@code instanceId} jest unikalny w obrębie jednej partii.
+ * A concrete card instance in a match; {@code instanceId} is unique within a single match.
  */
 public record CardInstance(int instanceId, Card card) {
 }
