@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import com.example.itcardbrawl.game.AbilityKeyword;
 import com.example.itcardbrawl.game.CardCatalog;
@@ -14,6 +15,7 @@ import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.MatchEvent;
 import com.example.itcardbrawl.game.MatchResult;
 import com.example.itcardbrawl.game.MatchResult.EndReason;
+import com.example.itcardbrawl.game.MoveReason;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -55,7 +57,61 @@ class MatchLogFormatterTests {
 				events.add(new MatchEvent.MatchEnded(side, new MatchResult(side, reason)));
 			}
 		}
+		events.addAll(everyReason());
 		return events;
+	}
+
+	// Każdy rodzaj powodu ruchu komputera, z celem i bez (karta null tylko dla końca tury).
+	private static List<MatchEvent.MoveExplained> everyReason() {
+		List<MatchEvent.MoveExplained> reasons = new ArrayList<>();
+		for (MoveReason reason : MoveReason.values()) {
+			boolean endTurn = reason == MoveReason.END_NO_GAIN || reason == MoveReason.END_NO_MOVES;
+			CardInstance card = endTurn ? null : TECH_LEAD;
+			reasons.add(new MatchEvent.MoveExplained(Side.OPPONENT, reason, card, endTurn ? null : MANUAL_TESTER, 3));
+			reasons.add(new MatchEvent.MoveExplained(Side.OPPONENT, reason, card, null, endTurn ? 0 : 1));
+		}
+		return reasons;
+	}
+
+	@Test
+	void everyMoveReasonHasOpponentSentenceNamingOnlyItsOwnCards() {
+		List<String> otherNames = Stream.of("developers", "testers").flatMap(faction -> CATALOG.deck(faction).stream())
+			.filter(card -> !card.id().equals(TECH_LEAD.card().id()) && !card.id().equals(MANUAL_TESTER.card().id()))
+			.flatMap(card -> Stream.of(card.name().in(Language.PL), card.name().in(Language.EN)))
+			.distinct().toList();
+		for (MatchEvent.MoveExplained reason : everyReason()) {
+			String polish = formatter.format(reason, Language.PL);
+			String english = formatter.format(reason, Language.EN);
+			assertThat(polish).as("pl: %s", reason).startsWith("Przeciwnik: ").hasSizeGreaterThan("Przeciwnik: ".length());
+			assertThat(english).as("en: %s", reason).startsWith("Opponent: ").hasSizeGreaterThan("Opponent: ".length());
+			for (String name : otherNames) {
+				assertThat(polish).as("pl: %s", reason).doesNotContain(name);
+				assertThat(english).as("en: %s", reason).doesNotContain(name);
+			}
+			if (reason.card() != null) {
+				assertThat(polish).contains(TECH_LEAD.card().name().in(Language.PL));
+				assertThat(english).contains(TECH_LEAD.card().name().in(Language.EN));
+			}
+		}
+	}
+
+	@Test
+	void moveReasonSentencesMatchTemplates() {
+		MatchEvent lethal = new MatchEvent.MoveExplained(Side.OPPONENT, MoveReason.LETHAL, TECH_LEAD, null, 5);
+		MatchEvent lethalOne = new MatchEvent.MoveExplained(Side.OPPONENT, MoveReason.LETHAL, TECH_LEAD, null, 1);
+		MatchEvent noGain = new MatchEvent.MoveExplained(Side.OPPONENT, MoveReason.END_NO_GAIN, null, null, 0);
+		MatchEvent removes = new MatchEvent.MoveExplained(Side.OPPONENT, MoveReason.REMOVE_THREAT, TECH_LEAD,
+				MANUAL_TESTER, 8);
+
+		assertThat(formatter.format(lethal, Language.PL)).isEqualTo("Przeciwnik: kończy partię — Tech Lead zadaje Ci 5 obrażeń");
+		assertThat(formatter.format(lethal, Language.EN))
+			.isEqualTo("Opponent: finishes the match — Tech Lead deals you 5 damage");
+		assertThat(formatter.format(lethalOne, Language.PL)).endsWith("zadaje Ci 1 obrażenie");
+		assertThat(formatter.format(noGain, Language.PL))
+			.isEqualTo("Przeciwnik: kończy turę — żaden ruch nie poprawia jego sytuacji");
+		assertThat(formatter.format(noGain, Language.EN)).isEqualTo("Opponent: ends the turn — no move improves the position");
+		assertThat(formatter.format(removes, Language.PL)).isEqualTo("Przeciwnik: Tech Lead usuwa Twoją postać Tester manualny");
+		assertThat(formatter.format(removes, Language.EN)).isEqualTo("Opponent: Tech Lead removes your Manual Tester");
 	}
 
 	@Test

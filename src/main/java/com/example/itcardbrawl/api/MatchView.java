@@ -232,10 +232,12 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	public record LogEntryView(Match.Side side, String text) {
+	/** Wpis logu; {@code reason} odróżnia powód ruchu komputera od skutków ruchów. */
+	public record LogEntryView(Match.Side side, String text, boolean reason) {
 
 		static LogEntryView of(MatchEvent event, MatchLogFormatter formatter, Language language) {
-			return new LogEntryView(event.side(), formatter.format(event, language));
+			return new LogEntryView(event.side(), formatter.format(event, language),
+					event instanceof MatchEvent.MoveExplained);
 		}
 
 	}

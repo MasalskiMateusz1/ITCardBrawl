@@ -1,5 +1,6 @@
 package com.example.itcardbrawl.game;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +31,16 @@ public record Match(UUID id, int turnNumber, Side activeSide, MatchSide player, 
 
 	public MatchSide side(Side side) {
 		return side == Side.PLAYER ? player : opponent;
+	}
+
+	/**
+	 * Kopia partii z wpisem logu wstawionym na pozycji {@code index}. Log nie jest stanem zasad, więc dopisanie
+	 * wyjaśnienia poza {@link MatchEngine} nie zmienia przebiegu gry.
+	 */
+	public Match withEventAt(int index, MatchEvent event) {
+		List<MatchEvent> entries = new ArrayList<>(log);
+		entries.add(index, event);
+		return new Match(id, turnNumber, activeSide, player, opponent, status, result, entries);
 	}
 
 }

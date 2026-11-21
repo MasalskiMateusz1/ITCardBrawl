@@ -15,6 +15,7 @@ import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.Match.Status;
 import com.example.itcardbrawl.game.MatchEvent.CardPlayed;
 import com.example.itcardbrawl.game.MatchEvent.EffectApplied;
+import com.example.itcardbrawl.game.MatchEvent.MoveExplained;
 import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
 import com.example.itcardbrawl.game.MatchEvent.TurnStarted;
 
@@ -95,6 +96,8 @@ class ComputerOpponentTests {
 
 			assertThat(steps).as("ziarno %d", seed).hasSize(1);
 			assertThat(steps.getFirst().result().winner()).isEqualTo(Side.OPPONENT);
+			assertThat(reasons(match, steps)).containsExactly(
+					new MoveExplained(Side.OPPONENT, MoveReason.LETHAL, attacker.instance(), null, 3));
 		}
 	}
 
@@ -111,6 +114,8 @@ class ComputerOpponentTests {
 			assertThat(steps).as("ziarno %d", seed).hasSize(1);
 			assertThat(steps.getFirst().result().winner()).isEqualTo(Side.OPPONENT);
 			assertThat(steps.getFirst().log()).contains(new CardPlayed(Side.OPPONENT, damage));
+			assertThat(reasons(match, steps)).containsExactly(
+					new MoveExplained(Side.OPPONENT, MoveReason.LETHAL, damage, null, 5));
 		}
 	}
 
@@ -196,6 +201,52 @@ class ComputerOpponentTests {
 			assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
 			assertThat(after.log()).noneMatch(CardPlayed.class::isInstance);
 			assertThat(after.opponent().hand()).containsExactly(heal);
+			assertThat(reasons(match, steps)).extracting(MoveExplained::reason).containsExactly(MoveReason.END_NO_GAIN);
+		}
+	}
+
+	@Test
+	void defeatingPlayerCharacterIsExplainedAsRemovingThreat() {
+		BoardCharacter attacker = ready(character(1, 1, 3, 5));
+		CardInstance guard = guard(2, 2, 2);
+		Match match = opponentTurn(side(MatchRules.MAX_HP, List.of(), List.of(ready(guard)), 0),
+				side(MatchRules.MAX_HP, List.of(), List.of(attacker), 0));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed).playTurnSteps(match);
+
+			assertThat(reasons(match, steps)).as("ziarno %d", seed).containsExactly(
+					new MoveExplained(Side.OPPONENT, MoveReason.REMOVE_THREAT, attacker.instance(), guard, 3),
+					new MoveExplained(Side.OPPONENT, MoveReason.END_NO_MOVES, null, null, 0));
+		}
+	}
+
+	@Test
+	void everyMoveHasExactlyOneReasonDirectlyBeforeItsEvents() {
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match previous = midgame(seed);
+			List<Match> steps = computer(seed + 1_000).playTurnSteps(previous);
+
+			for (Match step : steps) {
+				List<MatchEvent> added = step.log().subList(previous.log().size(), step.log().size());
+				assertThat(added).as("ziarno %d", seed).hasSizeGreaterThanOrEqualTo(2);
+				assertThat(added.getFirst()).isInstanceOf(MoveExplained.class);
+				assertThat(added).filteredOn(MoveExplained.class::isInstance).hasSize(1);
+				assertThat(added.get(1)).isNotInstanceOf(MoveExplained.class);
+				MoveExplained reason = (MoveExplained) added.getFirst();
+				assertThat(reason.side()).isEqualTo(Side.OPPONENT);
+				if (reason.reason() == MoveReason.END_NO_GAIN || reason.reason() == MoveReason.END_NO_MOVES) {
+					// Koniec tury: powód przed Nadgodzinami i TurnEnded.
+					assertThat(added.get(1)).isInstanceOfAny(TurnEnded.class, MatchEvent.AbilityTriggered.class);
+					assertThat(reason.card()).isNull();
+				}
+				else {
+					assertThat(added.get(1)).isInstanceOfAny(CardPlayed.class, MatchEvent.Attacked.class);
+					assertThat(reason.card()).isNotNull();
+				}
+				previous = step;
+			}
+			assertThat(reasons(midgame(seed), steps)).hasSameSizeAs(steps);
 		}
 	}
 
@@ -242,6 +293,8 @@ class ComputerOpponentTests {
 		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
 		assertThat(after.opponent().hand()).hasSize(1);
 		assertThat(after.log()).noneMatch(CardPlayed.class::isInstance);
+		assertThat(after.log()).filteredOn(MoveExplained.class::isInstance)
+			.containsExactly(new MoveExplained(Side.OPPONENT, MoveReason.END_NO_MOVES, null, null, 0));
 	}
 
 	@Test
@@ -340,6 +393,13 @@ class ComputerOpponentTests {
 				match.status(), match.result(), match.log());
 	}
 
+	// Powody ruchów komputera dopisane do logu od stanu początkowego do ostatniego kroku.
+	private static List<MoveExplained> reasons(Match start, List<Match> steps) {
+		List<MatchEvent> log = steps.getLast().log();
+		return log.subList(start.log().size(), log.size()).stream().filter(MoveExplained.class::isInstance)
+			.map(MoveExplained.class::cast).toList();
+	}
+
 	private static List<EffectApplied> effects(Match match) {
 		return match.log().stream().filter(EffectApplied.class::isInstance).map(EffectApplied.class::cast).toList();
 	}
@@ -378,6 +438,11 @@ class ComputerOpponentTests {
 	private static CardInstance character(int instanceId, int cost, int attack, int health) {
 		return new CardInstance(instanceId, new Card("char-" + instanceId, FACTION.id(), text("Postać"),
 				CardType.CHARACTER, cost, text("Opis"), attack, health, null, null, null));
+	}
+
+	private static CardInstance guard(int instanceId, int attack, int health) {
+		return new CardInstance(instanceId, new Card("guard-" + instanceId, FACTION.id(), text("Ochroniarz"),
+				CardType.CHARACTER, 1, text("Opis"), attack, health, new Ability(AbilityKeyword.GUARD, 0), null, null));
 	}
 
 	private static CardInstance event(int instanceId, int cost, Effect effect) {
