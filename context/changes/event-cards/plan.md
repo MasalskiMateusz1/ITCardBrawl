@@ -478,14 +478,14 @@ Partie trzymane w pamięci (`MatchStore`) nie przeżywają restartu, więc zmian
 
 #### Automated
 
-- [x] 5.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false`
-- [x] 5.2 Build produkcyjny przechodzi: `cd frontend && npm run build`
-- [x] 5.3 Testy backendu dalej zielone: `./mvnw -B verify`
+- [x] 5.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — f7460ca
+- [x] 5.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — f7460ca
+- [x] 5.3 Testy backendu dalej zielone: `./mvnw -B verify` — f7460ca
 
 #### Manual
 
-- [x] 5.4 Lokalnie rozegranie partii każdą frakcją: zagranie wydarzenia bez celu, z celem-postacią obu stron i z celem-graczem; efekty zgodne z opisem na karcie
-- [x] 5.5 Pułapka: uwięziona postać nie atakuje i nie jest celem; efekt obszarowy ją trafia; jej Ochrona nie blokuje ataku
-- [x] 5.6 Aura: postać zagrana w czasie działania wzmocnienia dostaje bonus; po wygaśnięciu wartości wracają
-- [x] 5.7 „Ostatnio zagrane” i wpisy logu pokazują wydarzenie gracza i komputera (także w odtwarzaniu tury komputera); `duration 0` ma „Natychmiastowe”
-- [x] 5.8 Po przełączeniu na EN opisy efektów, log i nowe etykiety są po angielsku
+- [x] 5.4 Lokalnie rozegranie partii każdą frakcją: zagranie wydarzenia bez celu, z celem-postacią obu stron i z celem-graczem; efekty zgodne z opisem na karcie — f7460ca
+- [x] 5.5 Pułapka: uwięziona postać nie atakuje i nie jest celem; efekt obszarowy ją trafia; jej Ochrona nie blokuje ataku — f7460ca
+- [x] 5.6 Aura: postać zagrana w czasie działania wzmocnienia dostaje bonus; po wygaśnięciu wartości wracają — f7460ca
+- [x] 5.7 „Ostatnio zagrane” i wpisy logu pokazują wydarzenie gracza i komputera (także w odtwarzaniu tury komputera); `duration 0` ma „Natychmiastowe” — f7460ca
+- [x] 5.8 Po przełączeniu na EN opisy efektów, log i nowe etykiety są po angielsku — f7460ca
