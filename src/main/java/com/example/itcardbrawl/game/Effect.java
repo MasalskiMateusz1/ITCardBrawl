@@ -14,9 +14,7 @@ public record Effect(EffectKind kind, EffectScope scope, int amount) {
 	}
 
 	public LocalizedText describe() {
-		String description = kind.description(scope, amount);
-		int separator = description.indexOf(" / ");
-		return new LocalizedText(description.substring(0, separator), description.substring(separator + 3));
+		return kind.description(scope, amount);
 	}
 
 }

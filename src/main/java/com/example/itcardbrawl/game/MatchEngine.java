@@ -47,26 +47,27 @@ public class MatchEngine {
 		if (match.status() != Status.IN_PROGRESS || side != match.activeSide()) {
 			return List.of();
 		}
-		MatchSide own = match.side(side);
-		MatchSide enemy = match.side(side.opponent());
+		// Te same pomocnicze funkcje co apply, na kopii stanu - legalMoves i apply nie mogą się rozjechać.
+		State state = new State(match);
+		SideState own = state.side(side);
 		List<Move> moves = new ArrayList<>();
-		for (CardInstance card : own.hand()) {
+		for (CardInstance card : own.hand) {
 			if (canPlay(own, card)) {
 				if (!hasTargetEffect(card.card())) {
 					moves.add(new Move.PlayCard(card.instanceId(), null));
 				}
 				else {
-					List<Target> targets = eventTargets(match, side, card.card());
+					List<Target> targets = eventTargets(state, card.card());
 					for (Target target : targets) {
 						moves.add(new Move.PlayCard(card.instanceId(), target));
 					}
 				}
 			}
 		}
-		List<BoardCharacter> targets = allowedTargets(match, side.opponent());
-		boolean stressAllowed = !isGuarded(match, side.opponent());
-		for (BoardCharacter attacker : own.board()) {
-			if (!canAttack(match, side, attacker)) {
+		List<BoardCharacter> targets = allowedTargets(state, side.opponent());
+		boolean stressAllowed = !isGuarded(state, side.opponent());
+		for (BoardCharacter attacker : own.board) {
+			if (!canAttack(state, side, attacker)) {
 				continue;
 			}
 			for (BoardCharacter target : targets) {
@@ -79,38 +80,16 @@ public class MatchEngine {
 		return List.copyOf(moves);
 	}
 
-	private static boolean canPlay(MatchSide side, CardInstance card) {
-		return card.card().cost() <= side.resourceCurrent()
-				&& (card.card().type() != CardType.CHARACTER || side.board().size() < MatchRules.BOARD_LIMIT);
+	private static boolean canPlay(SideState side, CardInstance card) {
+		return card.card().cost() <= side.resourceCurrent
+				&& (card.card().type() != CardType.CHARACTER || side.board.size() < MatchRules.BOARD_LIMIT);
 	}
 
 	private static boolean hasTargetEffect(Card card) {
 		return card.type() == CardType.EVENT && card.effects().stream().anyMatch(e -> e.scope() == EffectScope.TARGET);
 	}
 
-	private static List<Target> eventTargets(Match match, Side actor, Card card) {
-		List<Effect> targeted = card.effects().stream().filter(e -> e.scope() == EffectScope.TARGET).toList();
-		if (targeted.isEmpty()) {
-			return List.of();
-		}
-		List<Target> result = new ArrayList<>();
-		for (Side side : Side.values()) {
-			for (BoardCharacter character : match.side(side).board()) {
-				if (!stats(match, side, character).trapped()
-						&& targeted.stream().allMatch(effect -> supportsCharacter(effect.kind()))) {
-					result.add(new Target.Character(character.instance().instanceId()));
-				}
-			}
-		}
-		for (Side side : Side.values()) {
-			if (targeted.stream().allMatch(effect -> supportsPlayer(effect.kind()))) {
-				result.add(new Target.Player(side));
-			}
-		}
-		return List.copyOf(result);
-	}
-
-	private static List<Target> eventTargets(State state, Side actor, Card card) {
+	private static List<Target> eventTargets(State state, Card card) {
 		List<Effect> targeted = card.effects().stream().filter(e -> e.scope() == EffectScope.TARGET).toList();
 		if (targeted.isEmpty()) {
 			return List.of();
@@ -193,6 +172,9 @@ public class MatchEngine {
 		}
 		if (scope == EffectScope.ENEMY_ALL) {
 			state.addStress(actor.opponent(), amount);
+			if (state.finished()) {
+				return;
+			}
 		}
 		List<Side> affected = switch (scope) {
 			case ENEMY_BOARD, ENEMY_ALL -> List.of(actor.opponent());
@@ -258,6 +240,10 @@ public class MatchEngine {
 	}
 
 	private static void defeatCharacters(State state, Side actor) {
+		// Po końcu partii log kończy się na MatchEnded - żadnych dalszych wpisów.
+		if (state.finished()) {
+			return;
+		}
 		for (Side side : List.of(actor.opponent(), actor)) {
 			SideState owner = state.side(side);
 			for (BoardCharacter character : List.copyOf(owner.board)) {
@@ -270,27 +256,13 @@ public class MatchEngine {
 		}
 	}
 
-	private static CharacterStats stats(Match match, Side owner, BoardCharacter character) {
-		return CharacterStats.of(character, owner, match.player().activeEvents(), match.opponent().activeEvents());
-	}
-
 	private static CharacterStats stats(State state, Side owner, BoardCharacter character) {
 		return CharacterStats.of(character, owner, state.player.activeEvents, state.opponent.activeEvents);
-	}
-
-	private static boolean canAttack(Match match, Side owner, BoardCharacter character) {
-		CharacterStats stats = stats(match, owner, character);
-		return !character.attacked() && (!character.enteredThisTurn() || stats.has(AbilityKeyword.RUSH)) && !stats.trapped();
 	}
 
 	private static boolean canAttack(State state, Side owner, BoardCharacter character) {
 		CharacterStats stats = stats(state, owner, character);
 		return !character.attacked() && (!character.enteredThisTurn() || stats.has(AbilityKeyword.RUSH)) && !stats.trapped();
-	}
-
-	private static boolean isGuarded(Match match, Side owner) {
-		return match.side(owner).board().stream().anyMatch(c -> !stats(match, owner, c).trapped()
-				&& stats(match, owner, c).has(AbilityKeyword.GUARD));
 	}
 
 	private static boolean isGuarded(State state, Side owner) {
@@ -299,11 +271,11 @@ public class MatchEngine {
 	}
 
 	// Jeśli przeciwnik ma postacie z Ochroną, tylko one są dozwolonym celem (stres też odpada).
-	private static List<BoardCharacter> allowedTargets(Match match, Side owner) {
-		List<BoardCharacter> board = match.side(owner).board();
-		return isGuarded(match, owner) ? board.stream().filter(c -> !stats(match, owner, c).trapped()
-				&& stats(match, owner, c).has(AbilityKeyword.GUARD)).toList()
-				: board.stream().filter(c -> !stats(match, owner, c).trapped()).toList();
+	private static List<BoardCharacter> allowedTargets(State state, Side owner) {
+		List<BoardCharacter> board = state.side(owner).board;
+		return isGuarded(state, owner) ? board.stream().filter(c -> !stats(state, owner, c).trapped()
+				&& stats(state, owner, c).has(AbilityKeyword.GUARD)).toList()
+				: board.stream().filter(c -> !stats(state, owner, c).trapped()).toList();
 	}
 
 	private static void playCard(State state, int instanceId, Target target) {
@@ -325,7 +297,7 @@ public class MatchEngine {
 			throw new IllegalMoveException("Stół jest pełny");
 		}
 		if (!character) {
-			List<Target> allowed = eventTargets(state, actor, definition);
+			List<Target> allowed = eventTargets(state, definition);
 			if (hasTargetEffect(definition) != (target != null) || target != null && !allowed.contains(target)) {
 				throw new IllegalMoveException("Brak lub nieprawidłowy cel wydarzenia");
 			}

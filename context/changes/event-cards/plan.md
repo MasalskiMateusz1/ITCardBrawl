@@ -440,27 +440,27 @@ Partie trzymane w pamięci (`MatchStore`) nie przeżywają restartu, więc zmian
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — b9b821e
-- [x] 1.2 `CardCatalogTests` pokrywa każdą nową regułę walidacji efektów i prawdziwy katalog (16 wydarzeń z efektami, talie po 30 kart) — b9b821e
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 42f3db9
+- [x] 1.2 `CardCatalogTests` pokrywa każdą nową regułę walidacji efektów i prawdziwy katalog (16 wydarzeń z efektami, talie po 30 kart) — 42f3db9
 
 #### Manual
 
-- [x] 1.3 Przegląd tabeli efektów 16 wydarzeń: wartości do przyjęcia jako szkic, opisy generowane pl/en czytelne — b9b821e
+- [x] 1.3 Przegląd tabeli efektów 16 wydarzeń: wartości do przyjęcia jako szkic, opisy generowane pl/en czytelne — 42f3db9
 
 ### Phase 2: Efekty natychmiastowe i cele w silniku
 
 #### Automated
 
-- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 6658abf
-- [x] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu — 6658abf
-- [x] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu — 6658abf
+- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 72408d9
+- [x] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu — 72408d9
+- [x] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu — 72408d9
 
 ### Phase 3: Efekty trwające
 
 #### Automated
 
-- [x] 3.1 Testy backendu przechodzą: `./mvnw -B verify` — c1dffa7
-- [x] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki — c1dffa7
+- [x] 3.1 Testy backendu przechodzą: `./mvnw -B verify` — 0477b1c
+- [x] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki — 0477b1c
 
 ### Phase 4: API — cele, efekty i legalność w widoku
 

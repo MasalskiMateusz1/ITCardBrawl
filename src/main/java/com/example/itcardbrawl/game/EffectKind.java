@@ -64,91 +64,79 @@ public enum EffectKind {
 				&& (this != HEALTH || amount != 0);
 	}
 
-	public String description(EffectScope scope, int amount) {
+	public LocalizedText description(EffectScope scope, int amount) {
 		return switch (this) {
-			case STRESS -> "Zadaj przeciwnikowi %d stresu / Give the opponent %d stress".formatted(amount, amount);
+			case STRESS -> text("Zadaj przeciwnikowi %d stresu".formatted(amount),
+					"Give the opponent %d stress".formatted(amount));
 			case DAMAGE -> damageDescription(scope, amount);
 			case HEAL -> healDescription(scope, amount);
-			case DRAW -> "Dobierz %d %s / Draw %d cards".formatted(amount,
-					PolishNumberForms.form(amount, "kartę", "karty", "kart"), amount);
-			case RESOURCE -> "Zyskaj %d pkt zasobu / Gain %d resource".formatted(amount, amount);
-			case RESOURCE_MAX -> "Zwiększ maksymalny zasób o %d".formatted(amount)
-					+ " / Increase maximum resource by %d".formatted(amount);
+			case DRAW -> text("Dobierz %d %s".formatted(amount, PolishNumberForms.form(amount, "kartę", "karty", "kart")),
+					"Draw %d %s".formatted(amount, amount == 1 ? "card" : "cards"));
+			case RESOURCE -> text("Zyskaj %d pkt zasobu".formatted(amount), "Gain %d resource".formatted(amount));
+			case RESOURCE_MAX -> text("Zwiększ maksymalny zasób o %d".formatted(amount),
+					"Increase maximum resource by %d".formatted(amount));
 			case ATTACK -> modifierDescription(scope, amount, "ataku", "attack");
 			case HEALTH -> modifierDescription(scope, amount, "zdrowia", "health");
 			case GUARD -> keywordDescription(scope, "Ochrona", "Guard");
 			case RUSH -> keywordDescription(scope, "Szarża", "Rush");
-			case TRAP -> scope == EffectScope.TARGET ? "Uwięź wybraną postać / Trap a chosen character"
-					: "Uwięź postacie / Trap characters";
+			case TRAP -> scope == EffectScope.TARGET ? text("Uwięź wybraną postać", "Trap a chosen character")
+					: text("Uwięź postacie", "Trap characters");
 		};
 	}
 
-	private static String damageDescription(EffectScope scope, int amount) {
-		String n = PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń");
+	private static LocalizedText text(String pl, String en) {
+		return new LocalizedText(pl, en);
+	}
+
+	private static LocalizedText damageDescription(EffectScope scope, int amount) {
+		String pl = "Zadaj %d %s".formatted(amount, PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń"));
 		String en = "Deal %d damage".formatted(amount);
 		return switch (scope) {
-			case TARGET -> "Zadaj %d %s wybranej postaci lub graczowi / %s to a chosen character or player"
-					.formatted(amount, n, en);
-			case ENEMY_BOARD -> "Zadaj %d %s postaciom przeciwnika / %s to enemy characters"
-					.formatted(amount, n, en);
-			case ENEMY_ALL -> "Zadaj %d %s postaciom i %d stresu przeciwnikowi / %s to enemy characters and give the opponent %d stress"
-					.formatted(amount, n, amount, en, amount);
-			case ALL_BOARDS -> "Zadaj %d %s wszystkim postaciom / %s to all characters"
-					.formatted(amount, n, en);
-			default -> "Zadaj %d %s / %s".formatted(amount, n, en);
+			case TARGET -> text(pl + " wybranej postaci lub graczowi", en + " to a chosen character or player");
+			case ENEMY_BOARD -> text(pl + " postaciom przeciwnika", en + " to enemy characters");
+			case ENEMY_ALL -> text(pl + " postaciom i %d stresu przeciwnikowi".formatted(amount),
+					en + " to enemy characters and give the opponent %d stress".formatted(amount));
+			case ALL_BOARDS -> text(pl + " wszystkim postaciom", en + " to all characters");
+			default -> text(pl, en);
 		};
 	}
 
-	private static String healDescription(EffectScope scope, int amount) {
+	private static LocalizedText healDescription(EffectScope scope, int amount) {
 		return switch (scope) {
-			case TARGET -> "Przywróć %d pkt zdrowia wybranej postaci lub obniż stres gracza o %d / Restore %d health to a chosen character or reduce a player's stress by %d"
-					.formatted(amount, amount, amount, amount);
-			case OWN_BOARD -> "Przywróć własnym postaciom %d pkt zdrowia / Restore %d health to your characters"
-					.formatted(amount, amount);
-			case OWN_ALL -> "Przywróć własnym postaciom %d pkt zdrowia i obniż własny stres / Restore %d health to your characters and reduce your stress"
-					.formatted(amount, amount);
-			case ALL_BOARDS -> "Przywróć wszystkim postaciom %d pkt zdrowia / Restore %d health to all characters"
-					.formatted(amount, amount);
-			default -> "Przywróć %d pkt zdrowia / Restore %d health".formatted(amount, amount);
+			case TARGET -> text(
+					"Przywróć %d pkt zdrowia wybranej postaci lub obniż stres gracza o %d".formatted(amount, amount),
+					"Restore %d health to a chosen character or reduce a player's stress by %d".formatted(amount, amount));
+			case OWN_BOARD -> text("Przywróć własnym postaciom %d pkt zdrowia".formatted(amount),
+					"Restore %d health to your characters".formatted(amount));
+			case OWN_ALL -> text("Przywróć własnym postaciom %d pkt zdrowia i obniż własny stres".formatted(amount),
+					"Restore %d health to your characters and reduce your stress".formatted(amount));
+			case ALL_BOARDS -> text("Przywróć wszystkim postaciom %d pkt zdrowia".formatted(amount),
+					"Restore %d health to all characters".formatted(amount));
+			default -> text("Przywróć %d pkt zdrowia".formatted(amount), "Restore %d health".formatted(amount));
 		};
 	}
 
-	private static String modifierDescription(EffectScope scope, int amount, String plNoun, String enNoun) {
-		String sign = amount > 0 ? "+" : "−";
-		String subject = switch (scope) {
-			case TARGET -> "Wybrana postać";
-			case OWN_BOARD -> "Własne postacie";
-			case ENEMY_BOARD -> "Postacie przeciwnika";
-			case ALL_BOARDS -> "Wszystkie postacie";
-			default -> "Postacie";
-		};
-		String enSubject = switch (scope) {
-			case TARGET -> "Chosen character";
-			case OWN_BOARD -> "Your characters";
-			case ENEMY_BOARD -> "Enemy characters";
-			case ALL_BOARDS -> "All characters";
-			default -> "Characters";
-		};
-		String amountText = sign + Math.abs(amount);
-		return "%s: %s %s / %s: %s %s".formatted(subject, amountText, plNoun, enSubject, amountText, enNoun);
+	private static LocalizedText modifierDescription(EffectScope scope, int amount, String plNoun, String enNoun) {
+		String amountText = (amount > 0 ? "+" : "−") + Math.abs(amount);
+		LocalizedText subject = subject(scope);
+		return text("%s: %s %s".formatted(subject.in(Language.PL), amountText, plNoun),
+				"%s: %s %s".formatted(subject.in(Language.EN), amountText, enNoun));
 	}
 
-	private static String keywordDescription(EffectScope scope, String plKeyword, String enKeyword) {
-		String plSubject = switch (scope) {
-			case TARGET -> "Wybrana postać";
-			case OWN_BOARD -> "Własne postacie";
-			case ENEMY_BOARD -> "Postacie przeciwnika";
-			case ALL_BOARDS -> "Wszystkie postacie";
-			default -> "Postacie";
+	private static LocalizedText keywordDescription(EffectScope scope, String plKeyword, String enKeyword) {
+		LocalizedText subject = subject(scope);
+		return text("%s: %s".formatted(subject.in(Language.PL), plKeyword),
+				"%s: %s".formatted(subject.in(Language.EN), enKeyword));
+	}
+
+	private static LocalizedText subject(EffectScope scope) {
+		return switch (scope) {
+			case TARGET -> text("Wybrana postać", "Chosen character");
+			case OWN_BOARD -> text("Własne postacie", "Your characters");
+			case ENEMY_BOARD -> text("Postacie przeciwnika", "Enemy characters");
+			case ALL_BOARDS -> text("Wszystkie postacie", "All characters");
+			default -> text("Postacie", "Characters");
 		};
-		String enSubject = switch (scope) {
-			case TARGET -> "Chosen character";
-			case OWN_BOARD -> "Your characters";
-			case ENEMY_BOARD -> "Enemy characters";
-			case ALL_BOARDS -> "All characters";
-			default -> "Characters";
-		};
-		return "%s: %s / %s: %s".formatted(plSubject, plKeyword, enSubject, enKeyword);
 	}
 
 }
