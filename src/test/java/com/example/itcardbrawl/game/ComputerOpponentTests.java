@@ -35,17 +35,17 @@ class ComputerOpponentTests {
 
 	private static final Faction FACTION = new Faction("test", text("Test"), text("Test"), true);
 
-	// Limit tur jednej partii w teście: talie po 30 kart kończą partię najpóźniej w okolicach tury 60.
+	// Turn limit for one match in the test: 30-card decks end the match around turn 60 at the latest.
 	private static final int MAX_TURNS = 200;
 
 	private static final int SIMULATED_MATCHES = 200;
 
-	// Talie zapasowe ręcznie budowanych stanów dostają unikalne instanceId.
+	// Spare decks of hand-built states get unique instanceIds.
 	private static final AtomicInteger NEXT_FILLER_ID = new AtomicInteger(1_000);
 
 	private static final double REQUIRED_WIN_RATE = 0.8;
 
-	// Gwarancje „bez głupich ruchów” nie mogą zależeć od losowania.
+	// The "no dumb moves" guarantees must not depend on randomness.
 	private static final int SEEDS = 20;
 
 	private static ComputerOpponent computer(long seed) {
@@ -251,7 +251,7 @@ class ComputerOpponentTests {
 				MoveExplained reason = (MoveExplained) added.getFirst();
 				assertThat(reason.side()).isEqualTo(Side.OPPONENT);
 				if (reason.reason() == MoveReason.END_NO_GAIN || reason.reason() == MoveReason.END_NO_MOVES) {
-					// Koniec tury: powód przed Nadgodzinami i TurnEnded.
+					// End of turn: the reason comes before Overtime and TurnEnded.
 					assertThat(added.get(1)).isInstanceOfAny(TurnEnded.class, MatchEvent.AbilityTriggered.class);
 					assertThat(reason.card()).isNull();
 				}
@@ -352,7 +352,7 @@ class ComputerOpponentTests {
 		}
 	}
 
-	// Tasowanie z ziarna, a wybór zaczynającego (nextBoolean) ustalony przez test.
+	// Shuffling from the seed, while the choice of who starts (nextBoolean) is fixed by the test.
 	private static RandomGenerator factoryRandom(long seed, boolean playerStarts) {
 		SplittableRandom delegate = new SplittableRandom(seed);
 		return new RandomGenerator() {
@@ -368,13 +368,14 @@ class ComputerOpponentTests {
 		};
 	}
 
-	// Partia z katalogu, w której zaczyna komputer (gdy fabryka wylosuje gracza, gracz kończy turę 1).
+	// A match from the catalog in which the computer starts (if the factory draws the player, the player ends turn 1).
 	private static Match computerStarts(long seed) {
 		Match match = new MatchFactory(CATALOG, new SplittableRandom(seed)).create("developers");
 		return match.activeSide() == Side.OPPONENT ? match : ENGINE.apply(match, Side.PLAYER, new Move.EndTurn());
 	}
 
-	// Partia z katalogu rozegrana do początku tury komputera od tury 7 (stoły i ręce nie są puste).
+	// A match from the catalog played up to the start of a computer turn from turn 7 on (boards and hands are
+	// not empty).
 	private static Match midgame(long seed) {
 		Match match = new MatchFactory(CATALOG, new SplittableRandom(seed))
 			.create(seed % 2 == 0 ? "developers" : "testers");
@@ -388,7 +389,7 @@ class ComputerOpponentTests {
 		return match;
 	}
 
-	// Ta sama partia z inną zawartością ręki gracza i odwróconą kolejnością obu talii (liczby kart bez zmian).
+	// The same match with different player hand contents and both decks in reverse order (card counts unchanged).
 	private static Match withDifferentHiddenCards(Match match) {
 		MatchSide player = match.player();
 		int handSize = player.hand().size();
@@ -408,7 +409,7 @@ class ComputerOpponentTests {
 				match.status(), match.result(), match.log());
 	}
 
-	// Powody ruchów komputera dopisane do logu od stanu początkowego do ostatniego kroku.
+	// The computer move reasons appended to the log from the initial state to the last step.
 	private static List<MoveExplained> reasons(Match start, List<Match> steps) {
 		List<MatchEvent> log = steps.getLast().log();
 		return log.subList(start.log().size(), log.size()).stream().filter(MoveExplained.class::isInstance)
@@ -426,7 +427,7 @@ class ComputerOpponentTests {
 				Status.IN_PROGRESS, null, List.of(new TurnStarted(Side.PLAYER, 1)));
 	}
 
-	// Partia w turze 1 komputera.
+	// A match on the computer's turn 1.
 	private static Match opponentTurn(MatchSide player, MatchSide opponent) {
 		return new Match(UUID.randomUUID(), 1, Side.OPPONENT, player, opponent, Status.IN_PROGRESS, null,
 				List.of(new TurnStarted(Side.OPPONENT, 1)));
@@ -436,7 +437,7 @@ class ComputerOpponentTests {
 		return new MatchSide(FACTION, deck, hand, MatchRules.MAX_HP, budget, budget, List.of(), List.of(), List.of());
 	}
 
-	// Strona z talią zapasową, żeby koniec tury nie kończył partii pustą talią.
+	// A side with a spare deck, so that ending the turn does not end the match on an empty deck.
 	private static MatchSide side(int hp, List<CardInstance> hand, List<BoardCharacter> board, int budget) {
 		return new MatchSide(FACTION, List.of(filler(NEXT_FILLER_ID.getAndAdd(10))), hand, hp, budget, budget, board,
 				List.of(), List.of());

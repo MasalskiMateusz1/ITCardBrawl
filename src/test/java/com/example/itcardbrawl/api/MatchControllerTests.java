@@ -83,8 +83,8 @@ class MatchControllerTests {
 	@Autowired
 	private MatchStore store;
 
-	// Magazyn partii jest współdzielony w kontekście Springa - każdy test używa własnego gracza.
-	// oauth2Login() bierze nazwę principala z atrybutu "sub".
+	// The match store is shared in the Spring context - each test uses its own player.
+	// oauth2Login() takes the principal name from the "sub" attribute.
 	private RequestPostProcessor player(String name) {
 		return oauth2Login()
 			.clientRegistration(clientRegistrations.findByRegistrationId("github"))
@@ -95,8 +95,8 @@ class MatchControllerTests {
 		return player("player-" + UUID.randomUUID());
 	}
 
-	// Token CSRF jak w SPA (cookie XSRF-TOKEN -> naglowek X-XSRF-TOKEN). Celowo bez post-procesora csrf():
-	// podmienia on repozytorium tokenow we wspoldzielonym kontekscie (zob. SecurityFlowTests).
+	// CSRF token as in the SPA (XSRF-TOKEN cookie -> X-XSRF-TOKEN header). Deliberately without the csrf()
+	// post-processor: it replaces the token repository in the shared context (see SecurityFlowTests).
 	private MockHttpServletRequestBuilder postMatches() throws Exception {
 		return csrfPost("/api/matches");
 	}
@@ -213,7 +213,7 @@ class MatchControllerTests {
 		return JsonPath.parse(json);
 	}
 
-	// Każda karta ręki ma nazwę i tekst z katalogu w danym języku.
+	// Every card in hand has a name and text from the catalog in the given language.
 	private void assertHandIn(DocumentContext match, Language language) {
 		List<String> cardIds = match.read("$.player.hand[*].cardId");
 		List<String> names = match.read("$.player.hand[*].name");
@@ -242,8 +242,8 @@ class MatchControllerTests {
 			.andExpect(jsonPath("$.player.deckCount").isNumber())
 			.andExpect(jsonPath("$.opponent.deckCount").value(25))
 			.andExpect(jsonPath("$.opponent.handCount").isNumber())
-			// HP gracza może już spaść, jeśli zaczął komputer (zdolność On play); pełne HP sprawdza
-			// startAlwaysHandsTurnToPlayer dla tury 1.
+			// The player's HP may already have dropped if the computer started (On play ability); full HP is checked by
+			// startAlwaysHandsTurnToPlayer for turn 1.
 			.andExpect(jsonPath("$.player.hp").isNumber())
 			.andExpect(jsonPath("$.player.maxHp").value(30))
 			.andExpect(jsonPath("$.opponent.hp").value(30))
@@ -266,14 +266,14 @@ class MatchControllerTests {
 			.andExpect(jsonPath("$.player.hand[0].neutral").isBoolean());
 	}
 
-	// Kto zaczyna, jest losowe. Gdy zaczyna komputer, start rozgrywa od razu jego turę 1 — gracz zawsze
-	// dostaje stół w swojej turze: tura 1 z ręką 5 albo tura 2 po dobraniu szóstej karty.
+	// Who starts is random. When the computer starts, start plays its turn 1 right away — the player always
+	// gets the board on their own turn: turn 1 with a hand of 5, or turn 2 after drawing a sixth card.
 	@Test
 	void startAlwaysHandsTurnToPlayer() throws Exception {
 		DocumentContext match = start(newPlayer(), "testers");
 
 		assertThat((String) match.read("$.turn.active")).isEqualTo("PLAYER");
-		// Kontrakt gracza zawiera tylko hp/maxHp — dawnego licznika już nie ma w JSON.
+		// The player contract contains only hp/maxHp — the former counter is no longer in the JSON.
 		Map<String, Object> player = match.read("$.player");
 		assertThat(player).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
 				"activeEvents", "graveyardCount", "lastEvent");
@@ -425,7 +425,7 @@ class MatchControllerTests {
 			.andExpect(status().isNotFound());
 	}
 
-	// --- Ruchy ---
+	// --- Moves ---
 
 	private MockHttpServletRequestBuilder movePost(String matchId, String move, String body) throws Exception {
 		return csrfPost("/api/matches/" + matchId + "/" + move).content(body);
@@ -447,7 +447,7 @@ class MatchControllerTests {
 		return "{\"turn\":" + match.read("$.turn.number") + ",\"instanceId\":" + instanceId + "}";
 	}
 
-	// Pierwsza karta z ręki, która jest (albo nie jest) do opłacenia bieżącym budżetem gracza; null, gdy brak.
+	// The first card in hand that is (or is not) affordable with the player's current budget; null if there is none.
 	private static Map<String, Object> handCard(DocumentContext match, boolean affordable) {
 		int budget = match.read("$.player.budget.current");
 		List<Map<String, Object>> hand = match.read("$.player.hand");
@@ -461,7 +461,7 @@ class MatchControllerTests {
 	void playAffordableCardMovesItFromHandToTable() throws Exception {
 		RequestPostProcessor player = newPlayer();
 		DocumentContext match = start(player, "developers");
-		// Ten test sprawdza ruch bez celu; wydarzenia celowane dostaną osobny test w fazie API.
+		// This test checks a move without a target; targeted events get a separate test in the API phase.
 		while (affordableCharacter(match) == null) {
 			assertThat((String) match.read("$.status")).isEqualTo("IN_PROGRESS");
 			match = endTurn(player, match);
@@ -531,7 +531,7 @@ class MatchControllerTests {
 				.isInstanceOf(com.example.itcardbrawl.game.IllegalMoveException.class);
 	}
 
-	// --- Wydarzenia z celem przez HTTP (stół ustawiony w magazynie, żeby nie zależeć od losowania) ---
+	// --- Targeted events over HTTP (board set up in the store, so as not to depend on randomness) ---
 
 	private static final int TARGETED_EVENT = 900; // dev-force-push: DAMAGE TARGET 5
 
@@ -541,7 +541,7 @@ class MatchControllerTests {
 
 	private static final int ENEMY_CHARACTER = 903;
 
-	// Startuje partię przez HTTP, potem podmienia rękę, budżet i stoły na znane karty.
+	// Starts a match over HTTP, then replaces the hand, budget and boards with known cards.
 	private DocumentContext seededTable(String sub) throws Exception {
 		DocumentContext started = start(player(sub), "developers");
 		store.update("github:" + sub, m -> {
@@ -630,7 +630,7 @@ class MatchControllerTests {
 		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
 				playBody(match, TARGETED_EVENT, "{\"kind\":\"CHARACTER\",\"instanceId\":" + ENEMY_CHARACTER + "}"));
 
-		// Tester manualny ma mniej niż 5 HP - pięć obrażeń go pokonuje.
+		// The manual tester has less than 5 HP - five damage defeats it.
 		assertThat((List<Integer>) after.read("$.opponent.board[*].instanceId")).doesNotContain(ENEMY_CHARACTER);
 		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(30);
 	}
@@ -666,7 +666,8 @@ class MatchControllerTests {
 	void unaffordableCardReturns400AndLeavesStateUnchanged() throws Exception {
 		RequestPostProcessor player = newPlayer();
 		DocumentContext match = start(player, "developers");
-		// Na starcie budżet to 1, a talia ma najwyżej 3 karty za 1 - na ręce zawsze jest karta za droga.
+		// At the start the budget is 1 and the deck has at most 3 one-cost cards - there is always an unaffordable
+		// card in hand.
 		Map<String, Object> card = handCard(match, false);
 		assertThat(card).isNotNull();
 		int instanceId = (Integer) card.get("instanceId");
@@ -772,7 +773,8 @@ class MatchControllerTests {
 		assertThat((Object) after.read("$.result")).isNull();
 	}
 
-	// Przeciwnik dobiera w swojej turze - log mówi tylko, że dobrał, a widok nie ma jego ręki ani talii.
+	// The opponent draws on their turn - the log only says that they drew, and the view has neither their hand
+	// nor deck.
 	@Test
 	void viewDoesNotRevealOpponentHandOrDraws() throws Exception {
 		RequestPostProcessor player = newPlayer();
@@ -786,7 +788,8 @@ class MatchControllerTests {
 			.containsOnly("Przeciwnik dobiera kartę");
 	}
 
-	// Kroki tury komputera: lekkie stany bez logu, z rosnącą liczbą widocznych wpisów i bez ręki przeciwnika.
+	// Computer turn steps: lightweight states without a log, with a growing number of visible entries and no
+	// opponent hand.
 	@Test
 	void endTurnReturnsReplayStepsWithGrowingLogSize() throws Exception {
 		RequestPostProcessor player = newPlayer();
@@ -810,7 +813,7 @@ class MatchControllerTests {
 			@SuppressWarnings("unchecked")
 			Map<String, Object> stepPlayer = (Map<String, Object>) step.get("player");
 			assertThat(stepPlayer).containsKey("hp").containsEntry("maxHp", MatchRules.MAX_HP);
-			// Pełna lista kluczy: budżet jest pod budget, dawnej nazwy pola już nie ma.
+			// The full list of keys: the budget is under budget, the former field name is gone.
 			assertThat(stepPlayer).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
 					"activeEvents", "graveyardCount", "lastEvent");
 			assertThat(opponent).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "handCount",
@@ -824,7 +827,7 @@ class MatchControllerTests {
 		}
 	}
 
-	// Każdy krok tury komputera zaczyna się od powodu; pole reason jest w każdym wpisie, true tylko dla powodów.
+	// Every computer turn step starts with a reason; the reason field is in every entry, true only for reasons.
 	@Test
 	void endTurnLogFlagsOneReasonPerComputerStep() throws Exception {
 		RequestPostProcessor player = newPlayer();

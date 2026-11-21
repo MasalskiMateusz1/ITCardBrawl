@@ -11,9 +11,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
- * Regula tras SPA w SecurityConfig przepuszcza bez logowania kazdy GET spoza prefiksow backendu
- * ({@code /api}, {@code /oauth2}, {@code /login}, {@code /error}). Kazdy endpoint backendu musi wiec
- * lezec pod jednym z tych prefiksow - inaczej po cichu stalby sie publiczny.
+ * The SPA route rule in SecurityConfig lets through, without login, every GET outside the backend prefixes
+ * ({@code /api}, {@code /oauth2}, {@code /login}, {@code /error}). Every backend endpoint must therefore
+ * live under one of these prefixes - otherwise it would silently become public.
  */
 @SpringBootTest
 class BackendRoutesTests {

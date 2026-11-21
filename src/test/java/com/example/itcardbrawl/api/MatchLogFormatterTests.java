@@ -33,7 +33,7 @@ class MatchLogFormatterTests {
 
 	private final MatchLogFormatter formatter = new MatchLogFormatter();
 
-	// Każdy typ zdarzenia (i każdy wariant słowa kluczowego oraz wyniku) z perspektywy obu stron.
+	// Every event type (and every keyword and outcome variant) from the perspective of both sides.
 	private static List<MatchEvent> everyEvent() {
 		List<MatchEvent> events = new ArrayList<>();
 		for (Side side : Side.values()) {
@@ -61,7 +61,7 @@ class MatchLogFormatterTests {
 		return events;
 	}
 
-	// Każdy rodzaj powodu ruchu komputera, z celem i bez (karta null tylko dla końca tury).
+	// Every kind of computer move reason, with and without a target (card is null only for end of turn).
 	private static List<MatchEvent.MoveExplained> everyReason() {
 		List<MatchEvent.MoveExplained> reasons = new ArrayList<>();
 		for (MoveReason reason : MoveReason.values()) {

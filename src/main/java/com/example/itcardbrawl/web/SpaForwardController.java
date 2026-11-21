@@ -11,9 +11,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UrlPathHelper;
 
 /**
- * Fallback tras SPA: GET na trase Angulara (np. {@code /sign-in}) zwraca {@code index.html},
- * zeby odswiezenie i glebokie linki dzialaly. Pliki z kropka w ostatnim segmencie
- * (bundle, {@code favicon.ico}) obsluguje domyslny handler zasobow statycznych.
+ * SPA route fallback: a GET to an Angular route (e.g. {@code /sign-in}) returns {@code index.html},
+ * so that refreshes and deep links work. Files with a dot in the last segment
+ * (bundles, {@code favicon.ico}) are served by the default static resource handler.
  */
 @Controller
 public class SpaForwardController {
@@ -29,7 +29,7 @@ public class SpaForwardController {
 	}
 
 	/**
-	 * Trasa SPA: ostatni segment bez kropki i pierwszy segment spoza prefiksow backendu
+	 * An SPA route: the last segment has no dot and the first segment is not one of the backend prefixes
 	 * ({@code /api}, {@code /oauth2}, {@code /login}, {@code /error}).
 	 */
 	public static boolean isSpaRoute(String path) {
@@ -45,8 +45,8 @@ public class SpaForwardController {
 		return !BACKEND_PREFIXES.contains(firstSegment);
 	}
 
-	// Zdekodowana i znormalizowana sciezka (jak w routingu MVC), nie surowy URI:
-	// inaczej "/%61pi/me" omijalby regule bezpieczenstwa jako "trasa SPA".
+	// The decoded and normalized path (as in MVC routing), not the raw URI:
+	// otherwise "/%61pi/me" would bypass the security rule as an "SPA route".
 	public static String pathWithinApplication(HttpServletRequest request) {
 		return UrlPathHelper.defaultInstance.getPathWithinApplication(request);
 	}

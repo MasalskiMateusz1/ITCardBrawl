@@ -32,7 +32,7 @@ class MatchEngineTests {
 
 	private static final Faction FACTION = new Faction("test", text("Test"), text("Test"), true);
 
-	// ---- Zagranie ----
+	// ---- Playing ----
 
 	@Test
 	void playingCharacterPaysCostAndEntersBoard() {
@@ -267,7 +267,7 @@ class MatchEngineTests {
 				&& applied.effect().kind() == EffectKind.BUDGET_GAIN);
 	}
 
-	// Efekt, który kończy partię, nie dopisuje nic do logu po MatchEnded - ani obrażeń postaci, ani pokonań.
+	// An effect that ends the match appends nothing to the log after MatchEnded - neither character damage nor defeats.
 	@Test
 	void matchEndingAreaDamageLogsNothingAfterMatchEnded() {
 		CardInstance spell = event(1, 1, 2, new Effect(EffectKind.DAMAGE, EffectScope.ENEMY_ALL, 3),
@@ -283,7 +283,7 @@ class MatchEngineTests {
 		assertThat(after.log()).noneMatch(CharacterDefeated.class::isInstance);
 	}
 
-	// ---- Gotowość ----
+	// ---- Readiness ----
 
 	@Test
 	void freshCharacterCannotAttackButRushCan() {
@@ -309,7 +309,7 @@ class MatchEngineTests {
 		assertIllegal(after, Side.PLAYER, new Move.Attack(1, null));
 	}
 
-	// ---- Walka ----
+	// ---- Combat ----
 
 	@Test
 	void combatDamageIsMutualAndBothCanDie() {
@@ -364,7 +364,7 @@ class MatchEngineTests {
 		assertThat(after.log().getLast()).isEqualTo(new MatchEnded(Side.PLAYER, after.result()));
 	}
 
-	// ---- Zdolności ----
+	// ---- Abilities ----
 
 	@Test
 	void onPlayDamageEndsMatchWhenHpReachesZero() {
@@ -437,7 +437,7 @@ class MatchEngineTests {
 		assertThat(after.opponent().hp()).isZero();
 		assertThat(after.status()).isEqualTo(Status.FINISHED);
 		assertThat(after.result()).isEqualTo(new MatchResult(Side.PLAYER, EndReason.HP_DEPLETED));
-		// Druga Nadgodzina, zmiana tury i dobranie przeciwnika już się nie wykonują.
+		// The second Overtime, the turn change and the opponent's draw no longer happen.
 		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
 		assertThat(after.turnNumber()).isEqualTo(1);
 		assertThat(after.opponent().hand()).isEmpty();
@@ -445,7 +445,7 @@ class MatchEngineTests {
 		assertThat(after.log()).noneMatch(TurnEnded.class::isInstance);
 	}
 
-	// ---- Koniec tury ----
+	// ---- End of turn ----
 
 	@Test
 	void damageIsClearedAtEndOfTurn() {
@@ -655,7 +655,7 @@ class MatchEngineTests {
 		assertThat(after.log().getLast()).isEqualTo(new MatchEnded(Side.OPPONENT, after.result()));
 	}
 
-	// ---- Po końcu ----
+	// ---- After the end ----
 
 	@Test
 	void everyMoveIsRejectedAfterMatchFinished() {
@@ -732,7 +732,7 @@ class MatchEngineTests {
 				new CharacterDefeated(Side.OPPONENT, target));
 	}
 
-	// ---- Wydarzenia: dodatkowe przypadki ----
+	// ---- Events: additional cases ----
 
 	@Test
 	void onPlayAbilityResolvesBeforeNegativeHealthAuraDefeatsNewCharacter() {
@@ -743,7 +743,7 @@ class MatchEngineTests {
 		Match after = ENGINE.apply(ENGINE.apply(match, Side.PLAYER, new Move.PlayCard(1)), Side.PLAYER,
 				new Move.PlayCard(2));
 
-		// Zdolność ON_PLAY działa, zanim aura −HP pokona postać.
+		// The ON_PLAY ability takes effect before the −HP aura defeats the character.
 		assertThat(after.opponent().hp()).isEqualTo(28);
 		assertThat(after.log()).containsSubsequence(new CardPlayed(Side.PLAYER, fragile),
 				new AbilityTriggered(Side.PLAYER, fragile, AbilityKeyword.ON_PLAY_DAMAGE, 2),
@@ -759,7 +759,7 @@ class MatchEngineTests {
 		CardInstance playerDamage = event(3, 1, 0, new Effect(EffectKind.PLAYER_DAMAGE, EffectScope.OPPONENT, 1));
 		Match match = match(side().hand(trap, buff, playerDamage).budget(3), side());
 
-		// Puste stoły: pułapka i wzmocnienie celowane nie mają dozwolonego celu.
+		// Empty boards: the trap and the targeted buff have no legal target.
 		assertThat(ENGINE.legalMoves(match, Side.PLAYER)).containsExactly(new Move.PlayCard(3, null));
 		assertIllegal(match, Side.PLAYER, new Move.PlayCard(1));
 		assertIllegal(match, Side.PLAYER, new Move.PlayCard(2));
@@ -768,7 +768,7 @@ class MatchEngineTests {
 	@Test
 	void budgetEffectsStopAtCap() {
 		CardInstance budgetGain = event(1, 1, 0, new Effect(EffectKind.BUDGET_GAIN, EffectScope.SELF, 2));
-		// Po opłacie bieżący budżet to 9; +2 zatrzymuje się na limicie.
+		// After paying, the current budget is 9; +2 stops at the limit.
 		Match budgeted = ENGINE.apply(match(side().hand(budgetGain).budget(MatchRules.BUDGET_CAP), side()),
 				Side.PLAYER, new Move.PlayCard(1));
 		assertThat(budgeted.player().budgetCurrent()).isEqualTo(MatchRules.BUDGET_CAP);
@@ -796,7 +796,7 @@ class MatchEngineTests {
 		assertThat(defeated.opponent().graveyard()).containsExactly(weak);
 		assertThat(defeated.log()).contains(new CharacterDefeated(Side.OPPONENT, weak));
 
-		// Karta mieszana: obrażenia od razu, modyfikator zapisany z tym samym celem.
+		// A mixed card: damage right away, a modifier recorded with the same target.
 		CardInstance mixed = event(5, 1, 2, new Effect(EffectKind.DAMAGE, EffectScope.TARGET, 2),
 				new Effect(EffectKind.ATTACK, EffectScope.TARGET, -1));
 		CardInstance enemy = character(6, 1, 3, 5, null);
@@ -836,7 +836,7 @@ class MatchEngineTests {
 		assertThat(afterExpiry.health()).isEqualTo(4);
 	}
 
-	// ---- Pomocnicze budowniczki ----
+	// ---- Helper builders ----
 
 	private static void assertIllegal(Match match, Side side, Move move) {
 		assertThatThrownBy(() -> ENGINE.apply(match, side, move)).isInstanceOf(IllegalMoveException.class);
@@ -850,7 +850,7 @@ class MatchEngineTests {
 		return current;
 	}
 
-	// Partia w turze 1 gracza, z logiem jak po fabryce.
+	// A match on the player's turn 1, with a log as produced by the factory.
 	private static Match match(SideBuilder player, SideBuilder opponent) {
 		return new Match(UUID.randomUUID(), 1, Side.PLAYER, player.build(), opponent.build(), Status.IN_PROGRESS, null,
 				List.of(new TurnStarted(Side.PLAYER, 1)));

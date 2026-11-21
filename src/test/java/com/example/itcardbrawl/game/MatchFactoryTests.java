@@ -19,7 +19,7 @@ class MatchFactoryTests {
 	private static final CardCatalog CATALOG = CardCatalogLoader.load(JsonMapper.builder().build(),
 			new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION));
 
-	// Tasowanie z ziarna, a wybór zaczynającego (nextBoolean) ustalony przez test.
+	// Shuffling from the seed, while the choice of who starts (nextBoolean) is fixed by the test.
 	private static RandomGenerator random(long seed, boolean playerStarts) {
 		SplittableRandom delegate = new SplittableRandom(seed);
 		return new RandomGenerator() {

@@ -215,25 +215,25 @@ None. Existing archived plans keep their Polish quotes of old comments. `git bla
 
 #### Automated
 
-- [x] 1.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/game`
-- [x] 1.2 Leftover Polish check prints nothing for comment lines in `src/main/java/com/example/itcardbrawl/game`
-- [x] 1.3 Full backend suite passes: `./mvnw -B verify`
+- [x] 1.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/game` — 1acc367
+- [x] 1.2 Leftover Polish check prints nothing for comment lines in `src/main/java/com/example/itcardbrawl/game` — 1acc367
+- [x] 1.3 Full backend suite passes: `./mvnw -B verify` — 1acc367
 
 #### Manual
 
-- [x] 1.4 Spot-read 3 translated files (`PositionEvaluator`, `ComputerOpponent`, `MatchEngine`): the javadoc is accurate and reads naturally in English
+- [x] 1.4 Spot-read 3 translated files (`PositionEvaluator`, `ComputerOpponent`, `MatchEngine`): the javadoc is accurate and reads naturally in English — 1acc367
 
 ### Phase 2: Remaining Java (`api`, `config`, `web`, `src/test`)
 
 #### Automated
 
-- [ ] 2.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/{api,config,web}` and `src/test/java`
-- [ ] 2.2 Leftover Polish check prints nothing for comment lines in all of `src/**/*.java`
-- [ ] 2.3 Full backend suite passes: `./mvnw -B verify`
+- [x] 2.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/{api,config,web}` and `src/test/java`
+- [x] 2.2 Leftover Polish check prints nothing for comment lines in all of `src/**/*.java`
+- [x] 2.3 Full backend suite passes: `./mvnw -B verify`
 
 #### Manual
 
-- [ ] 2.4 Spot-read `MatchView`, `SecurityConfig` and one test file: the translations are accurate, and the security and fairness notes keep their meaning
+- [x] 2.4 Spot-read `MatchView`, `SecurityConfig` and one test file: the translations are accurate, and the security and fairness notes keep their meaning
 
 ### Phase 3: Config, deploy and rule
 

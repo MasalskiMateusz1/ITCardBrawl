@@ -8,8 +8,8 @@ import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.Match.Status;
 
 /**
- * Punkt odniesienia w testach: gracz (strona {@link Side#PLAYER}) grający losowo. Wybiera jednostajnie akcję
- * (kartę z ręki albo atakującą postać), potem jeden z jej wariantów (cel), dopóki są poprawne ruchy.
+ * A baseline in tests: a player (side {@link Side#PLAYER}) that plays randomly. It uniformly picks an action
+ * (a card from hand or an attacking character), then one of its variants (target), while there are legal moves.
  */
 final class RandomPlayer {
 
@@ -24,7 +24,7 @@ final class RandomPlayer {
 		this.random = random;
 	}
 
-	/** Rozgrywa turę gracza; poza turą gracza zwraca partię bez zmian. */
+	/** Plays the player's turn; outside the player's turn it returns the match unchanged. */
 	Match playTurn(Match match) {
 		Match current = match;
 		int moves = 0;

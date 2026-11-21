@@ -86,7 +86,7 @@ class MatchStoreTests {
 
 		Match updated = store.update(KEY, m -> {
 			if (calls.incrementAndGet() == 1) {
-				// Inny zapis wygrywa wyścig, gdy pierwsza próba jeszcze liczy.
+				// Another write wins the race while the first attempt is still computing.
 				store.save(KEY, concurrent);
 			}
 			return nextTurn(m);
