@@ -16,4 +16,9 @@ public final class PolishNumberForms {
 		return last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14) ? plural : genitivePlural;
 	}
 
+	/** Forma „obrażenie / obrażenia / obrażeń” dla podanej liczby. */
+	public static String damage(int value) {
+		return form(value, "obrażenie", "obrażenia", "obrażeń");
+	}
+
 }

@@ -218,7 +218,7 @@ class MatchViewTests {
 	}
 
 	private static MatchSide side(List<CardInstance> hand, List<BoardCharacter> board, List<ActiveEvent> activeEvents) {
-		return new MatchSide(FACTION, List.of(), hand, MatchRules.MAX_HP, 10, 10, board, List.of(), activeEvents);
+		return new MatchSide(FACTION, List.of(), hand, MatchRules.MAX_HP, MatchRules.BUDGET_CAP, MatchRules.BUDGET_CAP, board, List.of(), activeEvents);
 	}
 
 	private static Match matchWithSides(List<CardInstance> hand, List<BoardCharacter> playerBoard,

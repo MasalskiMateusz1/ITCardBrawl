@@ -35,7 +35,7 @@ const GAIN: EffectView = {
   kind: 'BUDGET_GAIN',
   scope: 'SELF',
   amount: 2,
-  text: 'Zwiększ budżet o 2',
+  text: 'Dodaj 2 do budżetu w tej turze',
 };
 
 /** Hand cards without legality; `hand()` adds it the way the backend would. */
@@ -598,7 +598,7 @@ describe('MatchTable', () => {
       'Wybrana postać: +2 ataku',
     ]);
     expect(Array.from(cards[3].querySelectorAll('.effects .effect')).map(text)).toEqual([
-      'Zwiększ budżet o 2',
+      'Dodaj 2 do budżetu w tej turze',
     ]);
     expect(cards[0].querySelector('.effects')).toBeNull();
     expect(text(cards[4].querySelector('.ability'))).toBe(
@@ -1234,7 +1234,7 @@ describe('MatchTable', () => {
       log: [
         { side: 'PLAYER', text: 'Zagrywasz: Junior Dev' },
         { side: 'OPPONENT', text: 'Przeciwnik zagrywa: Tech Lead' },
-        { side: 'OPPONENT', text: 'Tech Lead atakuje Cię: −8' },
+        { side: 'OPPONENT', text: 'Tech Lead atakuje Cię i zadaje 8 obrażeń' },
       ],
     });
 
@@ -1242,7 +1242,7 @@ describe('MatchTable', () => {
     expect(entries).toEqual([
       'Zagrywasz: Junior Dev',
       'Przeciwnik zagrywa: Tech Lead',
-      'Tech Lead atakuje Cię: −8',
+      'Tech Lead atakuje Cię i zadaje 8 obrażeń',
     ]);
     expect(text(element.querySelector('.log h2'))).toBe('Przebieg partii');
   });

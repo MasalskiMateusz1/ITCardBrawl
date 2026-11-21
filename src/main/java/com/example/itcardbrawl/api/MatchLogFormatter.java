@@ -4,7 +4,6 @@ import com.example.itcardbrawl.game.CardInstance;
 import com.example.itcardbrawl.game.Language;
 import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.MatchEvent;
-import com.example.itcardbrawl.game.PolishNumberForms;
 import com.example.itcardbrawl.game.MatchEvent.AbilityTriggered;
 import com.example.itcardbrawl.game.MatchEvent.Attacked;
 import com.example.itcardbrawl.game.MatchEvent.CardBurned;
@@ -19,6 +18,7 @@ import com.example.itcardbrawl.game.MatchEvent.TurnEnded;
 import com.example.itcardbrawl.game.MatchEvent.TurnStarted;
 import com.example.itcardbrawl.game.MatchResult;
 import com.example.itcardbrawl.game.MatchRules;
+import com.example.itcardbrawl.game.PolishNumberForms;
 
 import org.springframework.stereotype.Component;
 
@@ -90,9 +90,9 @@ public class MatchLogFormatter {
 		int amount = e.amount();
 		return switch (e.keyword()) {
 			case ON_PLAY_DAMAGE, OVERTIME -> mine(e.side())
-					? text(language, "%s zadaje przeciwnikowi %d %s".formatted(card, amount, damageNoun(amount)),
+					? text(language, "%s zadaje przeciwnikowi %d %s".formatted(card, amount, PolishNumberForms.damage(amount)),
 							"%s deals %d damage to the opponent".formatted(card, amount))
-					: text(language, "%s zadaje Ci %d %s".formatted(card, amount, damageNoun(amount)),
+					: text(language, "%s zadaje Ci %d %s".formatted(card, amount, PolishNumberForms.damage(amount)),
 							"%s deals you %d damage".formatted(card, amount));
 			case HEAL -> mine(e.side())
 					? text(language, "%s leczy Twoje HP o %d".formatted(card, amount),
@@ -108,10 +108,12 @@ public class MatchLogFormatter {
 		String attacker = name(e.attacker(), language);
 		if (e.target() == null) {
 			return mine(e.side())
-					? text(language, "%s atakuje przeciwnika: −%d".formatted(attacker, e.damageDealt()),
-							"%s attacks the opponent: −%d".formatted(attacker, e.damageDealt()))
-					: text(language, "%s atakuje Cię: −%d".formatted(attacker, e.damageDealt()),
-							"%s attacks you: −%d".formatted(attacker, e.damageDealt()));
+					? text(language, "%s atakuje przeciwnika i zadaje %d %s".formatted(attacker, e.damageDealt(),
+									PolishNumberForms.damage(e.damageDealt())),
+							"%s attacks the opponent for %d damage".formatted(attacker, e.damageDealt()))
+					: text(language, "%s atakuje Cię i zadaje %d %s".formatted(attacker, e.damageDealt(),
+									PolishNumberForms.damage(e.damageDealt())),
+							"%s attacks you for %d damage".formatted(attacker, e.damageDealt()));
 		}
 		String target = name(e.target(), language);
 		return mine(e.side())
@@ -139,11 +141,7 @@ public class MatchLogFormatter {
 		};
 	}
 
-	private static String damageNoun(int amount) {
-		return PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń");
-	}
-
-	// Ujemne HP z typograficznym minusem (U+2212), jak kwoty obrażeń w logu.
+	// Ujemne HP z typograficznym minusem (U+2212).
 	private static String hp(int value) {
 		return value < 0 ? "−" + -value : Integer.toString(value);
 	}

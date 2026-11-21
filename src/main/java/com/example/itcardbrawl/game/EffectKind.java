@@ -68,13 +68,14 @@ public enum EffectKind {
 		return switch (this) {
 			case PLAYER_DAMAGE -> text(
 					"Zadaj przeciwnikowi %d %s".formatted(amount,
-							PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń")),
+							PolishNumberForms.damage(amount)),
 					"Deal %d damage to the opponent".formatted(amount));
 			case DAMAGE -> damageDescription(scope, amount);
 			case HEAL -> healDescription(scope, amount);
 			case DRAW -> text("Dobierz %d %s".formatted(amount, PolishNumberForms.form(amount, "kartę", "karty", "kart")),
 					"Draw %d %s".formatted(amount, amount == 1 ? "card" : "cards"));
-			case BUDGET_GAIN -> text("Zwiększ budżet o %d".formatted(amount), "Increase budget by %d".formatted(amount));
+			case BUDGET_GAIN -> text("Dodaj %d do budżetu w tej turze".formatted(amount),
+					"Add %d to your budget this turn".formatted(amount));
 			case BUDGET_MAX -> text("Zwiększ maksymalny budżet o %d".formatted(amount),
 					"Increase maximum budget by %d".formatted(amount));
 			case ATTACK -> modifierDescription(scope, amount, "ataku", "attack");
@@ -91,7 +92,7 @@ public enum EffectKind {
 	}
 
 	private static LocalizedText damageDescription(EffectScope scope, int amount) {
-		String pl = "Zadaj %d %s".formatted(amount, PolishNumberForms.form(amount, "obrażenie", "obrażenia", "obrażeń"));
+		String pl = "Zadaj %d %s".formatted(amount, PolishNumberForms.damage(amount));
 		String en = "Deal %d damage".formatted(amount);
 		return switch (scope) {
 			case TARGET -> text(pl + " wybranej postaci lub graczowi", en + " to a chosen character or player");
