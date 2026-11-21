@@ -47,12 +47,12 @@ HELP.md
 ### Local secrets ###
 .env.properties
 
-### Serwer produkcyjny (deploy/): sekrety i stan wdrozenia tylko na serwerze ###
+### Production server (deploy/): secrets and deploy state live only on the server ###
 deploy/app.env
 deploy/.env
 deploy/.previous_tag
 
-### Skille 10xDevs (licencjonowane, nie publikowac) ###
+### 10xDevs skills (licensed, do not publish) ###
 **/.claude/skills/
 **/.agents/skills/
 **/.codex/skills/

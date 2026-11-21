@@ -16,7 +16,7 @@ public final class PolishNumberForms {
 		return last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14) ? plural : genitivePlural;
 	}
 
-	/** The form of the Polish noun for "damage" (singular / plural / genitive plural) for the given number. */
+	/** The form "obrażenie / obrażenia / obrażeń" (Polish for "damage") for the given number. */
 	public static String damage(int value) {
 		return form(value, "obrażenie", "obrażenia", "obrażeń");
 	}

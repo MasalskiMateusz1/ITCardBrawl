@@ -191,7 +191,8 @@ public class ComputerOpponent {
 
 	/**
 	 * {@code boardSwing} is the combined change in the scores of both boards: a trade is favorable when the player's
-	 * board loses more than its own. An attack on a character without such an advantage only weakens the target.
+	 * board loses more than the computer's own board. An attack on a character without such an advantage only
+	 * weakens the target.
 	 */
 	private static MatchEvent.MoveExplained attackReason(Match before, Match after, Move.Attack attack,
 			CardInstance attacker, double boardSwing) {

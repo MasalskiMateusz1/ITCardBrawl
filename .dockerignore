@@ -1,16 +1,16 @@
-# Artefakty buildu i zaleznosci (budowane w obrazie)
+# Build artifacts and dependencies (built in the image)
 target/
 frontend/node_modules/
 frontend/dist/
 frontend/.angular/
-# SPA trafia do static/ wylacznie z etapu 1 Dockerfile
+# The SPA reaches static/ only from stage 1 of the Dockerfile
 src/main/resources/static/
 
-# Sekrety
+# Secrets
 .env.properties
 **/.env.properties
 
-# Repo, IDE, narzedzia agentow, dokumentacja
+# Repo, IDE, agent tools, documentation
 .git/
 .idea/
 .vscode/

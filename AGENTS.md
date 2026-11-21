@@ -27,8 +27,9 @@ ItCardBrawl is a browser card game. It has a Spring Boot 4 / Java 21 JSON API (`
 
 ## Coding Style
 
-- Java: tabs. Comments and javadoc are in English (as in all code: TypeScript, config, scripts); validation and exception messages stay in Polish.
-- TypeScript: Prettier (@frontend/.prettierrc, width 100, single quotes), 2-space indent, English comments.
+- Code comments and javadoc are in English everywhere (Java, TypeScript, config, Docker, CI, scripts). Runtime text stays Polish: validation and exception messages, log and CI step messages, test `.as(…)` descriptions.
+- Java: tabs.
+- TypeScript: Prettier (@frontend/.prettierrc, width 100, single quotes), 2-space indent.
 - Angular: standalone components with signals, split into `name.ts/.html/.css/.spec.ts` per file. Interceptors are functional (`HttpInterceptorFn`).
 
 ## Testing

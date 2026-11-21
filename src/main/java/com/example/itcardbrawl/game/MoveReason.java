@@ -12,7 +12,7 @@ public enum MoveReason {
 	/** The move defeats a player's character. */
 	REMOVE_THREAT,
 
-	/** An attack on a character that weakens the player's board more than its own. */
+	/** An attack on a character that weakens the player's board more than the computer's own board. */
 	FAVORABLE_TRADE,
 
 	/** An attack on a character with Guard, which blocks other targets. */
