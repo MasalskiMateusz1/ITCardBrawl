@@ -1,6 +1,6 @@
-# Rotacja logow kontenerow Dockera (app, caddy): codziennie, trzymane 30 dni wstecz.
-# Docker (sterownik json-file) rotuje tylko po rozmiarze, wiec rotacje w czasie robi logrotate hosta.
-# Instalacja: /etc/logrotate.d/docker-containers (zob. deploy/README.md, sekcja 1).
+# Rotation of Docker container logs (app, caddy): daily, kept for 30 days.
+# Docker (json-file driver) rotates only by size, so the host's logrotate does time-based rotation.
+# Installation: /etc/logrotate.d/docker-containers (see deploy/README.md, section 1).
 /var/lib/docker/containers/*/*-json.log {
 	daily
 	rotate 30
@@ -10,6 +10,6 @@
 	compress
 	delaycompress
 	dateext
-	# Docker trzyma plik otwarty - kopiujemy i przycinamy w miejscu zamiast przenosic
+	# Docker keeps the file open - we copy and truncate in place instead of moving it
 	copytruncate
 }

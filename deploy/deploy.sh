@@ -1,32 +1,32 @@
 #!/usr/bin/env bash
-# Wdrozenie ItCardBrawl na serwerze (katalog skryptu, np. /opt/itcardbrawl).
+# Deploys ItCardBrawl on the server (the script's directory, e.g. /opt/itcardbrawl).
 #
-# Uzycie:
-#   ./deploy.sh <tag>     wdraza obraz ghcr.io/masalskimateusz1/itcardbrawl:<tag>
-#   ./deploy.sh rollback  wraca do tagu z .previous_tag
+# Usage:
+#   ./deploy.sh <tag>     deploys the image ghcr.io/masalskimateusz1/itcardbrawl:<tag>
+#   ./deploy.sh rollback  goes back to the tag from .previous_tag
 #
 # deploy <tag>:
-#   1. Zapamietuje biezacy APP_TAG z .env w .previous_tag (przed podmiana). Gdy <tag> jest
-#      rowny biezacemu (ponowny deploy tej samej wersji), .previous_tag zostaje bez zmian.
-#   2. Ustawia APP_TAG=<tag> w .env, `docker compose pull app`, `docker compose up -d`
-#      i czeka do 90 s na health=healthy kontenera app.
-#   3. Porazka (pull - np. nieistniejacy tag, up albo brak zdrowia): przywraca poprzedni
-#      APP_TAG i poprzednia zawartosc .previous_tag, `up -d`, konczy sie kodem 1.
-#      Pierwszy deploy (brak APP_TAG w .env) nie ma do czego wracac - tylko blad, a wpis
-#      APP_TAG jest usuwany z .env, zeby nieudany tag nie stal sie "poprzednim".
-#   4. Sukces: usuwa lokalne obrazy aplikacji poza biezacym i poprzednim, czysci obrazy wiszace.
+#   1. Saves the current APP_TAG from .env in .previous_tag (before the swap). When <tag> equals
+#      the current one (redeploying the same version), .previous_tag stays unchanged.
+#   2. Sets APP_TAG=<tag> in .env, `docker compose pull app`, `docker compose up -d`
+#      and waits up to 90 s for health=healthy of the app container.
+#   3. Failure (pull - e.g. a nonexistent tag, up, or not healthy): restores the previous
+#      APP_TAG and the previous content of .previous_tag, `up -d`, exits with code 1.
+#      The first deploy (no APP_TAG in .env) has nothing to go back to - only an error, and the
+#      APP_TAG entry is removed from .env so the failed tag does not become the "previous" one.
+#   4. Success: removes local app images other than the current and previous ones, prunes dangling images.
 #
 # rollback:
-#   Ustawia APP_TAG z .previous_tag, `up -d` (bez pull - obraz jest w lokalnym cache)
-#   i czeka na zdrowie. .previous_tag NIE jest zmieniany: ponowny rollback nie "wraca do
-#   przodu" na wersje, z ktorej sie wycofano. Gdy poprzednia wersja nie stanie sie zdrowa,
-#   skrypt przywraca tag sprzed rollbacku i konczy sie kodem 1.
+#   Sets APP_TAG from .previous_tag, `up -d` (no pull - the image is in the local cache)
+#   and waits for health. .previous_tag is NOT changed: a repeated rollback does not "go back
+#   forward" to the version that was rolled back. When the previous version does not become healthy,
+#   the script restores the tag from before the rollback and exits with code 1.
 #
-# Wymaga w katalogu skryptu: compose.yaml, Caddyfile, app.env i .env z APP_DOMAIN.
+# Requires in the script's directory: compose.yaml, Caddyfile, app.env and .env with APP_DOMAIN.
 set -euo pipefail
 
-# Zerwane SSH (anulowany job CI, siec) nie moze przerwac skryptu miedzy podmiana tagu a jej
-# przywroceniem: ignorujemy HUP/PIPE, a log() nie konczy skryptu, gdy stderr juz nie istnieje.
+# A dropped SSH session (cancelled CI job, network) must not stop the script between swapping the tag
+# and restoring it: we ignore HUP/PIPE, and log() does not end the script when stderr is gone.
 trap '' HUP PIPE
 
 cd "$(dirname "$(readlink -f "$0")")"
@@ -44,13 +44,13 @@ usage() {
 	exit 2
 }
 
-# Biezacy APP_TAG z .env (pusty, gdy brak pliku albo wpisu).
+# Current APP_TAG from .env (empty when the file or the entry is missing).
 current_tag() {
 	[[ -f $ENV_FILE ]] || return 0
 	sed -n 's/^APP_TAG=//p' "$ENV_FILE" | tail -n 1
 }
 
-# Ustawia APP_TAG w .env (podmienia wpis albo dopisuje, gdy go nie ma).
+# Sets APP_TAG in .env (replaces the entry, or appends it when missing).
 set_tag() {
 	local tag=$1
 	touch "$ENV_FILE"
@@ -61,12 +61,12 @@ set_tag() {
 	fi
 }
 
-# Format tagu obrazu Dockera; chroni tez sed w set_tag przed znakami specjalnymi.
+# Docker image tag format; also protects sed in set_tag from special characters.
 valid_tag() {
 	[[ $1 =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]
 }
 
-# Czeka do HEALTH_TIMEOUT s na health=healthy kontenera app.
+# Waits up to HEALTH_TIMEOUT s for health=healthy of the app container.
 wait_healthy() {
 	local deadline=$((SECONDS + HEALTH_TIMEOUT)) cid status=""
 	log "Czekam do ${HEALTH_TIMEOUT} s na zdrowie kontenera app..."
@@ -91,7 +91,7 @@ wait_healthy() {
 	return 1
 }
 
-# Usuwa lokalne obrazy aplikacji poza biezacym i poprzednim tagiem; bledy nie psuja wdrozenia.
+# Removes local app images other than the current and previous tags; errors do not break the deployment.
 prune_images() {
 	local keep_current=$1 keep_previous=$2 tag
 	while read -r tag; do
@@ -126,7 +126,7 @@ deploy() {
 	fi
 
 	if [[ -z $current ]]; then
-		# Pierwszy deploy: nieudany tag nie moze zostac "biezacym" dla nastepnego wdrozenia.
+		# First deploy: the failed tag must not become the "current" one for the next deployment.
 		sed -i '/^APP_TAG=/d' "$ENV_FILE"
 		die "wdrozenie ${new} nieudane, brak poprzedniej wersji do przywrocenia"
 	fi

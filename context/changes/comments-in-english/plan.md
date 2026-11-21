@@ -227,24 +227,24 @@ None. Existing archived plans keep their Polish quotes of old comments. `git bla
 
 #### Automated
 
-- [x] 2.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/{api,config,web}` and `src/test/java`
-- [x] 2.2 Leftover Polish check prints nothing for comment lines in all of `src/**/*.java`
-- [x] 2.3 Full backend suite passes: `./mvnw -B verify`
+- [x] 2.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/{api,config,web}` and `src/test/java` — d89de2a
+- [x] 2.2 Leftover Polish check prints nothing for comment lines in all of `src/**/*.java` — d89de2a
+- [x] 2.3 Full backend suite passes: `./mvnw -B verify` — d89de2a
 
 #### Manual
 
-- [x] 2.4 Spot-read `MatchView`, `SecurityConfig` and one test file: the translations are accurate, and the security and fairness notes keep their meaning
+- [x] 2.4 Spot-read `MatchView`, `SecurityConfig` and one test file: the translations are accurate, and the security and fairness notes keep their meaning — d89de2a
 
 ### Phase 3: Config, deploy and rule
 
 #### Automated
 
-- [ ] 3.1 Comment-only diff check prints nothing for the nine files
-- [ ] 3.2 Leftover Polish check prints nothing for `#` comment lines in the nine files
-- [ ] 3.3 YAML still parses: `python3 -c "import yaml,sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" .github/workflows/ci.yml deploy/compose.yaml`
-- [ ] 3.4 Shell script still parses: `bash -n deploy/deploy.sh`
-- [ ] 3.5 `AGENTS.md` no longer mandates Polish comments: `grep -n "Comments, javadoc and validation messages are in Polish" AGENTS.md` prints nothing
-- [ ] 3.6 Full backend suite passes: `./mvnw -B verify`
+- [x] 3.1 Comment-only diff check prints nothing for the nine files
+- [x] 3.2 Leftover Polish check prints nothing for `#` comment lines in the nine files
+- [x] 3.3 YAML still parses: `python3 -c "import yaml,sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" .github/workflows/ci.yml deploy/compose.yaml`
+- [x] 3.4 Shell script still parses: `bash -n deploy/deploy.sh`
+- [x] 3.5 `AGENTS.md` no longer mandates Polish comments: `grep -n "Comments, javadoc and validation messages are in Polish" AGENTS.md` prints nothing
+- [x] 3.6 Full backend suite passes: `./mvnw -B verify`
 
 #### Manual
 

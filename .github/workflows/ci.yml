@@ -11,8 +11,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  # PR: nowszy push anuluje starsze uruchomienie; main: uruchomienie w toku nie jest anulowane,
-  # ale oczekujace w kolejce zastepuje najnowsze (wdrazany jest zawsze ostatni commit)
+  # PR: a newer push cancels the older run; main: a run in progress is not cancelled,
+  # but the newest one replaces those waiting in the queue (the latest commit is always deployed)
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -36,7 +36,7 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # Wersja npm zgodna z "packageManager" w frontend/package.json (jak w Dockerfile)
+      # npm version matching "packageManager" in frontend/package.json (as in the Dockerfile)
       - name: npm zgodny z packageManager
         run: npm install -g npm@12.1.0
 
@@ -52,7 +52,7 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-  # Obraz tylko z kodu, ktory przeszedl testy, i tylko z push na main
+  # Image only from code that passed the tests, and only on push to main
   image:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -71,7 +71,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Nazwa obrazu malymi literami (wymog GHCR)
+      # Image name in lowercase (GHCR requirement)
       - name: Build i push obrazu
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
@@ -96,9 +96,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Katalog na serwerze (/opt/itcardbrawl) wpisany doslownie w poleceniach ssh: zmienne
-      # przekazywane sa jako osobne argumenty, nie rozwijane wewnatrz zdalnego polecenia.
-      # Klucz i known_hosts z sekretow; host "prod" w ~/.ssh/config (StrictHostKeyChecking domyslnie yes)
+      # The server directory (/opt/itcardbrawl) is written literally in the ssh commands: variables
+      # are passed as separate arguments, not expanded inside the remote command.
+      # Key and known_hosts from secrets; host "prod" in ~/.ssh/config (StrictHostKeyChecking defaults to yes)
       - name: Konfiguracja SSH
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -126,21 +126,21 @@ jobs:
           scp deploy/compose.yaml deploy/Caddyfile deploy/deploy.sh prod:/opt/itcardbrawl/
           ssh prod chmod +x /opt/itcardbrawl/deploy.sh
 
-      # Token biezacego joba przez stdin SSH - nie trafia do argumentow ani logow
+      # The current job's token goes through SSH stdin - it never reaches arguments or logs
       - name: Logowanie serwera do GHCR
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: printf '%s' "$GHCR_TOKEN" | ssh prod docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
-      # deploy.sh sam wraca do poprzedniej wersji, gdy nowa nie jest zdrowa
-      # Reload Caddy zawsze (idempotentny): zmiana Caddyfile nie moze przepasc, gdy poprzedni run padl
+      # deploy.sh rolls back to the previous version by itself when the new one is not healthy
+      # Always reload Caddy (idempotent): a Caddyfile change must not get lost when the previous run failed
       - name: Wdrozenie
         run: |
-          # SHA przez stdin (xargs na serwerze) - nie jest wklejany do zdalnego polecenia
+          # SHA through stdin (xargs on the server) - it is not pasted into the remote command
           printf '%s' "$GITHUB_SHA" | ssh prod xargs /opt/itcardbrawl/deploy.sh
           ssh prod "cd /opt/itcardbrawl && docker compose exec -T -w /etc/caddy caddy caddy reload"
 
-      # Weryfikacja z zewnatrz: publiczny adres przez Caddy i TLS
+      # External check: the public address through Caddy and TLS
       - name: Smoke test
         id: smoke
         env:
@@ -161,12 +161,12 @@ jobs:
           curl -fsS --max-time 10 "https://${APP_DOMAIN}/" | grep -q '<app-root>' \
             || { echo "::error::strona glowna nie zawiera <app-root>"; exit 1; }
 
-      # Tylko porazka smoke testu - porazke samego wdrozenia obsluguje deploy.sh
+      # Only a smoke test failure - deploy.sh handles a failure of the deployment itself
       - name: Rollback
         if: failure() && steps.smoke.outcome == 'failure'
         run: ssh prod /opt/itcardbrawl/deploy.sh rollback
 
-      # Token joba wygasa po jego zakonczeniu - nie zostawiamy go w ~/.docker/config.json na serwerze
+      # The job token expires when the job ends - we do not leave it in ~/.docker/config.json on the server
       - name: Wylogowanie serwera z GHCR
         if: always()
         run: ssh prod docker logout ghcr.io || true
