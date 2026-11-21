@@ -114,9 +114,11 @@ Wygrywa ten, kto doprowadzi HP przeciwnika do 0 (lub poniżej) albo sprawi, że 
 
 Dane wejściowe reguły widoczne dla gracza: wybrana frakcja z gotową talią, karty postaci i wydarzeń zagrywane na zmianę przez gracza i przeciwnika komputerowego oraz bieżące HP obu stron. Każda strona zaczyna z 30 HP; obrażenia obniżają HP, a leczenie podnosi je najwyżej do 30.
 
+Zagranie karty kosztuje budżet równy jej kosztowi (1–10). Zaczynający ma w pierwszej turze budżet 1/1, druga strona startuje z 0/0; na początku każdej następnej własnej tury maksymalny budżet rośnie o 1 (najwyżej do 10), a bieżący odnawia się do maksimum — więc druga strona ma w swojej pierwszej turze 1/1. Karty, na które nie starcza bieżącego budżetu, nie mogą zostać zagrane.
+
 Wynik: partia kończy się w chwili, gdy któraś strona ma HP ≤ 0 albo musi dobrać kartę z pustej talii; ta strona przegrywa. HP może spaść poniżej zera i ta wartość jest pokazywana (np. −3/30). Gracz spotyka regułę przez cały przebieg partii (stale widoczne HP obu stron, widoczne skutki zagrań) i na ekranie wyniku.
 
-W v1 jedynym zasobem przegranej jest HP; dług techniczny nie jest częścią pierwszej wersji. Maksymalne (i startowe) HP wynosi 30, a talia każdej frakcji liczy 30 kart.
+W v1 jedynym licznikiem przegranej jest HP; dług techniczny nie jest częścią pierwszej wersji. Maksymalne (i startowe) HP wynosi 30, a talia każdej frakcji liczy 30 kart.
 
 ## Access Control
 
