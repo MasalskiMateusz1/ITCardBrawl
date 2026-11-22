@@ -1,0 +1,13 @@
+@if (handCount() !== null) {
+  <ul class="opponent-hand" [style.--n]="handBacks().length">
+    @for (back of handBacks(); track back) {
+      <li class="hand-back"><app-card-back /></li>
+    }
+  </ul>
+}
+<div class="deck-pile" [class.empty]="deckCount() === 0">
+  @for (layer of pileLayers(); track layer) {
+    <app-card-back class="pile-back" [style.--layer]="layer" />
+  }
+  <span class="deck-pile-count">{{ deckCount() }}</span>
+</div>

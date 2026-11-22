@@ -33,20 +33,27 @@ export interface Messages {
     playerZone: string;
     opponentHeading: (factionName: string) => string;
     playerHeading: (factionName: string) => string;
+    /** Accessible names of the aside status panels. */
+    opponentStatus: string;
+    playerStatus: string;
     hp: string;
     budget: string;
     handCount: string;
     deckCount: string;
     turn: (n: number, mine: boolean) => string;
     yourHand: string;
-    cost: (n: number) => string;
-    neutral: string;
-    backToLobby: string;
+    /** The exit link at the bottom of the aside (to the lobby). */
+    exit: string;
     loadFailed: string;
-    play: string;
-    attack: string;
-    target: string;
-    attackPlayer: string;
+    /** Accessible names of the card buttons: the action plus the card (or player) name. */
+    playCard: (name: string) => string;
+    selectAttacker: (name: string) => string;
+    attackCard: (name: string) => string;
+    targetCard: (name: string) => string;
+    /** A board character's name with its Guard keyword, for its button's accessible name. */
+    guardedName: (name: string, guard: string) => string;
+    /** An empty board slot (read by screen readers only). */
+    emptySlot: string;
     endTurn: string;
     /** Remaining time of the player's turn, shown next to the end-turn button. */
     timeLeft: (seconds: number) => string;
@@ -56,23 +63,12 @@ export interface Messages {
     activeEvents: string;
     graveyard: string;
     log: string;
-    attackHealth: (attack: number, health: number) => string;
-    duration: (turns: number) => string;
-    /** Shown instead of the duration for an event with `duration 0`. */
-    instant: string;
     chooseTarget: string;
     cancelTarget: string;
-    /** Event target button at the player's own HP. */
-    targetPlayer: string;
-    /** Event target button at the opponent's HP. */
-    targetOpponent: string;
     /** The target character of an active event. */
     eventTarget: (name: string) => string;
-    trapped: string;
-    /** Names of keywords a character has; only the ones given by events are shown. */
+    /** Names of the keywords a character has. */
     keyword: Record<AbilityKeyword, string>;
-    lastPlayed: string;
-    nothingPlayed: string;
     turnsLeft: (turns: number) => string;
     moveRejected: string;
     moveFailed: string;

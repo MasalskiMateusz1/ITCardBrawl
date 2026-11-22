@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="210" viewBox="0 0 150 210">
+  <!-- Card back (original art). Colours = board tokens, baked in: CSS url() images can't read CSS variables.
+       Ground --color-panel/--color-raised, lines --color-border-strong, accent --color-attack. -->
+  <defs>
+    <radialGradient id="ground" cx="50%" cy="45%" r="75%">
+      <stop offset="0" stop-color="#1e242e"/>
+      <stop offset="1" stop-color="#0b0d11"/>
+    </radialGradient>
+  </defs>
+  <rect width="150" height="210" fill="url(#ground)"/>
+  <rect x="7" y="7" width="136" height="196" rx="8" fill="none" stroke="#3a424e" stroke-width="1.5"/>
+  <rect x="12" y="12" width="126" height="186" rx="5" fill="none" stroke="#FFD166" stroke-opacity="0.35" stroke-width="0.8"/>
+  <!-- Circuit traces from the emblem to the border. -->
+  <g fill="none" stroke="#3a424e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M75 70V40l-14-14H36"/>
+    <path d="M75 140v30l14 14h25"/>
+    <path d="M40 105H24V64"/>
+    <path d="M110 105h16v41"/>
+    <path d="M55 78L40 63V44"/>
+    <path d="M95 132l15 15v19"/>
+  </g>
+  <g fill="#FFD166" fill-opacity="0.7">
+    <circle cx="36" cy="26" r="2.5"/>
+    <circle cx="114" cy="184" r="2.5"/>
+    <circle cx="24" cy="64" r="2.5"/>
+    <circle cx="126" cy="146" r="2.5"/>
+    <circle cx="40" cy="44" r="2.5"/>
+    <circle cx="110" cy="166" r="2.5"/>
+  </g>
+  <!-- Emblem: rounded hexagon with a code-bracket glyph. -->
+  <path d="M75 68l31 18v38l-31 18-31-18V86z" fill="#12161c" stroke="#FFD166" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M75 76l24 14v30l-24 14-24-14V90z" fill="none" stroke="#3a424e" stroke-width="1"/>
+  <g fill="none" stroke="#FFD166" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M64 95l-10 10 10 10"/>
+    <path d="M86 95l10 10-10 10"/>
+    <path d="M79 92l-8 26"/>
+  </g>
+</svg>

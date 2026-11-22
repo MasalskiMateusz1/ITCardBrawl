@@ -1,0 +1,63 @@
+/* Zone side column (Board.dc.html B:42-49). Only tokens. */
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding-inline-start: var(--space-6);
+  border-inline-start: 1px solid var(--color-divider);
+}
+
+.label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-raised);
+  font-size: 12px;
+}
+
+.event:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.event-name {
+  font-weight: 600;
+}
+
+.event-turns {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background-color: var(--faction-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-mono);
+}
+
+.event-target-name {
+  color: var(--color-text-muted);
+}
