@@ -1318,7 +1318,7 @@ describe('MatchTable', () => {
       expect(timer(element)).toBe('Pozostało: 45 s');
     });
 
-    it('does not send end-turn at zero while a request is in flight', () => {
+    it('sends end-turn at zero only after the request in flight settles', () => {
       const fixture = renderStarted(timed(matchView()));
       const element = fixture.nativeElement as HTMLElement;
 
@@ -1331,8 +1331,44 @@ describe('MatchTable', () => {
       expect(timer(element)).toBe('Pozostało: 0 s');
 
       play.flush(timed(matchView()));
-      advance(fixture, 5000);
-      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+      fixture.detectChanges();
+      const request = httpTesting.expectOne({
+        method: 'POST',
+        url: `/api/matches/${MATCH_ID}/end-turn`,
+      });
+      expect(request.request.body).toEqual({ turn: 1 });
+    });
+
+    it('cancels the attack selection at zero and ends the turn', () => {
+      const fixture = renderStarted(timed(boardView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      button(element, '.player .character button.attack').click();
+      fixture.detectChanges();
+      expect(element.querySelector('.attack-player')).not.toBeNull();
+
+      advance(fixture, 1000);
+      expect(element.querySelector('.attack-player')).toBeNull();
+      expect(element.querySelector('.opponent .target')).toBeNull();
+      httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/attack` });
+    });
+
+    it('cancels the event target selection at zero and ends the turn', () => {
+      const fixture = renderStarted(timed(targetView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      playButtons(element)[2].click();
+      fixture.detectChanges();
+      expect(element.querySelector('.choose-target')).not.toBeNull();
+
+      advance(fixture, 1000);
+      expect(element.querySelector('.choose-target')).toBeNull();
+      expect(element.querySelector('.event-target')).toBeNull();
+      httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
     });
 
     it('keeps counting through a move in the same turn', () => {
