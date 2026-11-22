@@ -1,6 +1,5 @@
 package com.example.itcardbrawl.game;
 
-import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
@@ -27,31 +26,13 @@ class CardPricingTests {
 	private static final Offset<Double> PRECISION = within(1e-9);
 
 	/**
-	 * Cards allowed outside {@link CardPricing#TOLERANCE}: card id → justification. Phase 3 lists every current
-	 * deviation; phase 4 recalculates the cards and empties the list.
+	 * Cards allowed outside {@link CardPricing#TOLERANCE}: card id → justification. Only a conscious author decision
+	 * belongs here (e.g. a deliberately weak joke card); the target is an empty list.
 	 */
-	private static final Map<String, String> TOLERANCE_EXCEPTIONS = Map.ofEntries(
-			entry("dev-works-on-my-machine", "do przeliczenia w fazie 4 (wartość 0.40, koszt 3)"),
-			entry("dev-force-push", "do przeliczenia w fazie 4 (wartość 4.30, koszt 6)"),
-			entry("dev-legacy-refactor", "do przeliczenia w fazie 4 (wartość 7.42, koszt 8)"),
-			entry("tst-intern", "do przeliczenia w fazie 4 (wartość 1.58, koszt 1)"),
-			entry("tst-vague-bug-report", "do przeliczenia w fazie 4 (wartość 0.80, koszt 2)"),
-			entry("tst-edge-case", "do przeliczenia w fazie 4 (wartość 1.90, koszt 3)"),
-			entry("tst-regression", "do przeliczenia w fazie 4 (wartość 2.80, koszt 4)"),
-			entry("tst-flaky-test", "do przeliczenia w fazie 4 (wartość 4.13, koszt 6)"),
-			entry("tst-performance", "do przeliczenia w fazie 4 (wartość 7.59, koszt 7)"),
-			entry("tst-production-bug", "do przeliczenia w fazie 4 (wartość 6.73, koszt 8)"),
-			entry("tst-qa-lead", "do przeliczenia w fazie 4 (wartość 8.29, koszt 10)"),
-			entry("neu-sprint-planning", "do przeliczenia w fazie 4 (wartość 2.73, koszt 4)"),
-			entry("neu-meeting", "do przeliczenia w fazie 4 (wartość 3.46, koszt 7)"),
-			entry("neu-deadline", "do przeliczenia w fazie 4 (wartość 3.40, koszt 9)"),
-			entry("neu-requirements-change", "do przeliczenia w fazie 4 (wartość 5.83, koszt 5)"),
-			entry("neu-client", "do przeliczenia w fazie 4 (wartość 11.18, koszt 10)"));
+	private static final Map<String, String> TOLERANCE_EXCEPTIONS = Map.of();
 
 	/** Cards allowed to be dominated: id of the dominated card → justification. */
-	private static final Map<String, String> DOMINANCE_EXCEPTIONS = Map.ofEntries(
-			entry("neu-devops", "do przeliczenia w fazie 4 (zdominowana przez tst-automation)"),
-			entry("dev-tech-lead", "do przeliczenia w fazie 4 (zdominowana przez neu-client)"));
+	private static final Map<String, String> DOMINANCE_EXCEPTIONS = Map.of();
 
 	// Every catalog card, including cards that are in no deck (e.g. neu-daily-standup).
 	private static List<Card> realCards() {
@@ -101,16 +82,16 @@ class CardPricingTests {
 	}
 
 	@Test
-	void dominanceScanFindsAutomationOverDevops() {
-		List<Card> cards = realCards();
-		Card automation = cards.stream().filter(c -> c.id().equals("tst-automation")).findFirst().orElseThrow();
-		Card devops = cards.stream().filter(c -> c.id().equals("neu-devops")).findFirst().orElseThrow();
+	void dominanceScanFindsAStrictlyBetterCharacter() {
+		// The phase 3 catalog pair: tst-automation (5, 4/5 OVERTIME) over neu-devops (5, 4/4 OVERTIME).
+		Card automation = character(5, 4, 5, new Ability(AbilityKeyword.OVERTIME, 0));
+		Card devops = character(5, 4, 4, new Ability(AbilityKeyword.OVERTIME, 0));
 
 		assertThat(CardPricing.dominates(automation, devops)).isTrue();
 		assertThat(CardPricing.dominates(devops, automation)).isFalse();
-		assertThat(dominatedPairs(cards)).anySatisfy(pair -> {
-			assertThat(pair.get(0).id()).isEqualTo("tst-automation");
-			assertThat(pair.get(1).id()).isEqualTo("neu-devops");
+		assertThat(dominatedPairs(List.of(automation, devops))).singleElement().satisfies(pair -> {
+			assertThat(pair.get(0)).isSameAs(automation);
+			assertThat(pair.get(1)).isSameAs(devops);
 		});
 	}
 

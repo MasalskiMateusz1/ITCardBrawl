@@ -618,7 +618,7 @@ class MatchControllerTests {
 		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
 				playBody(match, TARGETED_EVENT, "{\"kind\":\"PLAYER\",\"side\":\"OPPONENT\"}"));
 
-		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(25);
+		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(24);
 		assertThat((List<Integer>) after.read("$.player.hand[*].instanceId")).doesNotContain(TARGETED_EVENT);
 	}
 
