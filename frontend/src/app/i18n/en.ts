@@ -47,6 +47,7 @@ export const en: Messages = {
     target: 'Target',
     attackPlayer: 'Attack player',
     endTurn: 'End turn',
+    timeLeft: (s) => `Time left: ${s} s`,
     cancelAttack: 'Cancel attack',
     opponentMoving: 'Opponent is moving…',
     board: 'Board',

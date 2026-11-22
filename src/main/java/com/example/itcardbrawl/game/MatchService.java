@@ -1,19 +1,28 @@
 package com.example.itcardbrawl.game;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.example.itcardbrawl.game.Match.Side;
 import com.example.itcardbrawl.game.Match.Status;
+import com.example.itcardbrawl.game.MatchStore.Entry;
 
 import org.springframework.stereotype.Component;
 
 /**
- * Orchestration of a player's match: start, player moves and the computer turn. Every move, together with any
- * resulting computer turn, runs in a single atomic update {@link MatchStore#update}.
+ * Orchestration of a player's match: start, player moves, the computer turn and the player's turn time limit. Every
+ * move, together with any resulting computer turn, runs in a single atomic update {@link MatchStore#update}.
+ *
+ * <p>The player's turn deadline is set when their turn starts: now + {@link MatchRules#TURN_LIMIT} + the replay steps
+ * of the computer turn shown first × {@link MatchRules#REPLAY_STEP} + {@link MatchRules#TURN_GRACE}. It is checked
+ * lazily: every {@link #move} and {@link #current} first ends an expired player turn (with the computer turn), in the
+ * same atomic update.
  */
 @Component
 public class MatchService {
@@ -26,11 +35,15 @@ public class MatchService {
 
 	private final MatchStore store;
 
-	public MatchService(MatchFactory factory, MatchEngine engine, ComputerOpponent opponent, MatchStore store) {
+	private final Clock clock;
+
+	public MatchService(MatchFactory factory, MatchEngine engine, ComputerOpponent opponent, MatchStore store,
+			Clock clock) {
 		this.factory = factory;
 		this.engine = engine;
 		this.opponent = opponent;
 		this.store = store;
+		this.clock = clock;
 	}
 
 	/**
@@ -47,44 +60,107 @@ public class MatchService {
 			replay = withFirst(match, steps);
 			match = steps.isEmpty() ? match : steps.getLast();
 		}
-		store.save(playerKey, match);
-		return new MatchOutcome(match, replay);
+		Instant deadline = deadline(match, replay.size(), clock.instant());
+		store.save(playerKey, new Entry(match, deadline));
+		return new MatchOutcome(match, replay, deadline);
 	}
 
 	/**
 	 * Applies a player move; after an end of turn in a match in progress it also plays the computer turn.
 	 * {@code replay} is then the state after the player's end of turn and the state after each computer move; for
-	 * any other move it is empty.
+	 * any other move it is empty. When the player's turn deadline has passed, the turn is ended automatically first
+	 * (and stored) and the move is rejected as stale, because the turn number has changed; the computer turn is kept
+	 * in the entry so that the next {@link #current} replays it.
 	 *
 	 * @return the new match state, or {@link Optional#empty()} when the player has no current match
-	 * @throws StaleMoveException when {@code matchId} or {@code turn} does not match the current match
+	 * @throws StaleMoveException when {@code matchId} or {@code turn} does not match the current match, or the turn
+	 * has just ended automatically
 	 * @throws IllegalMoveException when the move breaks the rules
 	 */
 	public Optional<MatchOutcome> move(String playerKey, UUID matchId, int turn, Move move) {
 		// The steps are produced in the same atomic update, but the store accepts only the final state —
-		// so we carry them out of the lambda through a local holder. The store may invoke the lambda again (write
+		// so we carry them out of the lambda through local holders. The store may invoke the lambda again (write
 		// conflict), so every attempt starts with empty steps.
+		AtomicReference<List<Match>> replay = new AtomicReference<>(List.of());
+		AtomicBoolean timedOut = new AtomicBoolean();
+		Optional<Entry> updated = store.update(playerKey, current -> {
+			replay.set(List.of());
+			timedOut.set(false);
+			Instant now = clock.instant();
+			if (expired(current, now)) {
+				// The expired turn is ended and stored with its computer turn for the next read (the SPA reloads
+				// after the 409); the move itself is stale (thrown after the update).
+				timedOut.set(true);
+				return endPlayerTurn(current.match(), now, replay).withPendingReplay(replay.get());
+			}
+			Match match = current.match();
+			if (!match.id().equals(matchId)) {
+				throw new StaleMoveException("Ruch dotyczy innej partii niż bieżąca");
+			}
+			if (match.turnNumber() != turn) {
+				throw new StaleMoveException("Ruch dotyczy innej tury niż bieżąca");
+			}
+			if (move instanceof Move.EndTurn) {
+				return endPlayerTurn(match, now, replay);
+			}
+			Match after = engine.apply(match, Side.PLAYER, move);
+			return after.isPlayerTurn() ? current.withMatch(after) : new Entry(after, null);
+		});
+		if (timedOut.get()) {
+			throw new StaleMoveException("Tura zakończyła się automatycznie po upływie limitu czasu");
+		}
+		return updated.map(entry -> outcome(entry, replay.get()));
+	}
+
+	/**
+	 * The player's current match. When the player's turn deadline has passed, the turn is ended automatically first;
+	 * {@code replay} is then the computer turn as after a manual end of turn. A computer turn kept by a move rejected
+	 * after the deadline is returned once and cleared. Otherwise {@code replay} is empty.
+	 */
+	public Optional<MatchOutcome> current(String playerKey) {
 		AtomicReference<List<Match>> replay = new AtomicReference<>(List.of());
 		return store.update(playerKey, current -> {
 			replay.set(List.of());
-			if (!current.id().equals(matchId)) {
-				throw new StaleMoveException("Ruch dotyczy innej partii niż bieżąca");
+			Instant now = clock.instant();
+			if (expired(current, now)) {
+				return endPlayerTurn(current.match(), now, replay);
 			}
-			if (current.turnNumber() != turn) {
-				throw new StaleMoveException("Ruch dotyczy innej tury niż bieżąca");
+			if (!current.pendingReplay().isEmpty()) {
+				replay.set(current.pendingReplay());
+				return current.withPendingReplay(List.of());
 			}
-			Match after = engine.apply(current, Side.PLAYER, move);
-			if (move instanceof Move.EndTurn && after.status() == Status.IN_PROGRESS) {
-				List<Match> steps = opponent.playTurnSteps(after);
-				replay.set(withFirst(after, steps));
-				after = steps.isEmpty() ? after : steps.getLast();
-			}
-			return after;
-		}).map(match -> new MatchOutcome(match, replay.get()));
+			return current;
+		}).map(entry -> outcome(entry, replay.get()));
 	}
 
-	public Optional<Match> current(String playerKey) {
-		return store.findCurrent(playerKey);
+	// Ends the player's turn and plays the computer turn; the steps go to replay, the new deadline into the entry.
+	private Entry endPlayerTurn(Match match, Instant now, AtomicReference<List<Match>> replay) {
+		Match after = engine.apply(match, Side.PLAYER, new Move.EndTurn());
+		if (after.status() == Status.IN_PROGRESS) {
+			List<Match> steps = opponent.playTurnSteps(after);
+			replay.set(withFirst(after, steps));
+			after = steps.isEmpty() ? after : steps.getLast();
+		}
+		return new Entry(after, deadline(after, replay.get().size(), now));
+	}
+
+	private static boolean expired(Entry entry, Instant now) {
+		return entry.match().isPlayerTurn() && entry.playerTurnDeadline() != null
+				&& now.isAfter(entry.playerTurnDeadline());
+	}
+
+	// The SPA starts counting the turn limit after the replay, so the server allows for it and for a grace period.
+	private static Instant deadline(Match match, int replaySteps, Instant now) {
+		if (!match.isPlayerTurn()) {
+			return null;
+		}
+		return now.plus(MatchRules.TURN_LIMIT)
+			.plus(MatchRules.REPLAY_STEP.multipliedBy(replaySteps))
+			.plus(MatchRules.TURN_GRACE);
+	}
+
+	private static MatchOutcome outcome(Entry entry, List<Match> replay) {
+		return new MatchOutcome(entry.match(), replay, entry.playerTurnDeadline());
 	}
 
 	private static List<Match> withFirst(Match first, List<Match> rest) {

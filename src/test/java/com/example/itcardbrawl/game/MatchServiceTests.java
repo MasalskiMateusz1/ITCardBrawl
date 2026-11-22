@@ -3,6 +3,8 @@ package com.example.itcardbrawl.game;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.random.RandomGenerator;
@@ -24,7 +26,11 @@ class MatchServiceTests {
 
 	private static final String KEY = "github:gracz";
 
+	private static final Instant NOW = Instant.parse("2026-01-01T12:00:00Z");
+
 	private final MatchStore store = new MatchStore();
+
+	private final MutableClock clock = new MutableClock(NOW);
 
 	// Shuffling from the seed, while the choice of who starts (nextBoolean) is fixed by the test.
 	private static RandomGenerator random(long seed, boolean playerStarts) {
@@ -45,7 +51,7 @@ class MatchServiceTests {
 	private MatchService service(boolean playerStarts) {
 		MatchEngine engine = new MatchEngine();
 		return new MatchService(new MatchFactory(CATALOG, random(11, playerStarts)), engine,
-				new ComputerOpponent(engine, new PositionEvaluator(), new SplittableRandom(13)), store);
+				new ComputerOpponent(engine, new PositionEvaluator(), new SplittableRandom(13)), store, clock);
 	}
 
 	@Test
@@ -76,7 +82,7 @@ class MatchServiceTests {
 		assertThatThrownBy(() -> service.move(KEY, match.id(), match.turnNumber() + 1, new Move.EndTurn()))
 			.isInstanceOf(StaleMoveException.class);
 
-		assertThat(service.current(KEY)).containsSame(match);
+		assertThat(service.current(KEY).map(MatchOutcome::match)).containsSame(match);
 	}
 
 	@Test
@@ -87,7 +93,7 @@ class MatchServiceTests {
 		assertThatThrownBy(() -> service.move(KEY, UUID.randomUUID(), match.turnNumber(), new Move.EndTurn()))
 			.isInstanceOf(StaleMoveException.class);
 
-		assertThat(service.current(KEY)).containsSame(match);
+		assertThat(service.current(KEY).map(MatchOutcome::match)).containsSame(match);
 	}
 
 	@Test
@@ -98,7 +104,7 @@ class MatchServiceTests {
 		assertThatThrownBy(() -> service.move(KEY, match.id(), match.turnNumber(), new Move.PlayCard(-1)))
 			.isInstanceOf(IllegalMoveException.class);
 
-		assertThat(service.current(KEY)).containsSame(match);
+		assertThat(service.current(KEY).map(MatchOutcome::match)).containsSame(match);
 	}
 
 	@Test
@@ -113,7 +119,7 @@ class MatchServiceTests {
 		assertThat(after.turnNumber()).isEqualTo(3);
 		assertThat(after.log()).contains(new TurnEnded(Side.PLAYER), new TurnStarted(Side.OPPONENT, 2),
 				new TurnEnded(Side.OPPONENT), new TurnStarted(Side.PLAYER, 3));
-		assertThat(service.current(KEY)).containsSame(after);
+		assertThat(service.current(KEY).map(MatchOutcome::match)).containsSame(after);
 	}
 
 	@Test
@@ -125,7 +131,7 @@ class MatchServiceTests {
 		assertThatThrownBy(() -> service.move(KEY, match.id(), 1, new Move.EndTurn()))
 			.isInstanceOf(StaleMoveException.class);
 
-		assertThat(service.current(KEY)).containsSame(afterFirst);
+		assertThat(service.current(KEY).map(MatchOutcome::match)).containsSame(afterFirst);
 	}
 
 	@Test
@@ -158,7 +164,7 @@ class MatchServiceTests {
 		assertThat(first.log()).contains(new TurnEnded(Side.PLAYER), new TurnStarted(Side.OPPONENT, 2))
 			.doesNotContain(new TurnEnded(Side.OPPONENT));
 		assertThat(outcome.replay().getLast()).isSameAs(outcome.match());
-		assertThat(service.current(KEY)).containsSame(outcome.match());
+		assertThat(service.current(KEY).map(MatchOutcome::match)).containsSame(outcome.match());
 	}
 
 	@Test
@@ -190,6 +196,136 @@ class MatchServiceTests {
 	@Test
 	void moveWithoutMatchIsEmpty() {
 		assertThat(service(true).move(KEY, UUID.randomUUID(), 1, new Move.EndTurn())).isEmpty();
+	}
+
+	// --- Turn time limit ---
+
+	private static Instant deadlineAfter(int replaySteps) {
+		return NOW.plus(MatchRules.TURN_LIMIT)
+			.plus(MatchRules.REPLAY_STEP.multipliedBy(replaySteps))
+			.plus(MatchRules.TURN_GRACE);
+	}
+
+	@Test
+	void startWithPlayerFirstSetsDeadlineWithoutReplay() {
+		MatchOutcome outcome = service(true).start(KEY, "developers");
+
+		assertThat(outcome.playerTurnDeadline()).isEqualTo(deadlineAfter(0));
+		assertThat(store.find(KEY).orElseThrow().playerTurnDeadline()).isEqualTo(deadlineAfter(0));
+	}
+
+	@Test
+	void deadlineAccountsForReplaySteps() {
+		MatchOutcome started = service(false).start(KEY, "developers");
+
+		assertThat(started.replay()).hasSizeGreaterThanOrEqualTo(2);
+		assertThat(started.playerTurnDeadline()).isEqualTo(deadlineAfter(started.replay().size()));
+
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		MatchOutcome ended = service.move(KEY, match.id(), 1, new Move.EndTurn()).orElseThrow();
+		assertThat(ended.playerTurnDeadline()).isEqualTo(deadlineAfter(ended.replay().size()));
+	}
+
+	@Test
+	void moveWithinTheTurnKeepsTheDeadline() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		while (playCard(match) == null) {
+			match = service.move(KEY, match.id(), match.turnNumber(), new Move.EndTurn()).orElseThrow().match();
+		}
+		Instant deadline = store.find(KEY).orElseThrow().playerTurnDeadline();
+
+		MatchOutcome outcome = service.move(KEY, match.id(), match.turnNumber(), playCard(match)).orElseThrow();
+
+		assertThat(outcome.playerTurnDeadline()).isEqualTo(deadline);
+	}
+
+	@Test
+	void currentBeforeDeadlineChangesNothing() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		clock.advance(MatchRules.TURN_LIMIT.plus(MatchRules.TURN_GRACE));
+
+		MatchOutcome outcome = service.current(KEY).orElseThrow();
+
+		assertThat(outcome.match()).isSameAs(match);
+		assertThat(outcome.replay()).isEmpty();
+		assertThat(outcome.playerTurnDeadline()).isEqualTo(deadlineAfter(0));
+	}
+
+	@Test
+	void currentAfterDeadlineEndsThePlayerTurnWithComputerTurn() {
+		MatchService service = service(true);
+		service.start(KEY, "developers");
+		clock.advance(MatchRules.TURN_LIMIT.plus(MatchRules.TURN_GRACE).plusMillis(1));
+
+		MatchOutcome outcome = service.current(KEY).orElseThrow();
+
+		Match after = outcome.match();
+		assertThat(after.turnNumber()).isEqualTo(3);
+		assertThat(after.activeSide()).isEqualTo(Side.PLAYER);
+		assertThat(after.log()).contains(new TurnEnded(Side.PLAYER), new TurnStarted(Side.OPPONENT, 2),
+				new TurnEnded(Side.OPPONENT), new TurnStarted(Side.PLAYER, 3));
+		assertThat(outcome.replay()).hasSizeGreaterThanOrEqualTo(2);
+		assertThat(outcome.replay().getLast()).isSameAs(after);
+		assertThat(outcome.playerTurnDeadline())
+			.isEqualTo(clock.instant().plus(MatchRules.TURN_LIMIT)
+				.plus(MatchRules.REPLAY_STEP.multipliedBy(outcome.replay().size()))
+				.plus(MatchRules.TURN_GRACE));
+		assertThat(store.findCurrent(KEY)).containsSame(after);
+
+		// A second read within the new deadline has nothing more to replay.
+		assertThat(service.current(KEY).orElseThrow().replay()).isEmpty();
+	}
+
+	@Test
+	void moveAfterDeadlineEndsTheTurnAndIsStale() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		clock.advance(Duration.ofMinutes(5));
+
+		assertThatThrownBy(() -> service.move(KEY, match.id(), 1, new Move.EndTurn()))
+			.isInstanceOf(StaleMoveException.class);
+
+		Match stored = store.findCurrent(KEY).orElseThrow();
+		assertThat(stored.turnNumber()).isEqualTo(3);
+		assertThat(stored.activeSide()).isEqualTo(Side.PLAYER);
+		assertThat(stored.log()).containsOnlyOnce(new TurnEnded(Side.PLAYER));
+	}
+
+	@Test
+	void currentReplaysTheComputerTurnOnceAfterAMoveRejectedPastTheDeadline() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		clock.advance(Duration.ofMinutes(5));
+		assertThatThrownBy(() -> service.move(KEY, match.id(), 1, new Move.EndTurn()))
+			.isInstanceOf(StaleMoveException.class);
+
+		MatchOutcome first = service.current(KEY).orElseThrow();
+		assertThat(first.replay()).hasSizeGreaterThan(1);
+		assertThat(first.replay().getFirst().activeSide()).isEqualTo(Side.OPPONENT);
+		assertThat(first.replay().getLast()).isEqualTo(first.match());
+		assertThat(first.match().turnNumber()).isEqualTo(3);
+
+		MatchOutcome second = service.current(KEY).orElseThrow();
+		assertThat(second.replay()).isEmpty();
+		assertThat(second.match()).isEqualTo(first.match());
+	}
+
+	@Test
+	void finishedMatchHasNoDeadline() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		store.update(KEY, entry -> entry.withMatch(new Match(match.id(), match.turnNumber(), match.activeSide(),
+				match.player(), match.opponent(), Status.FINISHED, new MatchResult(Side.PLAYER,
+						MatchResult.EndReason.HP_DEPLETED), match.log())));
+		clock.advance(Duration.ofMinutes(5));
+
+		Match current = service.current(KEY).orElseThrow().match();
+
+		assertThat(current.status()).isEqualTo(Status.FINISHED);
+		assertThat(current.turnNumber()).isEqualTo(1);
 	}
 
 }

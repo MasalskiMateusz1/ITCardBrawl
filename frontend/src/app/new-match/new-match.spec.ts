@@ -20,7 +20,7 @@ const FACTIONS_EN: FactionSummary[] = [
 const MATCH: MatchView = {
   matchId: '00000000-0000-0000-0000-000000000001',
   status: 'IN_PROGRESS',
-  turn: { number: 1, active: 'PLAYER' },
+  turn: { number: 1, active: 'PLAYER', timeLimitSeconds: null },
   player: {
     faction: { id: 'developers', name: 'Developerzy' },
     hp: 30,

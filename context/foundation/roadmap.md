@@ -39,16 +39,16 @@ ItCardBrawl to przeglądarkowa gra karciana dla ludzi z IT na wieczór po pracy:
 
 ## At a glance
 
-| ID   | Change ID                   | Outcome (user can …)                                                                 | Prerequisites | PRD refs                                  | Status   |
-| ---- | --------------------------- | ------------------------------------------------------------------------------------ | ------------- | ----------------------------------------- | -------- |
-| F-01 | spa-api-walking-skeleton    | (foundation) aplikacja w przeglądarce rozmawia z API przez jedno źródło              | —             | NFR (przeglądarki), Guardrails            | done |
-| F-02 | deploy-pipeline-skeleton    | (foundation) każdy merge do main jest automatycznie wdrażany na serwer               | F-01          | NFR (bez instalacji), Guardrails          | done |
-| S-01 | external-login-gate         | gracz loguje się zewnętrznym kontem; niezalogowany trafia na logowanie               | F-01          | FR-001, Access Control, NFR (dane konta)  | done |
-| S-02 | match-setup-table           | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron           | S-01          | FR-002, FR-003, FR-007, US-01             | done |
-| S-03 | first-full-match            | gracz rozgrywa pełną partię postaciami przeciw komputerowi aż do wyniku              | S-02          | FR-004, FR-006, FR-008, US-01             | done |
-| S-04 | event-cards                 | gracz i komputer zagrywają karty wydarzeń o przewidywalnych efektach                 | S-03          | FR-005, US-01                             | done |
-| S-05 | sensible-computer-opponent  | gracz mierzy się z komputerem, który gra sensownie i pokazuje powód ruchu            | S-03          | FR-003, FR-006, US-01, Guardrails         | proposed |
-| S-06 | full-faction-decks-balance  | gracz gra jedną z 2 pełnych, zbalansowanych talii po 30 kart z humorem IT            | S-04, S-05    | FR-002, US-01, NFR (≤ 15 min), Guardrails | proposed |
+| ID   | Change ID                  | Outcome (user can …)                                                       | Prerequisites | PRD refs                                  | Status   |
+| ---- | -------------------------- | -------------------------------------------------------------------------- | ------------- | ----------------------------------------- | -------- |
+| F-01 | spa-api-walking-skeleton   | (foundation) aplikacja w przeglądarce rozmawia z API przez jedno źródło    | —             | NFR (przeglądarki), Guardrails            | done     |
+| F-02 | deploy-pipeline-skeleton   | (foundation) każdy merge do main jest automatycznie wdrażany na serwer     | F-01          | NFR (bez instalacji), Guardrails          | done     |
+| S-01 | external-login-gate        | gracz loguje się zewnętrznym kontem; niezalogowany trafia na logowanie     | F-01          | FR-001, Access Control, NFR (dane konta)  | done     |
+| S-02 | match-setup-table          | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron | S-01          | FR-002, FR-003, FR-007, US-01             | done     |
+| S-03 | first-full-match           | gracz rozgrywa pełną partię postaciami przeciw komputerowi aż do wyniku    | S-02          | FR-004, FR-006, FR-008, US-01             | done     |
+| S-04 | event-cards                | gracz i komputer zagrywają karty wydarzeń o przewidywalnych efektach       | S-03          | FR-005, US-01                             | done     |
+| S-05 | sensible-computer-opponent | gracz mierzy się z komputerem, który gra sensownie i pokazuje powód ruchu  | S-03          | FR-003, FR-006, US-01, Guardrails         | done     |
+| S-06 | full-faction-decks-balance | gracz gra jedną z 2 pełnych, zbalansowanych talii po 30 kart z humorem IT  | S-04, S-05    | FR-002, US-01, NFR (≤ 15 min), Guardrails | in-progress |
 
 ## Streams
 
@@ -169,7 +169,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Po czym poznamy, że komputer gra „sensownie” (kryterium akceptacji, np. wyraźnie częściej wygrywa z graczem grającym losowo)? — Owner: user. Block: no.
 - **Risk:** Równolegle z S-04 — jeśli S-05 skończy się przed S-04, strategia komputera musi zostać rozszerzona o karty wydarzeń (wychwyci to S-06 przy balansowaniu).
-- **Status:** proposed
+- **Status:** done
 
 ### S-06: Pełne talie frakcji i balans
 
@@ -183,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Treść kart obu frakcji (nazwy, żarty, wartości) — Owner: user. Block: no. Nazwy, opisy i teksty kart i frakcji muszą powstać po polsku i po angielsku (`factions.json` trzyma każde pole jako `{ "pl", "en" }`, a walidacja katalogu wymaga obu języków — zmiana ui-in-english-and-polish).
   - Jak sprawdzamy balans i czas partii przed udostępnieniem znajomym? — Owner: user. Block: no.
 - **Risk:** Balans ma sens dopiero przy kompletnych zasadach (wydarzenia) i sensownym przeciwniku, więc idzie na końcu; treść kart to praca autorska, której agent nie wymyśli za autora.
-- **Status:** proposed
+- **Status:** in-progress
 
 ## Backlog Handoff
 
@@ -227,3 +227,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 - **S-02: zalogowany gracz wybiera jedną z 2 frakcji, rozpoczyna partię przeciwko komputerowi i widzi stół: swoją rękę, liczbę kart w taliach oraz stres obu stron (0/30).** — Archived 2026-11-19 → `context/archive/2026-11-19-match-setup-table/`. Lesson: —.
 - **S-03: gracz zagrywa karty postaci na stół, komputer rozgrywa własne tury, gracz widzi każde zagranie komputera i jego skutek, stres rośnie, a partia kończy się przy stresie 30 albo pustej talii — gracz widzi wynik i może od razu zagrać ponownie.** — Archived 2026-11-20 → `context/archive/2026-11-20-first-full-match/`. Lesson: —.
 - **S-04: gracz i komputer mogą zagrywać karty wydarzeń (np. „Nagła zmiana założeń projektowych”), których efekt jest opisany na karcie i przewidywalny przed zagraniem.** — Archived 2026-11-21 → `context/archive/2026-11-20-event-cards/`. Lesson: —.
+- **S-05: gracz mierzy się z komputerem, który wybiera zagrania na podstawie oceny sytuacji na stole (nie losowo), a przy każdym ruchu widzi krótki powód zagrania.** — Archived 2026-11-21 → `context/archive/2026-11-21-sensible-computer-opponent/`. Lesson: —.

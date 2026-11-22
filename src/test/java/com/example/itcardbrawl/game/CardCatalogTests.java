@@ -590,6 +590,30 @@ class CardCatalogTests {
 	}
 
 	@Test
+	void secondPlayerBonusIsOptional() {
+		assertThat(build().secondPlayerBonus()).isEmpty();
+	}
+
+	@Test
+	void neutralSecondPlayerBonusIsAccepted() {
+		CardCatalog catalog = new CardCatalog(factions, cards, decks, "neutral-2");
+
+		assertThat(catalog.secondPlayerBonus()).get().extracting(Card::id).isEqualTo("neutral-2");
+	}
+
+	@Test
+	void unknownSecondPlayerBonusIsRejected() {
+		assertThatIllegalStateException().isThrownBy(() -> new CardCatalog(factions, cards, decks, "ghost"))
+			.withMessageContaining("secondPlayerBonus wskazuje nieistniejącą kartę 'ghost'");
+	}
+
+	@Test
+	void factionSecondPlayerBonusIsRejected() {
+		assertThatIllegalStateException().isThrownBy(() -> new CardCatalog(factions, cards, decks, "alpha-2"))
+			.withMessageContaining("secondPlayerBonus: karta 'alpha-2' nie jest neutralna");
+	}
+
+	@Test
 	void emptyDeckEntryIsRejected() {
 		decks.get("alpha").set(0, null);
 
