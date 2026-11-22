@@ -503,13 +503,13 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [ ] 3.1 `./mvnw -B verify` przechodzi
-- [ ] 3.2 `CardPricingTests` pokrywa każdą wartość `AbilityKeyword` i `EffectKind`
-- [ ] 3.3 Test dominacji wykrywa parę `tst-automation` → `neu-devops`
+- [x] 3.1 `./mvnw -B verify` przechodzi
+- [x] 3.2 `CardPricingTests` pokrywa każdą wartość `AbilityKeyword` i `EffectKind`
+- [x] 3.3 Test dominacji wykrywa parę `tst-automation` → `neu-devops`
 
 #### Manual
 
-- [ ] 3.4 Autor akceptuje `card-pricing.md` (wzór, ceny, tolerancja)
+- [x] 3.4 Autor akceptuje `card-pricing.md` (wzór, ceny, tolerancja)
 
 ### Phase 4: Przeliczenie kart
 
