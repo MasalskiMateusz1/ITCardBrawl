@@ -9,7 +9,7 @@ main_goal: learn
 top_blocker: skills
 milestone_id: first-playable-match
 milestone_seq: 1
-milestone_status: open           # open | done
+milestone_status: done           # open | done
 ---
 
 # Roadmap: ItCardBrawl
@@ -20,7 +20,7 @@ milestone_status: open           # open | done
 
 ## Milestone
 
-**M-1: Pierwsza grywalna partia** — Status: open
+**M-1: Pierwsza grywalna partia** — Status: done
 
 - **Intent:** Zalogowany gracz rozgrywa w przeglądarce pełną partię jedną z 2 frakcji przeciwko sensownie grającemu komputerowi — od wyboru frakcji do wyniku — na wdrożonej wersji gry. Przy okazji autor przechodzi przez cały stos (SPA, API, logowanie zewnętrzne, wdrożenie), wprowadzając po jednej nowej technologii na raz.
 - **Source materials:** `context/foundation/prd.md` (v1), z kontekstem z `context/foundation/tech-stack.md`.
@@ -218,6 +218,8 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 - **Obserwowalność produkcyjna (śledzenie błędów, metryki)** — Why parked: brak NFR, który by jej wymagał; cel `learn` + blokada `skills` — wrócić po F-02, gdy wdrożona gra trafi do znajomych.
 
 ## Milestone History
+
+- **M-1: Pierwsza grywalna partia** (`first-playable-match`) — closed 2026-11-22. Zalogowany gracz rozgrywa na wdrożonej wersji pełną partię jedną z 2 zbalansowanych frakcji (po 30 kart) przeciw sensownie grającemu komputerowi, z limitem tury 45 s i partią ≤ 15 min.
 
 ## Done
 
