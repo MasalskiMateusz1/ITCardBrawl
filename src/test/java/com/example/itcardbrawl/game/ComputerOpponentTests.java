@@ -222,6 +222,31 @@ class ComputerOpponentTests {
 	}
 
 	@Test
+	void hitsLethalThreatThatTwoAttackersFinishTogetherInsteadOfPlayer() {
+		// Own HP 9: next turn the 9/4 Overtime character alone is lethal. Neither 2/10 attacker defeats it alone, but
+		// together they do - the first hit is a favorable trade that beats 2 points of player HP.
+		BoardCharacter first = ready(character(1, 1, 2, 10));
+		BoardCharacter second = ready(character(2, 1, 2, 10));
+		CardInstance threat = overtime(3, 9, 4);
+		Match match = opponentTurn(side(MatchRules.MAX_HP, List.of(), List.of(ready(threat)), 0),
+				side(9, List.of(), List.of(first, second), 0));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed).playTurnSteps(match);
+			List<MoveExplained> reasons = reasons(match, steps);
+
+			assertThat(reasons).as("ziarno %d", seed).hasSize(3);
+			assertThat(reasons.get(0).reason()).as("ziarno %d", seed).isEqualTo(MoveReason.FAVORABLE_TRADE);
+			assertThat(reasons.get(0).target()).isEqualTo(threat);
+			assertThat(reasons.get(1).reason()).as("ziarno %d", seed).isEqualTo(MoveReason.REMOVE_THREAT);
+			assertThat(reasons.get(1).target()).isEqualTo(threat);
+			assertThat(List.of(reasons.get(0).card(), reasons.get(1).card()))
+				.containsExactlyInAnyOrder(first.instance(), second.instance());
+			assertThat(steps.getLast().player().hp()).isEqualTo(MatchRules.MAX_HP);
+		}
+	}
+
+	@Test
 	void guardAtLowOwnHpIsExplainedAsDefence() {
 		CardInstance guardAll = event(1, 1, 2, new Effect(EffectKind.GUARD, EffectScope.OWN_BOARD, 0));
 		CardInstance own = character(2, 1, 1, 6);
@@ -459,6 +484,12 @@ class ComputerOpponentTests {
 	private static CardInstance guard(int instanceId, int attack, int health) {
 		return new CardInstance(instanceId, new Card("guard-" + instanceId, FACTION.id(), text("Ochroniarz"),
 				CardType.CHARACTER, 1, text("Opis"), attack, health, new Ability(AbilityKeyword.GUARD, 0), null, null));
+	}
+
+	private static CardInstance overtime(int instanceId, int attack, int health) {
+		return new CardInstance(instanceId, new Card("overtime-" + instanceId, FACTION.id(), text("Nadgodziny"),
+				CardType.CHARACTER, 1, text("Opis"), attack, health, new Ability(AbilityKeyword.OVERTIME, 0), null,
+				null));
 	}
 
 	private static CardInstance event(int instanceId, int cost, Effect effect) {

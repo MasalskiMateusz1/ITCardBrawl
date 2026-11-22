@@ -515,27 +515,27 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 4.1 `./mvnw -B verify` przechodzi
-- [x] 4.2 Lista tymczasowych wyjątków w `CardPricingTests` jest pusta
-- [x] 4.3 `ComputerOpponentTests` z graczem losowym nadal ≥ 80%
+- [x] 4.1 `./mvnw -B verify` przechodzi — 17f4412
+- [x] 4.2 Lista tymczasowych wyjątków w `CardPricingTests` jest pusta — 17f4412
+- [x] 4.3 `ComputerOpponentTests` z graczem losowym nadal ≥ 80% — 17f4412
 
 #### Manual
 
-- [x] 4.4 Porównanie `summary.md` z fazą 2 zanotowane
-- [x] 4.5 Autor przegląda wartości kart pod kątem żartów
+- [x] 4.4 Porównanie `summary.md` z fazą 2 zanotowane — 17f4412
+- [x] 4.5 Autor przegląda wartości kart pod kątem żartów — 17f4412
 
 ### Phase 5: Strojenie wag AI
 
 #### Automated
 
-- [ ] 5.1 `./mvnw -B verify` przechodzi
-- [ ] 5.2 Komputer wygrywa ≥ 80% z graczem losowym
-- [ ] 5.3 Nowy test `FAVORABLE_TRADE` przechodzi
-- [ ] 5.4 `summary.md` raportuje `FAVORABLE_TRADE` > 0
+- [x] 5.1 `./mvnw -B verify` przechodzi
+- [x] 5.2 Komputer wygrywa ≥ 80% z graczem losowym
+- [x] 5.3 Nowy test `FAVORABLE_TRADE` przechodzi
+- [x] 5.4 `summary.md` raportuje `FAVORABLE_TRADE` > 0
 
 #### Manual
 
-- [ ] 5.5 Partia lokalna: powody ruchów komputera brzmią sensownie
+- [x] 5.5 Partia lokalna: powody ruchów komputera brzmią sensownie
 
 ### Phase 6: Bramki balansu i długości partii
 
