@@ -477,22 +477,22 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 1.1 `pricing-sources.md` ma sekcje MTG, Hearthstone, Lorcana, Prace naukowe, Mapowanie, Wnioski z linkami
-- [x] 1.2 ≥ 3 źródła na grę, ≥ 3 prace naukowe (lub jawny brak), sekcja „Log wyszukiwania” z zapytaniami Exa
-- [x] 1.3 Brak zmian w kodzie i danych poza folderem zmiany
+- [x] 1.1 `pricing-sources.md` ma sekcje MTG, Hearthstone, Lorcana, Prace naukowe, Mapowanie, Wnioski z linkami — 88295f5
+- [x] 1.2 ≥ 3 źródła na grę, ≥ 3 prace naukowe (lub jawny brak), sekcja „Log wyszukiwania” z zapytaniami Exa — 88295f5
+- [x] 1.3 Brak zmian w kodzie i danych poza folderem zmiany — 88295f5
 
 #### Manual
 
-- [x] 1.4 Autor akceptuje wnioski z `pricing-sources.md`
+- [x] 1.4 Autor akceptuje wnioski z `pricing-sources.md` — 88295f5
 
 ### Phase 2: Symulacja komputer kontra komputer i ślad w CI
 
 #### Automated
 
-- [ ] 2.1 Wszystkie testy backendu przechodzą: `./mvnw -B verify`
-- [ ] 2.2 `ComputerOpponentTests` (w tym ≥ 80% z graczem losowym) przechodzi bez zmiany progu
-- [ ] 2.3 Po `./mvnw -B verify` istnieją `target/balance/matches.csv`, `cards.csv`, `summary.md`
-- [ ] 2.4 Dwukrotne uruchomienie daje identyczny `matches.csv` (determinizm ziaren)
+- [x] 2.1 Wszystkie testy backendu przechodzą: `./mvnw -B verify`
+- [x] 2.2 `ComputerOpponentTests` (w tym ≥ 80% z graczem losowym) przechodzi bez zmiany progu
+- [x] 2.3 Po `./mvnw -B verify` istnieją `target/balance/matches.csv`, `cards.csv`, `summary.md`
+- [x] 2.4 Dwukrotne uruchomienie daje identyczny `matches.csv` (determinizm ziaren)
 
 #### Manual
 
