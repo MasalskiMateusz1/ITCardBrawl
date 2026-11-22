@@ -48,6 +48,8 @@ export interface Messages {
     target: string;
     attackPlayer: string;
     endTurn: string;
+    /** Remaining time of the player's turn, shown next to the end-turn button. */
+    timeLeft: (seconds: number) => string;
     cancelAttack: string;
     opponentMoving: string;
     board: string;

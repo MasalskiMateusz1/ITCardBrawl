@@ -541,26 +541,26 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 6.1 `./mvnw -B verify` przechodzi z włączonymi bramkami
-- [x] 6.2 Każda komórka 45–55%, wszystkie w 40–60%, p90 czasu ≤ 15 min
-- [x] 6.3 `CardPricingTests` przechodzi bez nieuzasadnionych wyjątków
-- [x] 6.4 `ComputerOpponentTests` z graczem losowym ≥ 80%
-- [x] 6.5 Celowe zepsucie karty wywala bramkę (sprawdzone i cofnięte)
+- [x] 6.1 `./mvnw -B verify` przechodzi z włączonymi bramkami — 9f127a5
+- [x] 6.2 Każda komórka 45–55%, wszystkie w 40–60%, p90 czasu ≤ 15 min — 9f127a5
+- [x] 6.3 `CardPricingTests` przechodzi bez nieuzasadnionych wyjątków — 9f127a5
+- [x] 6.4 `ComputerOpponentTests` z graczem losowym ≥ 80% — 9f127a5
+- [x] 6.5 Celowe zepsucie karty wywala bramkę (sprawdzone i cofnięte) — 9f127a5
 
 #### Manual
 
-- [x] 6.6 Autor rozgrywa po partii każdą frakcją i ocenia grywalność
+- [x] 6.6 Autor rozgrywa po partii każdą frakcją i ocenia grywalność — 9f127a5
 
 ### Phase 7: Limit czasu tury 45 s
 
 #### Automated
 
-- [ ] 7.1 `./mvnw -B verify` przechodzi (w tym testy z zegarem stałym)
-- [ ] 7.2 Testy frontu przechodzą: `npx ng test --watch=false`
-- [ ] 7.3 Build SPA przechodzi: `npm run build`
+- [x] 7.1 `./mvnw -B verify` przechodzi (w tym testy z zegarem stałym)
+- [x] 7.2 Testy frontu przechodzą: `npx ng test --watch=false`
+- [x] 7.3 Build SPA przechodzi: `npm run build`
 
 #### Manual
 
-- [ ] 7.4 Licznik startuje po odtwarzaniu, odlicza od 45 s, po zerze tura kończy się sama
-- [ ] 7.5 Zamknięcie karty > 50 s i powrót pokazuje rozegraną turę komputera
+- [x] 7.4 Licznik startuje po odtwarzaniu, odlicza od 45 s, po zerze tura kończy się sama
+- [x] 7.5 Zamknięcie karty > 50 s i powrót pokazuje rozegraną turę komputera
 - [ ] 7.6 Na wdrożonej wersji 3 partie zmierzone stoperem, każda ≤ 15 min
