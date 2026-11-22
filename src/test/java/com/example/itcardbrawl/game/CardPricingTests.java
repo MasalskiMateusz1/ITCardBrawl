@@ -39,7 +39,7 @@ class CardPricingTests {
 		try (InputStream in = new ClassPathResource(CardCatalogLoader.CATALOG_LOCATION).getInputStream()) {
 			CatalogData data = JsonMapper.builder().build().readValue(in, CatalogData.class);
 			// Validate the data the same way the application does before pricing it.
-			new CardCatalog(data.factions(), data.cards(), data.decks());
+			new CardCatalog(data.factions(), data.cards(), data.decks(), data.secondPlayerBonus());
 			return data.cards();
 		}
 		catch (IOException ex) {

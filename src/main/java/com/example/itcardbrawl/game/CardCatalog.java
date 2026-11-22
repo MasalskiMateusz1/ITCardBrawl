@@ -41,7 +41,19 @@ public final class CardCatalog {
 
 	private final Map<String, List<Card>> decks;
 
+	private final Card secondPlayerBonus;
+
+	/** A catalog without a second player bonus card. */
 	public CardCatalog(List<Faction> factions, List<Card> cards, Map<String, List<DeckEntry>> decks) {
+		this(factions, cards, decks, null);
+	}
+
+	/**
+	 * @param secondPlayerBonus id of the card the non-starting side gets on top of its starting hand, or {@code null}
+	 * for none; when given, it must be an existing neutral card
+	 */
+	public CardCatalog(List<Faction> factions, List<Card> cards, Map<String, List<DeckEntry>> decks,
+			String secondPlayerBonus) {
 		List<Faction> factionList = factions != null ? factions : List.of();
 		List<Card> cardList = cards != null ? cards : List.of();
 		Map<String, List<DeckEntry>> deckMap = decks != null ? decks : Map.of();
@@ -51,6 +63,7 @@ public final class CardCatalog {
 		Map<String, Card> cardsById = indexCards(cardList, factionsById, errors);
 		validatePlayableFactions(factionsById, deckMap, errors);
 		Map<String, List<Card>> expandedDecks = expandDecks(deckMap, factionsById, cardsById, errors);
+		Card bonus = resolveSecondPlayerBonus(secondPlayerBonus, factionsById, cardsById, errors);
 
 		if (!errors.isEmpty()) {
 			throw new IllegalStateException("Niepoprawny katalog kart:\n- " + String.join("\n- ", errors));
@@ -59,6 +72,7 @@ public final class CardCatalog {
 		this.factions = Collections.unmodifiableMap(factionsById);
 		this.cards = Collections.unmodifiableMap(cardsById);
 		this.decks = Collections.unmodifiableMap(expandedDecks);
+		this.secondPlayerBonus = bonus;
 	}
 
 	/** Playable factions in catalog file order. */
@@ -78,6 +92,11 @@ public final class CardCatalog {
 	public boolean isNeutral(Card card) {
 		Faction faction = factions.get(card.faction());
 		return faction != null && !faction.playable();
+	}
+
+	/** The card the non-starting side gets on top of its starting hand, outside its deck (if configured). */
+	public Optional<Card> secondPlayerBonus() {
+		return Optional.ofNullable(secondPlayerBonus);
 	}
 
 	/**
@@ -221,6 +240,23 @@ public final class CardCatalog {
 			errors.add("karta '%s': pole '%s' ma wartość %d spoza zakresu %d–%d"
 				.formatted(id, field, value, min, max));
 		}
+	}
+
+	private static Card resolveSecondPlayerBonus(String id, Map<String, Faction> factions, Map<String, Card> cards,
+			List<String> errors) {
+		if (id == null) {
+			return null;
+		}
+		Card card = cards.get(id);
+		if (card == null) {
+			errors.add("secondPlayerBonus wskazuje nieistniejącą kartę '%s'".formatted(id));
+			return null;
+		}
+		if (!isNonPlayable(factions.get(card.faction()))) {
+			errors.add("secondPlayerBonus: karta '%s' nie jest neutralna".formatted(id));
+			return null;
+		}
+		return card;
 	}
 
 	private static void validatePlayableFactions(Map<String, Faction> factions, Map<String, List<DeckEntry>> decks,

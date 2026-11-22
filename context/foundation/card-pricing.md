@@ -1,6 +1,6 @@
 # Reguła wyceny kart
 
-**Status:** wersja 1 (S-06, faza 3, 2026-11-22). Czeka na akceptację autora.
+**Status:** wersja 1 (S-06, faza 3, 2026-11-22), stosowana w fazach 4–6. Faza 6 (2026-11-22): strojenie kart w tolerancji, karta dla drugiego gracza (`secondPlayerBonus`) i włączone bramki balansu (sekcja „Pomiar balansu”).
 **Kod:** `src/main/java/com/example/itcardbrawl/game/CardPricing.java` (stałe wzoru), `src/test/java/com/example/itcardbrawl/game/CardPricingTests.java` (sprawdzenie katalogu).
 
 Dokument mówi, ile punktów kosztu jest warta karta. Autor nowej karty liczy jej wartość według tego wzoru i ustawia koszt na wartość zaokrągloną do liczby całkowitej. Test `CardPricingTests` sprawdza każdą kartę z `factions.json` i wywala build, jeśli karta jest poza tolerancją albo jest zdominowana przez inną kartę.
@@ -302,11 +302,13 @@ Przewaga Developerów i strony zaczynającej zmalała, ale nadal jest duża. Dal
 
 Reguła wyceny daje ocenę z góry. O tym, czy przekłada się na balans, rozstrzyga symulacja komputer kontra komputer (`BalanceSimulationTests`, ślad w artefakcie CI `balance-report`).
 
-**Bramki (włączane w fazie 6):**
+**Bramki (włączone w fazie 6, `BalanceSimulationTests`):**
 - win rate frakcji PLAYER w każdej z 4 komórek (frakcja × strona zaczynająca) w **[40%, 60%]** — twarda bramka (`CELL_MIN_WIN_RATE = 0.40`, `CELL_MAX_WIN_RATE = 0.60`);
 - **45–55%** to cel orientacyjny, nie warunek zaliczenia (decyzja autora do pkt 11): przy 250 partiach na komórkę 95% przedział ufności to ok. ±6 p.p. (1,96·√(0,25/250)), czyli jest szerszy niż cel; kryterium 6.2 planu czytamy zgodnie z tą decyzją;
 - p90 szacowanego czasu partii ≤ **900 s** (15 min, `MAX_P90_MATCH_SECONDS`);
-- szacowany czas partii = tury „człowieka” × **`ASSUMED_HUMAN_TURN_SECONDS = 20`** + ruchy komputera × 0,7 s (odtwarzanie w SPA); liczony z perspektywy obu stron, brana jest większa wartość.
+- szacowany czas partii = tury „człowieka” × **`ASSUMED_HUMAN_TURN_SECONDS = 20`** + ruchy komputera × 0,7 s (odtwarzanie w SPA); liczony z perspektywy obu stron, brana jest większa wartość;
+- talia testowa aggro (karty za 1–3) pozostaje wyłącznie raportem, bez bramki;
+- pliki śladu (`target/balance/matches.csv`, `cards.csv`, `summary.md`) powstają przed asercjami, więc są dostępne także przy porażce. Komunikat porażki podaje komórkę, win rate, przedział i ścieżkę `target/balance/summary.md`.
 
 **Stan wyjściowy (faza 2, przed jakąkolwiek zmianą kart i wag AI):**
 
@@ -326,4 +328,71 @@ Wnioski ze stanu wyjściowego: Developerzy wyraźnie wygrywają z Testerami, a p
 2. `OVERTIME`, `TRAP`, `BUDGET_GAIN`, `BUDGET_MAX`, czas trwania i rabat `ALL_BOARDS`;
 3. metryki per karta z `cards.csv` (odsetek wygranych w partiach, w których karta została zagrana, jak WRP u Silvy i in.).
 
-Przy każdej zmianie kart należy sprawdzić artefakt `balance-report` z CI.
+### Faza 6: strojenie i karta dla drugiego gracza
+
+Pomiar fazy 6 robimy po ostatniej zmianie wag AI (faza 5). Wagi `PositionEvaluator` i algorytm `ComputerOpponent` w tej fazie się nie zmieniają. Wszystkie pomiary: N = 1000, te same ziarna 0–999. Komórka to win rate frakcji PLAYER.
+
+**Krok 1: strojenie kart w tolerancji.** Po fazie 5 Developerzy wygrywali 54,6%, więc karty Developerów zeszły bliżej dolnej granicy tolerancji:
+
+| Karta | Zmiana | Wartość | Odchylenie |
+|---|---|---|---|
+| `dev-stackoverflow` | koszt 2 → 3 | 2,50 | −0,50 (granica) |
+| `dev-tech-lead` | 8/8 → 7/8 (`ON_PLAY_DAMAGE 4` bez zmian) | 9,53 | −0,47 |
+
+`dev-tech-lead` 7/8 nie jest zdominowany przez `neu-client` (8/7, `ON_PLAY_DAMAGE 5`), bo ma więcej zdrowia. `CardPricingTests` przechodzi bez wyjątków.
+
+Win rate Developerów spadł do 51,9%, ale przewaga strony zaczynającej została (66,3%). Wszystkie 4 komórki są poza celem 45–55% w tę samą stronę, na korzyść strony zaczynającej, a 3 z nich także poza bramką 40–60%. Kartami w granicach tolerancji nie da się tego naprawić, bo tempo pierwszego ruchu działa na obie talie tak samo. Warunek wprowadzenia karty dla drugiego gracza (plan, faza 6, pkt 2) jest więc spełniony.
+
+**Krok 2: karta dla drugiego gracza.** `factions.json` ma pole najwyższego poziomu `secondPlayerBonus` (id karty neutralnej, sprawdzane przez `CardCatalog`). `MatchFactory` dodaje egzemplarz tej karty do ręki strony niezaczynającej, spoza talii: ręka ma 6 kart, talia 25, a `HAND_LIMIT` (10) się nie zmienia. Karta dostaje `instanceId` po obu taliach (61).
+
+Plan zakładał monetę `neu-coffee` (`BUDGET_GAIN 2` za 1, jak The Coin w HS). W symulacji ta karta **nic nie zmienia**, bo komputer nigdy jej nie zagrywa: ma 0 zagrań w `cards.csv`, a powód `GAIN_BUDGET` występuje 0 razy. Komputer patrzy tylko jeden ruch do przodu, a w `PositionEvaluator` zagranie kawy daje +1 netto bieżącego budżetu × `BUDGET_CURRENT_WEIGHT` (0,25) − 1 karta w ręce × `HAND_CARD_VALUE` (1,0) = **−0,75**. `ComputerOpponent` odrzuca więc ten ruch jako niekorzystny. Zmiana wag jest poza zakresem fazy 6, bo unieważniłaby pomiar. Dlatego porównaliśmy kilka kart neutralnych jako `secondPlayerBonus` (karty po kroku 1):
+
+| `secondPlayerBonus` | dev / zaczyna PLAYER | tst / zaczyna PLAYER | dev / zaczyna OPPONENT | tst / zaczyna OPPONENT | Strona zaczynająca | Developerzy | p90 czasu |
+|---|---|---|---|---|---|---|---|
+| brak | 67,6% | 63,2% | 34,4% | 31,2% | 66,3% | 51,9% | 272 s |
+| `neu-coffee` | 67,6% | 62,0% | 34,0% | 31,2% | 66,1% | 52,1% | 270 s |
+| `neu-daily-standup` | 59,2% | 54,4% | 40,4% | 36,4% | 59,2% | 52,2% | 266 s |
+| `neu-deadline` | 63,6% | 53,6% | 39,6% | 36,4% | 60,3% | 53,3% | 262 s |
+| **`neu-rubber-duck`** | **55,2%** | **50,8%** | **46,4%** | **42,0%** | **54,4%** | **52,2%** | **269 s** |
+| `neu-scrum-master` | 48,0% | 44,0% | 56,8% | 51,6% | 45,9% | 52,3% | 283 s |
+
+**Decyzja autora:** `secondPlayerBonus = "neu-rubber-duck"` (postać za 2, 1/3, `HEAL 2`, wartość 1,96).
+- To jedyny wariant, w którym wszystkie komórki mieszczą się w bramce 40–60%, a przewaga strony zaczynającej jest najbliżej źródeł (54,4% wobec 52–55% w MTG, Lorcanie i HS po The Coin).
+- `neu-scrum-master` przesadza w drugą stronę: druga strona wygrywa 54,1%.
+- `neu-coffee` zostaje w taliach jako zwykła karta. Jako karta dla drugiego gracza ma sens dopiero wtedy, gdy komputer nauczy się wydawać dodatkowy budżet (zmiana wag albo głębsze przeszukiwanie, poza S-06).
+
+**Krok 3: krzywa i walka o stół (uwagi autora po partii ręcznej).** Autor grał Developerami i miał wrażenie, że Testerzy są silniejsi przez lepszą krzywą kosztów, a nie przez mocniejsze karty. Porównanie talii to potwierdziło:
+- po kroku 1 Developerzy mieli tylko 1 kartę za 2 (neutralną `neu-rubber-duck`) i 2 karty za 4. Przeniesienie `dev-stackoverflow` na koszt 3 w kroku 1 zabrało im obie karty za 2;
+- tanie wydarzenia Developerów (leczenie, dobieranie, wzmocnienie ataku) pomagają tylko wtedy, gdy stół jest już wygrany. Pierwsze usunięcie postaci mieli dopiero za 6 (`dev-force-push`). Testerzy mają `tst-edge-case` (4 obrażenia za 3) i `tst-flaky-test` (pułapka za 4).
+
+Komputer słabo to odczuwa (Developerzy nadal wygrywali 52,2%), ale gracz za stołem tak. Zmiany po decyzji autora:
+
+| Karta | Zmiana | Wartość | Odchylenie |
+|---|---|---|---|
+| `dev-fullstack` | 3/3 za 3 → 2/3 za 2 | 1,93 | −0,07 |
+| `dev-force-push` | `DAMAGE 6` za 6 → `DAMAGE 3` za 2 | 1,90 | −0,10 |
+
+Po samej zmianie `dev-fullstack` komórki wynosiły 54,8 / 53,2 / 47,2 / 40,4% (kolejność jak w tabeli wariantów), czyli komórka testers / zaczyna OPPONENT leżała tuż przy bramce. Tanie usunięcie (`dev-force-push`) przesunęło balans w stronę Testerów i odsunęło tę komórkę od granicy.
+
+**Krzywa kosztów talii po fazie 6** (liczba kart o danym koszcie, z kopiami):
+
+| Talia | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | Średnia |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| developers | 5 | 5 | 5 | 2 | 4 | 2 | 4 | 0 | 0 | 3 | 4,27 |
+| testers | 3 | 3 | 7 | 4 | 4 | 2 | 4 | 0 | 0 | 3 | 4,53 |
+
+**Pomiar ostateczny** (`neu-rubber-duck` jako `secondPlayerBonus`, karty po krokach 1 i 3, wagi AI z fazy 5):
+
+| Frakcja PLAYER | Zaczyna PLAYER | Zaczyna OPPONENT |
+|---|---|---|
+| developers | 54,8% (95% CI 48,6–60,9%) | 42,4% (36,4–48,6%) |
+| testers | 54,4% (48,2–60,5%) | 47,6% (41,5–53,8%) |
+
+- win rate strony zaczynającej: **54,8%** (po fazie 5: 65,0%);
+- win rate Developerów: **48,8%** (po fazie 5: 54,6%);
+- p90 szacowanego czasu partii: **284 s** (4,7 min; mediana 220 s, maksimum 400 s), dużo poniżej 900 s;
+- N = **1000** partii (250 na komórkę) + 200 partii talii aggro; czas działania ok. **1,4 s** (razem z aggro ok. 1,7 s).
+
+Komórka developers / zaczyna OPPONENT (42,4%) nie mieści się w celu orientacyjnym 45–55%, ale przechodzi twardą bramkę 40–60%. Zgodnie z decyzją autora zapisaną wyżej to wystarcza: przedział ufności tej komórki (36,4–48,6%) obejmuje cel. Pozostałe trzy komórki mieszczą się w celu.
+
+**Przy każdej zmianie kart** (wartości, talii albo `secondPlayerBonus`) i wag AI trzeba sprawdzić artefakt `balance-report` z CI (`summary.md`: komórki, strona zaczynająca, p90 czasu; `cards.csv`: metryki per karta). Bramka 40–60% wychwyci tylko duże zmiany, a dryf w stronę granic widać dopiero w raporcie.

@@ -29,8 +29,10 @@ import tools.jackson.databind.json.JsonMapper;
  * Balance simulation: the computer plays both sides of seeded matches on the real catalog, and the test writes a
  * report to {@code target/balance/} ({@code matches.csv}, {@code cards.csv}, {@code summary.md}).
  *
- * <p>Report mode: no balance gate is asserted yet. The test only checks that every match finishes before
- * {@link #MAX_TURNS} with a result. The report files are written before that assertion, so they exist on failure too.
+ * <p>Balance gates: every match finishes before {@link #MAX_TURNS} with a result, the PLAYER faction win rate of each
+ * of the 4 cells is within [{@link #CELL_MIN_WIN_RATE}, {@link #CELL_MAX_WIN_RATE}], and the p90 of the estimated
+ * match time is at most {@link #MAX_P90_MATCH_SECONDS}. The aggro test deck is report only. The report files are
+ * written before the assertions, so they exist on failure too.
  *
  * <p>Matches are split evenly into 4 cells: PLAYER faction (developers, testers) x starting side (PLAYER, OPPONENT).
  * {@code matches.csv} and {@code cards.csv} depend only on the seeds (no wall-clock values), so two runs give identical
@@ -69,6 +71,19 @@ class BalanceSimulationTests {
 
 	// Turn limit for one match: 30-card decks end the match around turn 60 at the latest.
 	private static final int MAX_TURNS = 200;
+
+	// Balance gates and the match time estimate: see "Pomiar balansu" in context/foundation/card-pricing.md
+	// (45-55% is the orientation target, [40%, 60%] is the hard gate: the 95% CI at 250 matches per cell is about
+	// +-6 p.p.).
+
+	/** Lowest allowed PLAYER faction win rate in a cell (faction x starting side). */
+	static final double CELL_MIN_WIN_RATE = 0.40;
+
+	/** Highest allowed PLAYER faction win rate in a cell (faction x starting side). */
+	static final double CELL_MAX_WIN_RATE = 0.60;
+
+	/** Highest allowed p90 of the estimated match time (15 min). */
+	static final double MAX_P90_MATCH_SECONDS = 900;
 
 	/** Assumed duration of a human turn, for the estimated match length. */
 	static final double ASSUMED_HUMAN_TURN_SECONDS = 20;
@@ -109,13 +124,43 @@ class BalanceSimulationTests {
 		Files.writeString(OUTPUT.resolve("cards.csv"), cardsCsv(cardStats(matches)));
 		Files.writeString(OUTPUT.resolve("summary.md"), summary(matches, aggro, mainNanos, aggroNanos));
 
+		Path report = OUTPUT.resolve("summary.md");
 		List<Played> all = new ArrayList<>(matches);
 		all.addAll(aggro);
-		assertThat(all).as("partie bez wyniku przed turą %d (raport: %s)", MAX_TURNS, OUTPUT.resolve("summary.md"))
+		assertThat(all).as("partie bez wyniku przed turą %d (raport: %s)", MAX_TURNS, report)
 			.allSatisfy(played -> {
 				assertThat(played.match().status()).as("ziarno %d", played.seed()).isEqualTo(Status.FINISHED);
 				assertThat(played.match().result()).as("ziarno %d", played.seed()).isNotNull();
 			});
+
+		List<String> cellViolations = new ArrayList<>();
+		for (Side starting : STARTING_SIDES) {
+			for (String faction : FACTIONS) {
+				List<Played> cell = cell(matches, faction, starting);
+				int wins = (int) cell.stream().filter(p -> p.winner() == Side.PLAYER).count();
+				double winRate = (double) wins / cell.size();
+				if (winRate < CELL_MIN_WIN_RATE || winRate > CELL_MAX_WIN_RATE) {
+					cellViolations.add("frakcja PLAYER %s, zaczyna %s: win rate %s".formatted(faction, starting,
+							percent(wins, cell.size())));
+				}
+			}
+		}
+		assertThat(cellViolations)
+			.withFailMessage("Komórki poza przedziałem [%s, %s] (raport: %s):%n%s",
+					format("%.0f%%", 100 * CELL_MIN_WIN_RATE), format("%.0f%%", 100 * CELL_MAX_WIN_RATE), report,
+					String.join("\n", cellViolations))
+			.isEmpty();
+
+		double p90Seconds = percentile(matches.stream().map(Played::estimatedSeconds).sorted().toList(), 0.9);
+		assertThat(p90Seconds)
+			.withFailMessage("p90 szacowanego czasu partii %s s przekracza %s s (raport: %s)",
+					format("%.0f", p90Seconds), format("%.0f", MAX_P90_MATCH_SECONDS), report)
+			.isLessThanOrEqualTo(MAX_P90_MATCH_SECONDS);
+	}
+
+	private static List<Played> cell(List<Played> matches, String playerFaction, Side starting) {
+		return matches.stream().filter(p -> p.starting() == starting && p.faction(Side.PLAYER).equals(playerFaction))
+			.toList();
 	}
 
 	// ---- simulation ----
@@ -224,10 +269,17 @@ class BalanceSimulationTests {
 			}
 		}
 
+		// The same second player bonus card as in the real catalog.
+		String bonus = CATALOG.secondPlayerBonus().map(card -> {
+			cards.putIfAbsent(card.id(), card);
+			factions.putIfAbsent(card.faction(), CATALOG.faction(card.faction()).orElseThrow());
+			return card.id();
+		}).orElse(null);
+
 		Map<String, List<DeckEntry>> decks = new LinkedHashMap<>();
 		decks.put(realFaction, realCopies.entrySet().stream().map(e -> new DeckEntry(e.getKey(), e.getValue())).toList());
 		decks.put(AGGRO_FACTION, aggroDeck);
-		return new CardCatalog(List.copyOf(factions.values()), List.copyOf(cards.values()), decks);
+		return new CardCatalog(List.copyOf(factions.values()), List.copyOf(cards.values()), decks, bonus);
 	}
 
 	// ---- metrics ----
@@ -338,16 +390,19 @@ class BalanceSimulationTests {
 	private static String summary(List<Played> matches, List<Played> aggro, long mainNanos, long aggroNanos) {
 		StringBuilder md = new StringBuilder();
 		md.append("# Balance simulation\n\n");
-		md.append("Computer vs computer on the real catalog, report mode (no balance gates). Matches: %d, seeds 0-%d."
-			.formatted(matches.size(), matches.size() - 1)).append("\n\n");
+		md.append("Computer vs computer on the real catalog. Matches: %d, seeds 0-%d.".formatted(matches.size(),
+				matches.size() - 1)).append("\n\n");
+		md.append(("Gates: PLAYER faction win rate of every cell in [%s, %s], p90 of the estimated match time <= %s s. "
+				+ "The aggro test deck is report only.").formatted(format("%.0f%%", 100 * CELL_MIN_WIN_RATE),
+						format("%.0f%%", 100 * CELL_MAX_WIN_RATE), format("%.0f", MAX_P90_MATCH_SECONDS)))
+			.append("\n\n");
 
 		md.append("## Cells (win rate of the PLAYER faction)\n\n");
 		md.append("| PLAYER faction | OPPONENT faction | Starting side | Matches | PLAYER wins | Win rate | 95% CI |\n");
 		md.append("| --- | --- | --- | ---: | ---: | ---: | --- |\n");
 		for (Side starting : STARTING_SIDES) {
 			for (String faction : FACTIONS) {
-				List<Played> cell = matches.stream()
-					.filter(p -> p.starting() == starting && p.faction(Side.PLAYER).equals(faction)).toList();
+				List<Played> cell = cell(matches, faction, starting);
 				int wins = (int) cell.stream().filter(p -> p.winner() == Side.PLAYER).count();
 				String opponent = cell.isEmpty() ? "-" : cell.getFirst().faction(Side.OPPONENT);
 				md.append("| %s | %s | %s | %d | %d | %s | %s |\n".formatted(faction, opponent, starting, cell.size(),

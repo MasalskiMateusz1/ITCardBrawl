@@ -528,28 +528,28 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 5.1 `./mvnw -B verify` przechodzi
-- [x] 5.2 Komputer wygrywa ≥ 80% z graczem losowym
-- [x] 5.3 Nowy test `FAVORABLE_TRADE` przechodzi
-- [x] 5.4 `summary.md` raportuje `FAVORABLE_TRADE` > 0
+- [x] 5.1 `./mvnw -B verify` przechodzi — 044f20a
+- [x] 5.2 Komputer wygrywa ≥ 80% z graczem losowym — 044f20a
+- [x] 5.3 Nowy test `FAVORABLE_TRADE` przechodzi — 044f20a
+- [x] 5.4 `summary.md` raportuje `FAVORABLE_TRADE` > 0 — 044f20a
 
 #### Manual
 
-- [x] 5.5 Partia lokalna: powody ruchów komputera brzmią sensownie
+- [x] 5.5 Partia lokalna: powody ruchów komputera brzmią sensownie — 044f20a
 
 ### Phase 6: Bramki balansu i długości partii
 
 #### Automated
 
-- [ ] 6.1 `./mvnw -B verify` przechodzi z włączonymi bramkami
-- [ ] 6.2 Każda komórka 45–55%, wszystkie w 40–60%, p90 czasu ≤ 15 min
-- [ ] 6.3 `CardPricingTests` przechodzi bez nieuzasadnionych wyjątków
-- [ ] 6.4 `ComputerOpponentTests` z graczem losowym ≥ 80%
-- [ ] 6.5 Celowe zepsucie karty wywala bramkę (sprawdzone i cofnięte)
+- [x] 6.1 `./mvnw -B verify` przechodzi z włączonymi bramkami
+- [x] 6.2 Każda komórka 45–55%, wszystkie w 40–60%, p90 czasu ≤ 15 min
+- [x] 6.3 `CardPricingTests` przechodzi bez nieuzasadnionych wyjątków
+- [x] 6.4 `ComputerOpponentTests` z graczem losowym ≥ 80%
+- [x] 6.5 Celowe zepsucie karty wywala bramkę (sprawdzone i cofnięte)
 
 #### Manual
 
-- [ ] 6.6 Autor rozgrywa po partii każdą frakcją i ocenia grywalność
+- [x] 6.6 Autor rozgrywa po partii każdą frakcją i ocenia grywalność
 
 ### Phase 7: Limit czasu tury 45 s
 
