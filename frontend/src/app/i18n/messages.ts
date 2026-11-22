@@ -82,4 +82,23 @@ export interface Messages {
     playAgain: string;
   };
   cardType: Record<CardType, string>;
+  /** Labels of the shared card (ui/card). */
+  card: {
+    /** Accessible name of the cost badge. */
+    cost: (n: number) => string;
+    /** Accessible name of the attack badge. */
+    attack: (n: number) => string;
+    /** Accessible name of the HP badge (remaining HP). */
+    hp: (n: number) => string;
+    /** Placeholder text in the art window when there is no image. */
+    art: string;
+    trapped: string;
+    /** Event duration; `instant` is used for `duration 0`. */
+    duration: (turns: number) => string;
+    instant: string;
+    /** Turns left of an active event. */
+    turnsLeft: (turns: number) => string;
+    /** Faction names on the type line, by faction id; unknown ids show the type only. */
+    faction: Record<string, string>;
+  };
 }
