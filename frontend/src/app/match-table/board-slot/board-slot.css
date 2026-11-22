@@ -1,0 +1,50 @@
+/* A board character's slot: the Guard shield plate behind the card. Only tokens. */
+:host {
+  position: relative;
+  display: block;
+  isolation: isolate;
+  /* The card is zoomed with the board (--card-zoom), so is the plate around it. */
+  --shield-side: calc(-1 * var(--space-3) * var(--card-zoom, 1));
+  /* Shoulders and a raised crest at the top, a point at the bottom. */
+  --shield-shape: polygon(0 5%, 50% 0, 100% 5%, 100% 72%, 50% 100%, 0 72%);
+}
+
+.shield,
+.shield::before {
+  position: absolute;
+  clip-path: var(--shield-shape);
+}
+
+/* Larger than the card on every side: a crest above, rims at the sides, a point below. */
+.shield {
+  z-index: -1;
+  top: calc(-1 * var(--space-4) * var(--card-zoom, 1));
+  right: var(--shield-side);
+  bottom: calc(-1.5 * var(--space-6) * var(--card-zoom, 1));
+  left: var(--shield-side);
+  background-color: var(--color-text-secondary);
+}
+
+.shield::before {
+  content: '';
+  inset: 3px;
+  background: linear-gradient(var(--color-border-strong), var(--color-raised-2));
+}
+
+:host(.aimed) .shield {
+  animation: guard-aim 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes guard-aim {
+  to {
+    background-color: var(--color-attack);
+    filter: brightness(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host(.aimed) .shield {
+    animation: none;
+    background-color: var(--color-attack);
+  }
+}

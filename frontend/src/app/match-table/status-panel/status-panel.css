@@ -1,0 +1,109 @@
+/* Aside status panel (Board.dc.html B:156-203). Only tokens. */
+:host {
+  display: block;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-zone);
+  background-color: var(--color-panel);
+}
+
+:host(.targeting) .panel {
+  cursor: not-allowed;
+}
+
+:host(.targetable) .panel {
+  border-color: var(--color-attack);
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-row);
+  background-color: var(--color-raised-2);
+  border: 2px solid var(--faction-accent);
+}
+
+.name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+dt {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.hp-bar {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-border);
+  overflow: hidden;
+}
+
+.hp-bar span {
+  display: block;
+  height: 100%;
+  background-color: var(--color-danger);
+}
+
+.pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pip {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--faction-accent);
+}
+
+.pip.filled {
+  background-color: var(--faction-accent);
+}
+
+.status-target {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: var(--radius-zone);
+  background: transparent;
+  cursor: var(--cursor-target);
+}
+
+.status-target:disabled {
+  cursor: not-allowed;
+}
+
+.status-target:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}

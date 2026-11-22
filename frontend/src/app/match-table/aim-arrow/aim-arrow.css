@@ -1,0 +1,80 @@
+/* Attack aim arrow over the board. Only tokens; strokes read them through CSS. */
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.under,
+.line {
+  fill: none;
+  stroke-linecap: round;
+}
+
+/* Dark under-stroke: the arrow reads on light card art and dark zones alike. */
+.under {
+  stroke: var(--color-bg);
+  stroke-opacity: 0.75;
+  stroke-width: 11;
+}
+
+.line {
+  stroke: var(--color-attack);
+  stroke-width: 5;
+  stroke-dasharray: 14 10;
+  animation: march 0.6s linear infinite;
+}
+
+.origin {
+  fill: var(--color-attack);
+  stroke: var(--color-bg);
+  stroke-width: 3;
+}
+
+.reticle {
+  fill: none;
+  stroke: var(--color-text-muted);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  scale: 0.8;
+  transition:
+    scale 0.12s ease-out,
+    stroke 0.12s;
+}
+
+.reticle circle {
+  fill: color-mix(in srgb, var(--color-bg) 55%, transparent);
+}
+
+.reticle.locked {
+  stroke: var(--color-attack);
+  stroke-width: 3.5;
+  scale: 1.3;
+  filter: drop-shadow(0 0 6px var(--color-attack));
+}
+
+@keyframes march {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line {
+    animation: none;
+  }
+
+  .reticle {
+    transition: none;
+  }
+}

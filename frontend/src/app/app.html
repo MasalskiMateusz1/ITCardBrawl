@@ -1,6 +1,8 @@
-<header>
-  <h1>ItCardBrawl</h1>
-  <app-language-switch />
-</header>
+@if (!fullscreen()) {
+  <header>
+    <h1>ItCardBrawl</h1>
+    <app-language-switch />
+  </header>
+}
 
 <router-outlet />

@@ -1,0 +1,39 @@
+:host {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  transform: translate(-50%, -50%) scale(1.1);
+  pointer-events: none;
+  transition: opacity 0.15s;
+  zoom: var(--card-zoom);
+  /* Fly in from the clicked slot, then hover in place so the aim stays obvious. */
+  animation:
+    lift-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.25) backwards,
+    lift-float 2.4s ease-in-out 0.45s infinite;
+}
+
+@keyframes lift-in {
+  from {
+    /* --lift-* are screen px; zoom scales them, so undo it. */
+    transform: translate(
+        calc(-50% + var(--lift-x, 0px) / var(--card-zoom, 1)),
+        calc(-50% + var(--lift-y, 0px) / var(--card-zoom, 1))
+      )
+      scale(0.9);
+    opacity: 0.4;
+  }
+}
+
+@keyframes lift-float {
+  50% {
+    transform: translate(-50%, calc(-50% - 8px)) scale(1.14);
+    filter: drop-shadow(0 0 14px var(--color-attack));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    animation: none;
+  }
+}

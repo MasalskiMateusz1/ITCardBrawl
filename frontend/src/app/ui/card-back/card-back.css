@@ -1,0 +1,14 @@
+/* Card back. Only tokens; the art comes from --card-back. */
+:host {
+  display: block;
+  flex: none;
+  box-sizing: border-box;
+  width: 150px;
+  height: 210px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius-card-compact);
+  background:
+    var(--card-back) center / cover no-repeat,
+    var(--color-panel);
+  box-shadow: var(--shadow-card);
+}

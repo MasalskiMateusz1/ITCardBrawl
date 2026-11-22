@@ -808,26 +808,26 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 3.1 Card spec covers variants, character vs event, markers, not-playable state, `data-faction` and the art slot fallback
-- [x] 3.2 Full frontend suite passes: `cd frontend && npx ng test --watch=false`
-- [x] 3.3 `card.css` contains no hex literal
+- [x] 3.1 Card spec covers variants, character vs event, markers, not-playable state, `data-faction` and the art slot fallback — 31bb0a8
+- [x] 3.2 Full frontend suite passes: `cd frontend && npx ng test --watch=false` — 31bb0a8
+- [x] 3.3 `card.css` contains no hex literal — 31bb0a8
 
 ### Phase 4: Board layout and click interactions
 
 #### Automated
 
-- [ ] 4.1 Frontend tests pass: `cd frontend && npx ng test --watch=false`
-- [ ] 4.2 Production build passes without a component style budget warning
-- [ ] 4.3 No hex literal in match-table CSS
+- [x] 4.1 Frontend tests pass: `cd frontend && npx ng test --watch=false`
+- [x] 4.2 Production build passes without a component style budget warning
+- [x] 4.3 No hex literal in match-table CSS
 
 #### Manual
 
-- [ ] 4.4 At 1440×900 the board matches the canvas layout
-- [ ] 4.5 At 1280×720 nothing is clipped and the hand stays reachable
-- [ ] 4.6 A full match is playable with the mouse only
-- [ ] 4.7 A full match is playable with the keyboard only, and screen-reader names include the card names
-- [ ] 4.8 Lobby and new-match still show the header, and `/match` does not
-- [ ] 4.9 While targeting, the selected card floats in the board centre click-through and the cursor is a viewfinder
+- [x] 4.4 At 1440×900 the board matches the canvas layout
+- [x] 4.5 At 1280×720 nothing is clipped and the hand stays reachable
+- [x] 4.6 A full match is playable with the mouse only
+- [x] 4.7 A full match is playable with the keyboard only, and screen-reader names include the card names
+- [x] 4.8 Lobby and new-match still show the header, and `/match` does not
+- [x] 4.9 While targeting, the selected card floats in the board centre click-through and the cursor is a viewfinder
 
 ### Phase 5: Overlays and states
 

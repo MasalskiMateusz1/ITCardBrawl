@@ -1,0 +1,49 @@
+<section class="panel" [attr.data-faction]="factionId()" [attr.aria-label]="label()">
+  <div class="who">
+    <span class="avatar" aria-hidden="true"></span>
+    <span class="name">{{ factionName() }}</span>
+  </div>
+  <dl class="stats">
+    <div class="hp">
+      <dt>{{ texts().matchTable.hp }}</dt>
+      <dd>{{ hp() }}/{{ maxHp() }}</dd>
+    </div>
+    <div class="budget">
+      <dt>{{ texts().matchTable.budget }}</dt>
+      <dd>{{ budget().current }}/{{ budget().max }}</dd>
+    </div>
+    @if (handCount() !== null) {
+      <div class="hand-count">
+        <dt>{{ texts().matchTable.handCount }}</dt>
+        <dd>{{ handCount() }}</dd>
+      </div>
+    }
+    <div class="deck-count">
+      <dt>{{ texts().matchTable.deckCount }}</dt>
+      <dd>{{ deckCount() }}</dd>
+    </div>
+    <div class="graveyard">
+      <dt>{{ texts().matchTable.graveyard }}</dt>
+      <dd>{{ graveyardCount() }}</dd>
+    </div>
+  </dl>
+  @if (detailed()) {
+    <div class="hp-bar" aria-hidden="true"><span [style.width.%]="hpPercent()"></span></div>
+    <div class="pips" aria-hidden="true">
+      @for (filled of pips(); track $index) {
+        <span class="pip" [class.filled]="filled"></span>
+      }
+    </div>
+  }
+  @if (targetLabel(); as name) {
+    <button
+      type="button"
+      class="status-target"
+      [attr.aria-label]="name"
+      [disabled]="disabled()"
+      (click)="targeted.emit()"
+      (mouseenter)="targetHover.emit(true)"
+      (mouseleave)="targetHover.emit(false)"
+    ></button>
+  }
+</section>

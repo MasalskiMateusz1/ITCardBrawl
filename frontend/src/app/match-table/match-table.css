@@ -1,227 +1,303 @@
+/*
+ * Battle board layout (Board.dc.html B:18-204): the opponent's column, the board, the player's
+ * column. Only tokens; the status panels, card piles, zone side columns, hand slots and the hover
+ * card style themselves (their own folders), cards come from ui/.
+ */
+:host {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  --gap: var(--space-3);
+  --pad: var(--space-5);
+  --zone-h: clamp(212px, 30vh, 270px);
+  --side-w: 224px;
+  --card-zoom: 1;
+}
+
+.table {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: var(--side-w) minmax(0, 1fr) var(--side-w);
+  grid-template-areas: 'left main right';
+  gap: var(--pad);
+  min-width: 1280px;
+  min-height: 720px;
+  height: 100%;
+  padding: var(--pad);
+}
+
+.main {
+  grid-area: main;
+  position: relative;
+  display: grid;
+  grid-template-rows: var(--zone-h) 56px var(--zone-h) minmax(0, 1fr);
+  gap: var(--gap);
+}
+
+.main,
+.slots,
+.hand-zone,
+.aside {
+  min-height: 0;
+  min-width: 0;
+}
+
+.aside.left {
+  grid-area: left;
+}
+
+.aside.right {
+  grid-area: right;
+}
+
+.label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
 .zone {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-block: 1rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6) var(--pad);
+  background:
+    var(--faction-bg) center / cover no-repeat,
+    var(--color-panel);
 }
 
-.zone h2 {
-  margin-block-start: 0;
+.zone,
+.turn-bar {
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-zone);
 }
 
-.stats {
+.slots,
+.aside {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin: 0;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.stats dt {
-  font-size: 0.875rem;
-  color: #555;
-}
-
-.stats dd {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: bold;
-}
-
-.turn {
-  text-align: center;
-  font-weight: bold;
-  padding: 0.5rem;
-  background: #f0f0f0;
-  border-radius: 8px;
-}
-
-.hand,
-.board,
-.events {
+ul {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  list-style: none;
+  gap: var(--space-3);
+  margin: 0;
   padding: 0;
-  margin: 0;
+  list-style: none;
 }
 
-.card,
-.character {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  width: 12rem;
-  padding: 0.75rem;
-  border: 1px solid #999;
-  border-radius: 8px;
+.slot,
+.card-action {
+  zoom: var(--card-zoom);
+  border-radius: var(--radius-card-compact);
 }
 
-.card-type,
-.card-cost,
-.card-neutral,
-.card-stats,
-.card-duration,
-.event-turns {
-  font-size: 0.875rem;
+.slot {
+  box-sizing: border-box;
+  width: 150px;
+  height: 210px;
+  border: 2px dashed var(--color-slot-border);
+  background-color: var(--color-slot-fill);
 }
 
-.card-neutral {
-  align-self: flex-start;
-  padding: 0 0.375rem;
-  border: 1px solid #999;
-  border-radius: 4px;
+.card-action {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
 }
 
-.card-text,
-.ability {
-  margin: 0;
+.card-action:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
 }
 
-.ability {
-  font-size: 0.875rem;
-  font-style: italic;
-}
-
-.card button,
-.character button {
-  margin-block-start: auto;
-}
-
-.character.selected,
-.card.selected {
-  border-color: #1a73e8;
-  box-shadow: 0 0 0 2px #1a73e8;
-}
-
-.event {
-  display: flex;
-  flex-direction: column;
-  padding: 0.5rem 0.75rem;
-  border: 1px dashed #999;
-  border-radius: 8px;
-}
-
-.zone h3 {
-  margin-block: 1rem 0.5rem;
-}
-
-.attack-player,
-.target-player {
-  margin-block-start: 0.75rem;
-}
-
-.effects {
-  margin: 0;
-  padding-inline-start: 1.25rem;
-  font-size: 0.875rem;
-}
-
-.character-stats.modified {
-  font-weight: bold;
-  color: #1a73e8;
-}
-
-.character-trapped,
-.character-keyword {
-  align-self: flex-start;
-  padding: 0 0.375rem;
-  border: 1px solid #999;
-  border-radius: 4px;
-  font-size: 0.875rem;
-}
-
-.character-trapped {
-  border-color: #c62828;
-  color: #c62828;
-}
-
-.event-target-name {
-  font-size: 0.875rem;
-}
-
-.last-played {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-.nothing-played {
-  font-style: italic;
-  color: #555;
-}
-
-.choose-target {
-  margin: 0;
-  font-style: italic;
+.targeting,
+.targeting .card-action:enabled {
+  cursor: var(--cursor-target);
 }
 
 .turn-bar {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  background-color: var(--color-panel);
 }
 
-.turn-bar .turn {
+.turn-bar p {
+  margin: 0;
+}
+
+.turn {
   flex: 1;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+.choose-target,
+.opponent-moving,
+.move-reason {
+  font-style: italic;
+  color: var(--color-text-secondary);
 }
 
 .turn-timer {
-  font-variant-numeric: tabular-nums;
-  color: #555;
+  font-family: var(--font-mono);
 }
 
+.message,
 .turn-timer.urgent {
-  font-weight: bold;
-  color: #c62828;
+  font-weight: 700;
+  color: var(--color-danger);
 }
 
-.opponent-moving,
-.move-reason {
-  margin: 0;
-  font-style: italic;
-  color: #555;
+.turn-bar button,
+.exit {
+  height: 44px;
+  padding: 0 var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card-compact);
+  background-color: var(--color-raised);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
 }
 
-.result {
-  padding: 1rem;
-  margin-block: 1rem;
-  border: 2px solid #c62828;
-  border-radius: 8px;
-  text-align: center;
+.turn-bar .end-turn {
+  height: 48px;
+  background-color: var(--color-text);
+  color: var(--color-on-accent);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
 }
 
-.result.win {
-  border-color: #2e7d32;
+.card-action:disabled,
+.turn-bar button:disabled {
+  cursor: not-allowed;
 }
 
-.result h2 {
-  margin-block: 0 0.5rem;
+.turn-bar button:disabled {
+  opacity: 0.6;
 }
 
-.log ol {
-  max-height: 12rem;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0.5rem 0.5rem 0.5rem 2rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+.targeting-hover .lifted {
+  opacity: 0.35;
+}
+
+/*
+ * Up to ten cards fit without scrolling: past the natural gap they overlap just enough to fill the
+ * row (--n cards of --card-w in 100cqw). The hovered card rises to the front (hand-slot/).
+ */
+.hand {
+  height: 100%;
+  box-sizing: border-box;
+  justify-content: center;
+  gap: 0;
+  padding: var(--space-5) var(--space-2) var(--space-3);
+  container-type: inline-size;
+  --card-w: calc(150px * var(--card-zoom));
+}
+
+.hand > li {
+  flex: none;
+}
+
+.hand > li + li {
+  margin-inline-start: min(
+    var(--space-4),
+    calc((100cqw - var(--n) * var(--card-w)) / max(var(--n) - 1, 1))
+  );
+}
+
+.log {
+  flex: 1;
+  min-height: 80px;
+  overflow: auto;
+  font-size: 12px;
 }
 
 .log-entry.mine {
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .log-entry.reason {
   font-style: italic;
-  color: #555;
+  color: var(--color-text-muted);
 }
 
-a {
-  display: block;
-  margin-block: 0.5rem;
+.aside-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.exit {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--color-panel);
+  color: var(--color-link);
+}
+
+.exit:hover {
+  color: var(--color-link-hover);
+}
+
+.result {
+  position: absolute;
+  top: var(--pad);
+  left: 50%;
+  z-index: 3;
+  transform: translateX(-50%);
+  padding: var(--pad) var(--space-6);
+  border: 2px solid var(--color-danger);
+  border-radius: var(--radius-zone);
+  background-color: var(--color-overlay);
+  text-align: center;
+}
+
+.result.win {
+  border-color: var(--color-attack);
+}
+
+/*
+ * Below the design size the zones (clamp) and the cards tighten. Width counts too: the board needs
+ * five slots plus the zone side column between the two side columns.
+ */
+@media (max-height: 899px), (max-width: 1599px) {
+  :host {
+    --card-zoom: 0.85;
+  }
+}
+
+@media (max-height: 839px), (max-width: 1439px) {
+  :host {
+    --card-zoom: 0.7;
+  }
+}
+
+@media (max-height: 839px) {
+  :host {
+    --gap: var(--space-2);
+    --pad: var(--space-3);
+  }
 }

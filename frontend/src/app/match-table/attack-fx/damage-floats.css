@@ -1,0 +1,52 @@
+/* Damage numbers of an attack. Only tokens. */
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+  pointer-events: none;
+}
+
+.damage {
+  position: absolute;
+  translate: -50% 0;
+  color: var(--color-danger);
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  text-shadow:
+    0 2px 0 var(--color-bg),
+    0 0 10px var(--color-bg);
+  /* Shows at the impact (the end of the lunge), then rises and fades. */
+  animation: rise 0.9s ease-out 0.18s both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3)) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.15);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-48px) scale(1);
+  }
+}
+
+@keyframes fade {
+  from,
+  60% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .damage {
+    animation: fade 0.9s linear both;
+  }
+}

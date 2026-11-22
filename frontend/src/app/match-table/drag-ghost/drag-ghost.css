@@ -1,0 +1,30 @@
+/* A dragged hand card under the pointer. Only tokens; the card itself comes from ui/card. */
+:host {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  pointer-events: none;
+  scale: 1.06;
+  transition: rotate 0.12s ease-out;
+  animation: pick-up 0.12s ease-out;
+}
+
+/* Screen px come in from the table; the card inside keeps the board's card size. */
+.card {
+  zoom: var(--card-zoom);
+}
+
+@keyframes pick-up {
+  from {
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    rotate: none !important;
+    transition: none;
+    animation: none;
+  }
+}

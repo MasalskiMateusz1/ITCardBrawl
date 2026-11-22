@@ -60,6 +60,12 @@
   /* Shadows */
   --shadow-card: 0 8px 20px rgba(0, 0, 0, 0.45);
   --shadow-card-selected: 0 0 0 3px var(--color-focus), 0 12px 28px rgba(0, 0, 0, 0.55);
+
+  /* Cursors: the viewfinder while aiming (hotspot in the centre, crosshair as fallback). */
+  --cursor-target: url('./assets-media/cursor-target.svg') 32 32, crosshair;
+
+  /* Card back: deck piles, the opponent's hand and the face-down side of a drawn card. */
+  --card-back: url('./assets-media/card-back.svg');
 }
 
 /*
