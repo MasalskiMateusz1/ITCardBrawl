@@ -111,7 +111,7 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	public record PlayerView(FactionRef faction, int hp, int maxHp, BudgetView budget, int deckCount,
 			List<HandCardView> hand, List<BoardCharacterView> board, List<ActiveEventView> activeEvents,
-			int graveyardCount, PlayedEventView lastEvent) {
+			int graveyardCount, PlayedEventView lastEvent, List<GraveyardCardView> graveyard) {
 
 		static PlayerView of(Match match, CardCatalog catalog, Language language, List<Move> legalMoves) {
 			MatchSide player = match.player();
@@ -120,14 +120,14 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 					player.hand().stream().map(card -> HandCardView.of(card, catalog, language, legalMoves)).toList(),
 					BoardCharacterView.listOf(match, Match.Side.PLAYER, language, legalMoves),
 					ActiveEventView.listOf(match, Match.Side.PLAYER, language), player.graveyard().size(),
-					PlayedEventView.last(match, Match.Side.PLAYER, language));
+					PlayedEventView.last(match, Match.Side.PLAYER, language), GraveyardCardView.listOf(player, language));
 		}
 
 	}
 
 	public record OpponentView(FactionRef faction, int hp, int maxHp, BudgetView budget, int deckCount,
 			int handCount, List<BoardCharacterView> board, List<ActiveEventView> activeEvents, int graveyardCount,
-			PlayedEventView lastEvent) {
+			PlayedEventView lastEvent, List<GraveyardCardView> graveyard) {
 
 		static OpponentView of(Match match, Language language, List<Move> legalMoves) {
 			MatchSide opponent = match.opponent();
@@ -135,14 +135,15 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 					MatchRules.MAX_HP, BudgetView.of(opponent), opponent.deck().size(), opponent.hand().size(),
 					BoardCharacterView.listOf(match, Match.Side.OPPONENT, language, legalMoves),
 					ActiveEventView.listOf(match, Match.Side.OPPONENT, language), opponent.graveyard().size(),
-					PlayedEventView.last(match, Match.Side.OPPONENT, language));
+					PlayedEventView.last(match, Match.Side.OPPONENT, language), GraveyardCardView.listOf(opponent, language));
 		}
 
 	}
 
 	public record HandCardView(int instanceId, String cardId, String name, CardType type, int cost, String text,
 			boolean neutral, Integer attack, Integer health, AbilityView ability, Integer duration,
-			List<EffectView> effects, boolean requiresTarget, boolean playable, List<TargetView> targets) {
+			List<EffectView> effects, boolean requiresTarget, boolean playable, List<TargetView> targets,
+			String faction) {
 
 		static HandCardView of(CardInstance instance, CardCatalog catalog, Language language, List<Move> legalMoves) {
 			Card card = instance.card();
@@ -156,14 +157,14 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 					card.effects() == null ? List.of() : card.effects().stream()
 						.map(effect -> EffectView.of(effect, language)).toList(),
 					card.effects() != null && card.effects().stream().anyMatch(effect -> effect.scope() == EffectScope.TARGET),
-					!plays.isEmpty(), targets);
+					!plays.isEmpty(), targets, card.faction());
 		}
 
 	}
 
 	public record BoardCharacterView(int instanceId, String cardId, String name, int attack, int health, int damage,
 			boolean canAttack, AbilityView ability, int baseAttack, int baseHealth, Set<AbilityKeyword> keywords,
-			boolean trapped, List<TargetView> attackTargets) {
+			boolean trapped, List<TargetView> attackTargets, int cost, String faction) {
 
 		static List<BoardCharacterView> listOf(Match match, Match.Side owner, Language language, List<Move> legalMoves) {
 			return match.side(owner).board().stream()
@@ -185,7 +186,7 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 			return new BoardCharacterView(character.instance().instanceId(), card.id(), card.name().in(language),
 					stats.attack(), stats.health(), character.damage(), !attacks.isEmpty(),
 					AbilityView.of(card.ability(), language), card.attack(), card.health(), stats.keywords(), stats.trapped(),
-					targets);
+					targets, card.cost(), card.faction());
 		}
 
 	}
@@ -220,7 +221,7 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 	}
 
 	public record ActiveEventView(int instanceId, String cardId, String name, int turnsLeft,
-			List<EffectView> effects, String targetName) {
+			List<EffectView> effects, String targetName, int cost, String faction) {
 
 		static List<ActiveEventView> listOf(Match match, Match.Side side, Language language) {
 			return match.side(side).activeEvents().stream().map(event -> of(match, event, language)).toList();
@@ -234,7 +235,23 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 						.map(character -> character.instance().card().name().in(language)).findFirst().orElse(null);
 			return new ActiveEventView(event.instance().instanceId(), card.id(), card.name().in(language),
 					event.turnsLeft(), card.effects().stream().map(effect -> EffectView.of(effect, language)).toList(),
-					targetName);
+					targetName, card.cost(), card.faction());
+		}
+
+	}
+
+	/** A card in a side's graveyard; {@code faction} is the card's own faction id (neutral cards report it). */
+	public record GraveyardCardView(int instanceId, String cardId, String name, CardType type, int cost,
+			String faction) {
+
+		static List<GraveyardCardView> listOf(MatchSide side, Language language) {
+			return side.graveyard().stream().map(instance -> of(instance, language)).toList();
+		}
+
+		static GraveyardCardView of(CardInstance instance, Language language) {
+			Card card = instance.card();
+			return new GraveyardCardView(instance.instanceId(), card.id(), card.name().in(language), card.type(),
+					card.cost(), card.faction());
 		}
 
 	}
