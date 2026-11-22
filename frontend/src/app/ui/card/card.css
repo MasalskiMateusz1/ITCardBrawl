@@ -1,0 +1,278 @@
+/* Card frame (Card.dc.html C:15-57). Only tokens; faction colours via --faction-*. */
+:host {
+  display: block;
+  flex: none;
+  width: 240px;
+  height: 336px;
+  --badge: 34px;
+}
+
+:host(.compact) {
+  width: 150px;
+  height: 210px;
+  --badge: 30px;
+}
+
+.card {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-radius: var(--radius-card);
+  border: 3px solid var(--faction-accent);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  box-shadow: var(--shadow-card);
+}
+
+:host(.compact) .card {
+  padding: var(--space-1);
+  border-radius: var(--radius-card-compact);
+}
+
+.card.selected {
+  box-shadow: var(--shadow-card-selected);
+}
+
+.card.not-playable {
+  opacity: 0.6;
+  filter: saturate(0.3);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+}
+
+:host(.compact) .head {
+  gap: var(--space-1);
+  height: 30px;
+}
+
+.cost,
+.stat {
+  flex: none;
+  width: var(--badge);
+  height: var(--badge);
+  box-sizing: border-box;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.cost {
+  background-color: var(--faction-accent);
+  color: var(--color-on-accent);
+  font-size: 18px;
+}
+
+:host(.compact) .cost {
+  width: 28px;
+  height: 28px;
+  font-size: 15px;
+}
+
+.name {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.15;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+:host(.compact) .name {
+  font-size: 12.5px;
+}
+
+.art {
+  position: relative;
+  flex: none;
+  height: 124px;
+  border-radius: var(--radius-art);
+  background-color: var(--faction-tint);
+  border: 1px dashed var(--faction-accent-soft);
+  color: var(--faction-accent);
+}
+
+:host(.compact) .art {
+  flex: 1;
+  min-height: 0;
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.placeholder svg {
+  width: 28px;
+  height: 28px;
+}
+
+:host(.compact) .placeholder svg {
+  width: 22px;
+  height: 22px;
+}
+
+.art-label,
+.type-line {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.art img {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  object-fit: cover;
+  border-radius: var(--radius-art);
+}
+
+.chip {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-border);
+  color: var(--color-text);
+  border: 2px solid var(--color-surface);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.chip svg {
+  width: 12px;
+  height: 12px;
+}
+
+.time {
+  right: var(--space-1);
+  bottom: -12px;
+}
+
+.trapped-chip {
+  top: var(--space-1);
+  left: var(--space-1);
+  background-color: var(--color-danger);
+  color: var(--color-on-danger);
+}
+
+.type-line {
+  padding: var(--space-1) 30px 0;
+  text-align: center;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.keyword,
+.line {
+  font-weight: 700;
+  color: var(--faction-accent);
+}
+
+.text {
+  flex: none;
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: var(--space-1) 4px 2px;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.3;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.line {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 11px;
+}
+
+.line.trapped-chip {
+  align-self: center;
+  color: var(--color-on-danger);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+}
+
+.stat {
+  position: absolute;
+  top: 154px;
+  left: 2px;
+  border: 2px solid var(--color-surface);
+  background-color: var(--color-attack);
+  color: var(--color-on-attack);
+}
+
+.stat.hp {
+  left: auto;
+  right: 2px;
+  background-color: var(--color-danger);
+  color: var(--color-on-danger);
+}
+
+:host(.compact) .stat {
+  top: auto;
+  bottom: -8px;
+  left: -8px;
+  font-size: 15px;
+}
+
+:host(.compact) .stat.hp {
+  left: auto;
+  right: -8px;
+}
+
+/* Modified (effective != base) or damaged stat: the design draws no marker, so a text ring. */
+.stat.marked {
+  box-shadow: 0 0 0 2px var(--color-text);
+}

@@ -87,4 +87,19 @@ export const en: Messages = {
     CHARACTER: 'Character',
     EVENT: 'Event',
   },
+  card: {
+    cost: (n) => `Cost ${n}`,
+    attack: (n) => `Attack ${n}`,
+    hp: (n) => `HP ${n}`,
+    art: 'Artwork',
+    trapped: 'Trapped',
+    duration: (n) => `${n} ${n === 1 ? 'turn' : 'turns'}`,
+    instant: 'Instant',
+    turnsLeft: (n) => `${n} ${n === 1 ? 'turn' : 'turns'} left`,
+    faction: {
+      developers: 'Developers',
+      testers: 'Testers',
+      neutral: 'Neutral',
+    },
+  },
 };

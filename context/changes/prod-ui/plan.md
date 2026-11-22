@@ -796,21 +796,21 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 2.1 Production build passes and emits the three backgrounds under `media/`
-- [x] 2.2 Frontend tests pass: `cd frontend && npx ng test --watch=false`
+- [x] 2.1 Production build passes and emits the three backgrounds under `media/` — 9f81684
+- [x] 2.2 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 9f81684
 
 #### Manual
 
-- [x] 2.3 Lobby, new-match and sign-in look unchanged after the token block lands
-- [x] 2.4 The three exported backgrounds match their canvas artboards by eye
+- [x] 2.3 Lobby, new-match and sign-in look unchanged after the token block lands — 9f81684
+- [x] 2.4 The three exported backgrounds match their canvas artboards by eye — 9f81684
 
 ### Phase 3: Card component
 
 #### Automated
 
-- [ ] 3.1 Card spec covers variants, character vs event, markers, not-playable state, `data-faction` and the art slot fallback
-- [ ] 3.2 Full frontend suite passes: `cd frontend && npx ng test --watch=false`
-- [ ] 3.3 `card.css` contains no hex literal
+- [x] 3.1 Card spec covers variants, character vs event, markers, not-playable state, `data-faction` and the art slot fallback
+- [x] 3.2 Full frontend suite passes: `cd frontend && npx ng test --watch=false`
+- [x] 3.3 `card.css` contains no hex literal
 
 ### Phase 4: Board layout and click interactions
 

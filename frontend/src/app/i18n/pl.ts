@@ -1,5 +1,18 @@
 import { Messages } from './messages';
 
+/** Polish plural of "tura": 1 tura, 2–4 tury (not 12–14), otherwise tur. */
+function turns(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (n === 1) {
+    return `${n} tura`;
+  }
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${n} tury`;
+  }
+  return `${n} tur`;
+}
+
 export const pl: Messages = {
   shell: {
     languageGroup: 'Język',
@@ -86,5 +99,20 @@ export const pl: Messages = {
   cardType: {
     CHARACTER: 'Postać',
     EVENT: 'Wydarzenie',
+  },
+  card: {
+    cost: (n) => `Koszt ${n}`,
+    attack: (n) => `Atak ${n}`,
+    hp: (n) => `HP ${n}`,
+    art: 'Ilustracja',
+    trapped: 'Uwięziona',
+    duration: (n) => turns(n),
+    instant: 'Natychmiast',
+    turnsLeft: (n) => `Zostało: ${turns(n)}`,
+    faction: {
+      developers: 'Developerzy',
+      testers: 'Testerzy',
+      neutral: 'Neutralne',
+    },
   },
 };
