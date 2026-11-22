@@ -563,4 +563,4 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 - [x] 7.4 Licznik startuje po odtwarzaniu, odlicza od 45 s, po zerze tura kończy się sama — a057a99
 - [x] 7.5 Zamknięcie karty > 50 s i powrót pokazuje rozegraną turę komputera — a057a99
-- [ ] 7.6 Na wdrożonej wersji 3 partie zmierzone stoperem, każda ≤ 15 min
+- [x] 7.6 Na wdrożonej wersji 3 partie zmierzone stoperem, każda ≤ 15 min
