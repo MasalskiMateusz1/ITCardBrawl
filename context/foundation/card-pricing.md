@@ -173,9 +173,9 @@ Karta `a` **dominuje** kartę `b` (`CardPricing.dominates(a, b)`), gdy wszystkie
 4. wydarzenie: `duration` `a` ≥ `b`; każdy efekt `b` ma w `a` odpowiednik tego samego rodzaju, zasięgu i znaku kwoty, o kwocie nie gorszej dla właściciela (np. `ATTACK −3` na `ENEMY_BOARD` jest lepsze niż `−2`, a `ATTACK +1` na `ENEMY_BOARD` lepsze niż `+2`);
 5. co najmniej jedna z tych nierówności jest ostra albo `a` ma dodatkową zdolność lub efekt.
 
-Karta zdominowana nie ma sensu w żadnej talii, także w przyszłym kreatorze talii (research, Follow-up (2)). Karty identyczne mechanicznie (dziś `tst-manual` i `neu-scrum-master`: 3, 2/4, GUARD) nie są zdominowane, bo żadna nierówność nie jest ostra.
+Karta zdominowana nie ma sensu w żadnej talii, także w przyszłym kreatorze talii (research, Follow-up (2)). Karty identyczne mechanicznie (na koniec fazy 3 `tst-manual` i `neu-scrum-master`: 3, 2/4, GUARD; rozdzielone w fazie 4) nie są zdominowane, bo żadna nierówność nie jest ostra.
 
-Dominacja nie zależy od cen, tylko od samych liczb. Karta może być w tolerancji i jednocześnie zdominowana (np. `neu-devops`).
+Dominacja nie zależy od cen, tylko od samych liczb. Karta może być w tolerancji i jednocześnie zdominowana (np. `neu-devops` na koniec fazy 3).
 
 ---
 
@@ -226,6 +226,75 @@ Wartości policzone przez `CardPricing.value` dla wszystkich 31 kart z `factions
 | `neu-client` | postać | 10 | 11,18 | +1,18 | wyjątek: tolerancja |
 
 Podsumowanie: 16 kart poza tolerancją — 12 za słabych na swój koszt (odchylenie ujemne) i 4 za silnych (`tst-intern`, `tst-performance`, `neu-requirements-change`, `neu-client`) — oraz 2 karty zdominowane (`neu-devops` przez `tst-automation`, `dev-tech-lead` przez `neu-client`). Postacie w większości mieszczą się w regule. Prawie wszystkie wydarzenia są dziś za drogie, najbardziej obrażenia tylko w gracza (`neu-deadline`), obrażenia na obie plansze (`neu-meeting`) i leczenie (`dev-works-on-my-machine`).
+
+### Stan katalogu po fazie 4
+
+Faza 4 przeliczyła karty według reguły. Listy `TOLERANCE_EXCEPTIONS` i `DOMINANCE_EXCEPTIONS` w `CardPricingTests` są puste: każda z 31 kart mieści się w tolerancji i żadna nie jest zdominowana. Id, nazwy, żarty PL+EN, frakcje, kopie i rozmiar talii (30, w tym 15 postaci i 15 wydarzeń) bez zmian.
+
+Zasady wyboru poprawki:
+- wydarzenie za drogie: zwykle niższy koszt, a gdy to psuje krzywą kosztów, wyższa kwota albo dłuższy `duration`;
+- karta za silna: niższa statystyka albo niższa kwota zdolności;
+- wybór zgodny z żartem karty (np. „U mnie działa” zostaje słabym leczeniem, „Nieprzesuwalny deadline” jest „jednak przesunięty, na wcześniej”, więc tańszy);
+- Developerzy wyraźnie wygrywają w symulacji (faza 2), więc przy wyborze w granicach tolerancji karty Testerów dostały wartość bliżej górnej granicy (np. `tst-manual` 2/5), a karty Developerów bliżej dolnej (np. `dev-force-push` na −0,50). To nie jest strojenie balansu (faza 6), tylko wybór między poprawnymi wariantami.
+
+| Karta | Typ | Koszt | Wartość | Odchylenie | Zmiana w fazie 4 |
+|---|---|---|---|---|---|
+| `dev-junior` | postać | 1 | 0,83 | −0,17 | — |
+| `dev-stackoverflow` | wydarzenie | 2 | 2,50 | +0,50 | — |
+| `dev-fullstack` | postać | 3 | 2,50 | −0,50 | — |
+| `dev-works-on-my-machine` | wydarzenie | 1 | 0,70 | −0,30 | koszt 3 → 1, HEAL 3 → 4 |
+| `dev-friday-hotfix` | wydarzenie | 4 | 3,90 | −0,10 | — |
+| `dev-backend` | postać | 5 | 4,86 | −0,14 | — |
+| `dev-force-push` | wydarzenie | 6 | 5,50 | −0,50 | DAMAGE 5 → 6 |
+| `dev-senior` | postać | 7 | 6,83 | −0,17 | — |
+| `dev-legacy-refactor` | wydarzenie | 7 | 7,42 | +0,42 | koszt 8 → 7 |
+| `dev-tech-lead` | postać | 10 | 10,10 | +0,10 | — (dominacja usunięta zmianą `neu-client`) |
+| `tst-intern` | postać | 1 | 1,15 | +0,15 | 1/2 → 1/1 |
+| `tst-vague-bug-report` | wydarzenie | 2 | 2,10 | +0,10 | PLAYER_DAMAGE 2 → 4 |
+| `tst-manual` | postać | 3 | 3,29 | +0,29 | 2/4 → 2/5 |
+| `tst-edge-case` | wydarzenie | 3 | 3,10 | +0,10 | DAMAGE 3 → 4 |
+| `tst-regression` | wydarzenie | 4 | 3,86 | −0,14 | `duration` 2 → 3 |
+| `tst-automation` | postać | 5 | 5,23 | +0,23 | — |
+| `tst-flaky-test` | wydarzenie | 4 | 4,12 | +0,12 | koszt 6 → 4 |
+| `tst-performance` | postać | 7 | 7,16 | +0,16 | 7/5 → 7/4 |
+| `tst-production-bug` | wydarzenie | 7 | 6,73 | −0,27 | koszt 8 → 7 |
+| `tst-qa-lead` | postać | 10 | 10,00 | 0,00 | 7/10 → 10/10 |
+| `neu-coffee` | wydarzenie | 1 | 0,50 | −0,50 | — |
+| `neu-daily-standup` | wydarzenie | 2 | 1,95 | −0,05 | — |
+| `neu-rubber-duck` | postać | 2 | 1,96 | −0,04 | — |
+| `neu-scrum-master` | postać | 3 | 3,14 | +0,14 | 2/4 → 1/6 (rozdzielona z `tst-manual`) |
+| `neu-sprint-planning` | wydarzenie | 3 | 2,73 | −0,27 | koszt 4 → 3 |
+| `neu-devops` | postać | 5 | 5,37 | +0,37 | 4/4 → 5/4 (koniec dominacji `tst-automation`) |
+| `neu-project-manager` | postać | 6 | 5,88 | −0,12 | — |
+| `neu-meeting` | wydarzenie | 5 | 4,78 | −0,22 | koszt 7 → 5, DAMAGE 4 → 5 |
+| `neu-deadline` | wydarzenie | 3 | 3,40 | +0,40 | koszt 9 → 3 |
+| `neu-requirements-change` | wydarzenie | 6 | 5,83 | −0,17 | koszt 5 → 6 |
+| `neu-client` | postać | 10 | 10,32 | +0,32 | 8/9 → 8/7 (koniec dominacji nad `dev-tech-lead`) |
+
+**Krzywa kosztów talii** (liczba kart o danym koszcie, z kopiami):
+
+| Talia | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | Średnia |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| developers, faza 3 | 3 | 3 | 5 | 3 | 4 | 3 | 3 | 2 | 1 | 3 | 5,00 |
+| developers, faza 4 | 5 | 3 | 5 | 2 | 4 | 4 | 4 | 0 | 0 | 3 | 4,53 |
+| testers, faza 3 | 3 | 3 | 5 | 3 | 4 | 3 | 3 | 2 | 1 | 3 | 5,00 |
+| testers, faza 4 | 3 | 3 | 7 | 4 | 4 | 2 | 4 | 0 | 0 | 3 | 4,53 |
+
+Krzywe obu talii nie są już identyczne. Obie straciły karty za 8–9, bo wydarzenia za 8–9 były według reguły za słabe na swój koszt. Najdroższe karty to nadal postacie za 10 (`dev-tech-lead`, `tst-qa-lead`, `neu-client`).
+
+**Symulacja po fazie 4** (`BalanceSimulationTests`, N = 1000, te same ziarna, wagi AI bez zmian):
+
+| Frakcja PLAYER | Zaczyna PLAYER | Zaczyna OPPONENT |
+|---|---|---|
+| developers | 72,4% (faza 2: 80,0%) | 43,6% (faza 2: 45,6%) |
+| testers | 54,4% (faza 2: 52,4%) | 25,6% (faza 2: 21,6%) |
+
+- win rate Developerów: **59,0%** (faza 2: 62,9%);
+- win rate strony zaczynającej: **64,4%** (faza 2: 66,3%);
+- p90 szacowanego czasu partii: **264 s** (faza 2: 258 s);
+- liczba `FAVORABLE_TRADE`: **55** (faza 2: 85).
+
+Przewaga Developerów i strony zaczynającej zmalała, ale nadal jest duża. Dalsze strojenie to fazy 5 (wagi AI) i 6 (strojenie kart w tolerancji, ewentualnie karta-moneta).
 
 ---
 

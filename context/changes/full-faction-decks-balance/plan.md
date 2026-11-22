@@ -503,26 +503,26 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 3.1 `./mvnw -B verify` przechodzi
-- [x] 3.2 `CardPricingTests` pokrywa każdą wartość `AbilityKeyword` i `EffectKind`
-- [x] 3.3 Test dominacji wykrywa parę `tst-automation` → `neu-devops`
+- [x] 3.1 `./mvnw -B verify` przechodzi — 334615f
+- [x] 3.2 `CardPricingTests` pokrywa każdą wartość `AbilityKeyword` i `EffectKind` — 334615f
+- [x] 3.3 Test dominacji wykrywa parę `tst-automation` → `neu-devops` — 334615f
 
 #### Manual
 
-- [x] 3.4 Autor akceptuje `card-pricing.md` (wzór, ceny, tolerancja)
+- [x] 3.4 Autor akceptuje `card-pricing.md` (wzór, ceny, tolerancja) — 334615f
 
 ### Phase 4: Przeliczenie kart
 
 #### Automated
 
-- [ ] 4.1 `./mvnw -B verify` przechodzi
-- [ ] 4.2 Lista tymczasowych wyjątków w `CardPricingTests` jest pusta
-- [ ] 4.3 `ComputerOpponentTests` z graczem losowym nadal ≥ 80%
+- [x] 4.1 `./mvnw -B verify` przechodzi
+- [x] 4.2 Lista tymczasowych wyjątków w `CardPricingTests` jest pusta
+- [x] 4.3 `ComputerOpponentTests` z graczem losowym nadal ≥ 80%
 
 #### Manual
 
-- [ ] 4.4 Porównanie `summary.md` z fazą 2 zanotowane
-- [ ] 4.5 Autor przegląda wartości kart pod kątem żartów
+- [x] 4.4 Porównanie `summary.md` z fazą 2 zanotowane
+- [x] 4.5 Autor przegląda wartości kart pod kątem żartów
 
 ### Phase 5: Strojenie wag AI
 
