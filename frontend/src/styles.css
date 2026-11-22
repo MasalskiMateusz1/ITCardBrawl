@@ -1,1 +1,88 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+ * Design tokens: the single source of colour, type, radius, spacing and shadow values,
+ * named by role. Values come from context/changes/prod-ui/design-reference.md.
+ * Body stays unstyled on purpose; screens opt in by reading these properties.
+ */
+:root {
+  /* Surfaces */
+  --color-bg: #0b0d11;
+  --color-overlay: rgba(11, 13, 17, 0.97);
+  --color-panel: #12161c;
+  --color-surface: #161b22;
+  --color-raised: #1a1f27;
+  --color-raised-2: #1e242e;
+  --color-border: #2a313c;
+  --color-border-strong: #3a424e;
+
+  /* Text */
+  --color-text: #e6edf3;
+  --color-text-secondary: #c9d1d9;
+  --color-text-muted: #9ba7b4;
+  --color-on-accent: #0e1116;
+
+  /* Stats and states */
+  --color-attack: #ffd166;
+  --color-on-attack: #1a1300;
+  --color-danger: #e5484d;
+  --color-on-danger: #ffffff;
+  --color-focus: var(--color-text);
+
+  /* Board slots and dividers */
+  --color-slot-border: rgba(230, 237, 243, 0.14);
+  --color-slot-fill: rgba(14, 17, 22, 0.35);
+  --color-divider: rgba(230, 237, 243, 0.18);
+
+  /* Links */
+  --color-link: #9cc4ff;
+  --color-link-hover: #c8ddff;
+
+  /* Type */
+  --font-body: Inter, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', Inter, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Radii */
+  --radius-zone: 16px;
+  --radius-card: 14px;
+  --radius-card-compact: 12px;
+  --radius-row: 10px;
+  --radius-art: 8px;
+  --radius-pill: 20px;
+
+  /* Spacing */
+  --space-1: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 14px;
+  --space-5: 16px;
+  --space-6: 20px;
+
+  /* Shadows */
+  --shadow-card: 0 8px 20px rgba(0, 0, 0, 0.45);
+  --shadow-card-selected: 0 0 0 3px var(--color-focus), 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+/*
+ * Faction sets. Components read only --faction-*; the attribute picks the set.
+ * Any [data-faction] gets the neutral set first, so unknown ids fall back to it.
+ */
+[data-faction] {
+  --faction-accent: #a9b1bd;
+  --faction-accent-soft: rgba(169, 177, 189, 0.45);
+  --faction-tint: #1c2129;
+  --faction-bg: url('./assets-media/bg-neutral.svg');
+}
+
+[data-faction='developers'] {
+  --faction-accent: #4c9aff;
+  --faction-accent-soft: rgba(76, 154, 255, 0.45);
+  --faction-tint: #0f1e33;
+  --faction-bg: url('./assets-media/bg-developers.svg');
+}
+
+[data-faction='testers'] {
+  --faction-accent: #ff9f43;
+  --faction-accent-soft: rgba(255, 159, 67, 0.45);
+  --faction-tint: #2a1a0b;
+  --faction-bg: url('./assets-media/bg-testers.svg');
+}

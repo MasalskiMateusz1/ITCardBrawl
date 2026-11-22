@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="450" viewBox="0 0 720 450" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <!-- Exported from the BgDevelopers artboard (720x450, base #0B1524, accent #4C9AFF, intensity 1). -->
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <rect width="48" height="1" fill="rgba(76,154,255,0.10)"/>
+      <rect width="1" height="48" fill="rgba(76,154,255,0.10)"/>
+    </pattern>
+  </defs>
+  <rect width="720" height="450" fill="#0B1524"/>
+  <rect width="720" height="450" fill="url(#grid)"/>
+  <rect width="57" height="450" fill="rgba(0,0,0,0.18)"/>
+  <rect x="56" width="1" height="450" fill="rgba(76,154,255,0.16)"/>
+  <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="13">
+  <g text-anchor="end" fill="rgba(76,154,255,0.35)">
+    <text x="40" y="42">1</text>
+    <text x="40" y="68">2</text>
+    <text x="40" y="94">3</text>
+    <text x="40" y="120">4</text>
+    <text x="40" y="146">5</text>
+    <text x="40" y="172">6</text>
+    <text x="40" y="198">7</text>
+    <text x="40" y="224">8</text>
+    <text x="40" y="250">9</text>
+    <text x="40" y="276">10</text>
+    <text x="40" y="302">11</text>
+    <text x="40" y="328">12</text>
+    <text x="40" y="354">13</text>
+    <text x="40" y="380">14</text>
+  </g>
+  <g>
+    <text x="68" y="42" fill="rgba(76,154,255,0.30)">function shipIt(feature) {</text>
+    <text x="68" y="68" fill="rgba(230,237,243,0.16)">// TODO: napisać testy (kiedyś)</text>
+    <text x="68" y="94" fill="rgba(76,154,255,0.30)">if (worksOnMyMachine()) {</text>
+    <text x="68" y="120" fill="rgba(76,154,255,0.30)">return deploy(feature, "friday");</text>
+    <text x="68" y="146" fill="rgba(76,154,255,0.30)">}</text>
+    <text x="68" y="172" fill="rgba(76,154,255,0.30)">throw new Error("cannot reproduce");</text>
+    <text x="68" y="198" fill="rgba(76,154,255,0.30)">}</text>
+    <text x="68" y="250" fill="rgba(230,237,243,0.16)">git push --force origin main</text>
+    <text x="68" y="276" fill="rgba(76,154,255,0.30)">const coffee = await refill();</text>
+    <text x="68" y="302" fill="rgba(76,154,255,0.30)">while (sprint.active) code(coffee);</text>
+    <text x="68" y="354" fill="rgba(230,237,243,0.16)">// it works. nobody knows why.</text>
+    <text x="68" y="380" fill="rgba(76,154,255,0.30)">export default shipIt;</text>
+  </g>
+  </g>
+  <text x="681" y="395" text-anchor="end" font-family="'JetBrains Mono', ui-monospace, monospace" font-size="220" font-weight="600" letter-spacing="-8.8" fill="#4C9AFF" fill-opacity="0.06">&lt;/&gt;</text>
+</svg>

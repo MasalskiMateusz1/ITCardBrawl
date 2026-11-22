@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="450" viewBox="0 0 720 450" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <!-- Exported from the BgNeutral artboard (720x450, base #12151B, intensity 1). -->
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="1.3" fill="rgba(169,177,189,0.16)"/>
+    </pattern>
+    <pattern id="stripes" width="124" height="172" patternUnits="userSpaceOnUse" y="278">
+      <rect width="120" height="172" fill="rgba(169,177,189,0.05)"/>
+    </pattern>
+  </defs>
+  <rect width="720" height="450" fill="#12151B"/>
+  <rect width="720" height="450" fill="url(#dots)"/>
+  <rect y="278" width="720" height="172" fill="url(#stripes)"/>
+  <rect y="278" width="720" height="1" fill="rgba(169,177,189,0.10)"/>
+</svg>

@@ -40,7 +40,8 @@ language switch and "Wyjdź do menu". The board fills the viewport fluidly, stay
 
 Every move is a click on a card (or a status panel for the player as target). While aiming, the
 selected card floats click-through in the board centre and the cursor becomes a viewfinder. Hovering or focusing a
-card shows it full-size in the preview. Log, graveyard and game-over are overlays over the main
+card shows it full-size in the preview. Each card's art window shows its own image (`/media/cards/<cardId>.webp`),
+or the design's placeholder when the file is missing. Log, graveyard and game-over are overlays over the main
 column. Loading, errors, focus, urgent timer, opponent's turn and targeting each have a token-based
 look. All colours, radii and fonts on the board come from tokens. Playwright screenshot tests of the
 key states at both viewports pass locally and in CI.
@@ -64,7 +65,11 @@ warning), `npm run e2e`, plus a visual comparison of the screenshots against the
 - Component style budget is 4 kB warn / 8 kB error (`frontend/angular.json:41-43`), and `match-table.css`
   is already about 3 kB. Board CSS must be split across child components.
 - Assets referenced by `url()` from CSS are emitted under `/media/`, which `SecurityConfig.java:27`
-  permits anonymously. Files in `frontend/public/` would get a 401 before sign-in.
+  permits anonymously. Files in `frontend/public/` would get a 401 before sign-in, except under
+  `frontend/public/media/`, which is served at `/media/` too.
+- 31 cards in `src/main/resources/game/factions.json` (5 characters + 5 events per faction, plus 5
+  neutral characters and 6 neutral events). Every card view already carries `cardId`, which is the key
+  for its art file.
 
 ## What We're NOT Doing
 
@@ -72,8 +77,9 @@ warning), `npm run e2e`, plus a visual comparison of the screenshots against the
   Tokens are defined on `:root`, but the dark ground is applied by the board root, not `body`.
 - Mobile layout (`context/foundation/prd.md:135`). The mobile screenshot cell is N/A.
 - Graveyard "how" (played/expired/destroyed) and "t.N" turn (`B:129-132`). They need engine tracking.
-- Flavor text (`C:39`). It would need pl+en content for every card. Art windows render the placeholder
-  icon as drawn.
+- Flavor text (`C:39`). It would need pl+en content for every card.
+- Producing card art. The participant supplies the 31 image files for Phase 8; the plan only wires them
+  in. No `art` field in `factions.json` or the API: the file name is the `cardId`.
 - Self-hosted fonts (Google Fonts link for now; switching later touches only the link and `@font-face`).
 - A light theme or theme switch.
 - New npm dependencies other than `@playwright/test` (via `/10x-e2e-setup`).
@@ -87,7 +93,15 @@ everything the cards render, so no phase invents data in the SPA. Phase 2 lays d
 background images. Phase 3 builds the Card on those tokens in isolation. Phase 4 swaps the board's
 markup and interactions to use the Card and the new layout, keeping existing class names on the list
 items so the behaviour spec stays the safety net. Phase 5 covers the states and overlays the design
-doesn't draw. Phases 6–7 add Playwright and the screenshot gate.
+doesn't draw. Phases 6–7 add Playwright and the screenshot gate. Phase 8 drops the participant's card
+images into the art slot that Phase 3 built, and re-pins the screenshot baselines.
+
+Card art (decided in planning). The art window is an image slot keyed by `cardId`: the Card requests
+`/media/cards/<cardId>.webp` and falls back to the design's placeholder icon on the faction tint when the
+file is missing or fails to load. Images can therefore land card by card, and a missing file never
+breaks the board. Files live in `frontend/public/media/cards/` (copied as-is by the `public` asset glob,
+`angular.json:22-27`) so they are served at `/media/cards/…`, which `SecurityConfig.java:27` permits
+anonymously. CSS `url()` (Phase 2) can't be used here because the file depends on card data.
 
 Click semantics (decided in planning). Attacker and event selections stay mutually exclusive:
 - Hand card click: a playable card is played. An event that requires a target becomes the
@@ -228,7 +242,16 @@ export each one as SVG where the artboard is vector, otherwise WebP. Reference t
 **Contract**: Built output contains the files under `dist/.../media/`, reachable without a session
 (`SecurityConfig.java:27`). No emoji, no gradients beyond what the artboard draws.
 
-#### 4. Agent rule
+#### 4. Card art folder
+
+**File**: `frontend/public/media/cards/.gitkeep`
+
+**Intent**: The home of per-card images (filled in Phase 8). It exists now so the art slot's URL
+convention has a real target.
+
+**Contract**: `frontend/public/media/cards/<cardId>.webp` → served at `/media/cards/<cardId>.webp`.
+
+#### 5. Agent rule
 
 **File**: `AGENTS.md`
 
@@ -238,6 +261,8 @@ export each one as SVG where the artboard is vector, otherwise WebP. Reference t
 `styles.css` tokens, with no hex or px-radius literals in component CSS. Faction looks come from
 `data-faction` + `--faction-*`. Cards are rendered with `ui/card` (no per-screen card markup). Assets
 referenced by CSS live under `frontend/src/` and are referenced via `url()` (served at `/media/`).
+Card art lives in `frontend/public/media/cards/<cardId>.webp` (no other naming, no art field in data),
+and the Card component is the only place that builds that URL.
 
 ### Success Criteria:
 
@@ -272,7 +297,7 @@ handling), with its own spec.
 active events, preview and graveyard.
 
 **Contract**: Standalone `app-card` with inputs:
-- `variant: 'full' | 'compact'`, `faction: string`, `type: CardType`, `name`, `cost`, `attack?`,
+- `variant: 'full' | 'compact'`, `cardId: string`, `faction: string`, `type: CardType`, `name`, `cost`, `attack?`,
   `health?` (displayed health = remaining HP), `baseAttack?`, `baseHealth?`, `damaged?: boolean`,
   `keyword?: string`, `ability?: string`, `text?: string`, `effects?: string[]`, `duration?: number | null`,
   `turnsLeft?: number`;
@@ -284,6 +309,12 @@ and damaged health get a visible marker on the badge (ring in `--color-text`), b
 doesn't draw them. The trapped state shows a chip. The compact line shows, in priority order, trapped,
 keyword, event duration/turns left. The full variant shows ability, text and effects, and `instant` when
 `duration === 0`. Fixed sizes 240×336 / 150×210.
+
+Art slot: the art window renders `<img src="/media/cards/{cardId}.webp" alt="" loading="lazy">` (alt is
+empty because the `<article>` already names the card) with `object-fit: cover` and `--radius-art`. On the
+image's `error` event the card switches to the placeholder (the design's icon on `--faction-tint`,
+`C:21-23`) and doesn't retry for that `cardId`. A changed `cardId` input resets the state. Until the image
+loads, the placeholder shows behind it, so there's no empty flash.
 
 #### 2. i18n
 
@@ -297,7 +328,7 @@ keyword, event duration/turns left. The full variant shows ability, text and eff
 
 #### Automated Verification:
 
-- Card spec covers both variants, character vs event, modified/damaged/trapped markers, not-playable state and the `data-faction` host attribute: `cd frontend && npx ng test --watch=false --include src/app/ui/card/card.spec.ts`
+- Card spec covers both variants, character vs event, modified/damaged/trapped markers, not-playable state, the `data-faction` host attribute, and the art slot (img src from `cardId`, placeholder after an `error` event, reset on a new `cardId`): `cd frontend && npx ng test --watch=false --include src/app/ui/card/card.spec.ts`
 - Full frontend suite passes: `cd frontend && npx ng test --watch=false`
 - `card.css` contains no hex literal: `! grep -nE '#[0-9a-fA-F]{3,8}\b' frontend/src/app/ui/card/card.css`
 
@@ -342,6 +373,8 @@ instead of clipping.
 - The turn bar keeps `.turn`, `.turn-timer`, `.end-turn`, `.cancel-attack`, `.cancel-target`,
   `.choose-target`, `.opponent-moving`, `.move-reason`.
 - The hand is a horizontally scrolling row of compact cards.
+- Every `app-card` (hand, both boards, active events, preview, lifted card, graveyard rows if they use
+  it) gets `cardId` from its view object.
 - Stats move to the aside status panels (`.status.opponent` / `.status.player`), keeping the
   `dl.stats` / `.hp` / `.budget` / `.deck-count` / `.hand-count` / `.graveyard` structure. The
   player panel adds budget pips and an HP bar.
@@ -609,6 +642,8 @@ against the canvas by a human, then pinned as baselines.
 - Timers are frozen with Playwright's clock API so the timer and replay are deterministic.
 - Baselines are committed under `frontend/e2e/__screenshots__/` and generated on Linux chromium, the
   same environment as CI, with a small `maxDiffPixelRatio` for font anti-aliasing.
+- `mockMatch` routes `/media/cards/**` to 404 by default, so every state renders the placeholder art and
+  the baselines don't depend on which image files exist (Phase 8 adds an opt-in for real art).
 
 ### Success Criteria:
 
@@ -627,19 +662,92 @@ against the canvas by a human, then pinned as baselines.
 
 ---
 
+## Phase 8: Card images
+
+### Overview
+
+Add the participant's card art to the project and show it in the art slot from Phase 3. The images
+are supplied by the participant. This phase converts and places them, checks completeness, and pins the
+look with screenshots.
+
+### Changes Required:
+
+#### 1. Image files
+
+**File**: `frontend/public/media/cards/<cardId>.webp` (31 files; `.gitkeep` removed)
+
+**Intent**: One image per card, named exactly by `cardId` from `factions.json`.
+
+**Contract**:
+- WebP, cropped to the art window's aspect ratio, at 2× the full card's art window size.
+- Target ≤ 40 kB each.
+- Source files in another format or size are converted with whatever tool is available locally
+  (`cwebp` or ImageMagick). If no tool exists, ask the participant before adding a dependency.
+- Source originals are not committed.
+- If some files are missing when the phase starts, those cards keep the placeholder. The list of
+  missing ids is reported, and the participant decides whether to ship partially.
+
+#### 2. Completeness check
+
+**File**: `frontend/src/app/ui/card/card-art.spec.ts` (or a small test next to the Card spec)
+
+**Intent**: Catch an art file that doesn't match a card (typo, renamed card) and report cards without art.
+
+**Contract**:
+- The test reads the card ids from `src/main/resources/game/factions.json` and the file names in
+  `frontend/public/media/cards/`.
+- It fails on any `.webp` whose name is not a card id.
+- It fails on missing ids unless they are listed in an explicit `allowedMissing` array, which is empty
+  when all 31 files are in.
+- If the unit-test runner can't read the file system, the check moves to a Node script run by
+  `npm run check:card-art`. This is a minor adaptation.
+
+#### 3. Screenshots with art
+
+**File**: `frontend/e2e/match-board.spec.ts`, `frontend/e2e/__screenshots__/`
+
+**Intent**: Pin the board with real art, keep the placeholder look covered.
+
+**Contract**:
+- `mockMatch` gets an option to let `/media/cards/**` through to the built files.
+- A new state "default mid-game with art" runs at both viewports.
+- Existing states keep the 404 route (placeholder), so their baselines stay unchanged.
+- The art state's baselines are generated on Linux chromium as in Phase 7.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- Art completeness check passes: `cd frontend && npx ng test --watch=false` (or `npm run check:card-art`)
+- Production build passes and ships the art: `cd frontend && npm run build && ls dist/*/browser/media/cards/ | wc -l` prints 31
+- Screenshot suite passes including the art state: `cd frontend && npm run e2e`
+- CI e2e job is green on the PR
+
+#### Manual Verification:
+
+- In a running app every card in hand, on both boards, in the preview and the lifted card shows its own image, cropped cleanly inside the art window at 1440×900 and 1280×720
+- A card whose file is temporarily renamed falls back to the placeholder without layout shift
+- `/media/cards/<cardId>.webp` loads without a session (signed-out request returns 200)
+
+**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests:
 
 - Backend: new view fields and graveyard contents (`MatchViewTests`), including a neutral card's faction.
-- Card: variants, markers, states, `data-faction`.
+- Card: variants, markers, states, `data-faction`, art slot with placeholder fallback.
+- Card art: every image file matches a card id, and missing art is explicit (Phase 8).
 - Match table: click semantics per selection state, disabled non-legal cards, `aria-pressed`, accessible
   names, preview, overlays with focus return, loading/error/empty, header hidden on `/match`.
 - Existing behaviour (replay, timer, auto end-turn, 404 redirect) stays covered by the kept spec.
 
 ### Integration Tests:
 
-- Playwright with mocked API: seed plus 12 visual states × 2 viewports.
+- Playwright with mocked API: seed plus 12 visual states × 2 viewports (placeholder art), plus the
+  "with art" state × 2 viewports in Phase 8.
 
 ### Manual Testing Steps:
 
@@ -676,31 +784,31 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 1.1 Backend tests pass: `./mvnw -B verify`
-- [x] 1.2 Frontend tests pass: `cd frontend && npx ng test --watch=false`
-- [x] 1.3 Production build passes: `cd frontend && npm run build`
+- [x] 1.1 Backend tests pass: `./mvnw -B verify` — 956eefb
+- [x] 1.2 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 956eefb
+- [x] 1.3 Production build passes: `cd frontend && npm run build` — 956eefb
 
 #### Manual
 
-- [x] 1.4 `GET /api/matches/current` shows cost/faction on board characters and events, and a graveyard list that grows when a character dies
+- [x] 1.4 `GET /api/matches/current` shows cost/faction on board characters and events, and a graveyard list that grows when a character dies — 956eefb
 
 ### Phase 2: Tokens, fonts, backgrounds
 
 #### Automated
 
-- [ ] 2.1 Production build passes and emits the three backgrounds under `media/`
-- [ ] 2.2 Frontend tests pass: `cd frontend && npx ng test --watch=false`
+- [x] 2.1 Production build passes and emits the three backgrounds under `media/`
+- [x] 2.2 Frontend tests pass: `cd frontend && npx ng test --watch=false`
 
 #### Manual
 
-- [ ] 2.3 Lobby, new-match and sign-in look unchanged after the token block lands
-- [ ] 2.4 The three exported backgrounds match their canvas artboards by eye
+- [x] 2.3 Lobby, new-match and sign-in look unchanged after the token block lands
+- [x] 2.4 The three exported backgrounds match their canvas artboards by eye
 
 ### Phase 3: Card component
 
 #### Automated
 
-- [ ] 3.1 Card spec covers variants, character vs event, markers, not-playable state and `data-faction`
+- [ ] 3.1 Card spec covers variants, character vs event, markers, not-playable state, `data-faction` and the art slot fallback
 - [ ] 3.2 Full frontend suite passes: `cd frontend && npx ng test --watch=false`
 - [ ] 3.3 `card.css` contains no hex literal
 
@@ -755,3 +863,18 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 - [ ] 7.3 Baselines at 1440×900 match `Board.dc.html` / `Card.dc.html`
 - [ ] 7.4 Baselines at 1280×720 show no clipping
 - [ ] 7.5 Mobile cell recorded as N/A in the PR description
+
+### Phase 8: Card images
+
+#### Automated
+
+- [ ] 8.1 Art completeness check passes
+- [ ] 8.2 Production build passes and ships the art (31 files under `media/cards/`)
+- [ ] 8.3 Screenshot suite passes including the art state: `cd frontend && npm run e2e`
+- [ ] 8.4 CI e2e job is green on the PR
+
+#### Manual
+
+- [ ] 8.5 Every card shows its own image, cropped cleanly, at 1440×900 and 1280×720
+- [ ] 8.6 A card with a missing file falls back to the placeholder without layout shift
+- [ ] 8.7 `/media/cards/<cardId>.webp` loads without a session
