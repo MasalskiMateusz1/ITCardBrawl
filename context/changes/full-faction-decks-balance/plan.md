@@ -489,15 +489,15 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 2.1 Wszystkie testy backendu przechodzą: `./mvnw -B verify`
-- [x] 2.2 `ComputerOpponentTests` (w tym ≥ 80% z graczem losowym) przechodzi bez zmiany progu
-- [x] 2.3 Po `./mvnw -B verify` istnieją `target/balance/matches.csv`, `cards.csv`, `summary.md`
-- [x] 2.4 Dwukrotne uruchomienie daje identyczny `matches.csv` (determinizm ziaren)
+- [x] 2.1 Wszystkie testy backendu przechodzą: `./mvnw -B verify` — b937e77
+- [x] 2.2 `ComputerOpponentTests` (w tym ≥ 80% z graczem losowym) przechodzi bez zmiany progu — b937e77
+- [x] 2.3 Po `./mvnw -B verify` istnieją `target/balance/matches.csv`, `cards.csv`, `summary.md` — b937e77
+- [x] 2.4 Dwukrotne uruchomienie daje identyczny `matches.csv` (determinizm ziaren) — b937e77
 
 #### Manual
 
-- [ ] 2.5 `summary.md` czytelny; zanotowany stan wyjściowy (komórki, p90 czasu, czas działania)
-- [ ] 2.6 Na PR widać artefakt `balance-report` i podsumowanie joba
+- [x] 2.5 `summary.md` czytelny; zanotowany stan wyjściowy (komórki, p90 czasu, czas działania) — b937e77
+- [x] 2.6 Na PR widać artefakt `balance-report` i podsumowanie joba — b937e77
 
 ### Phase 3: Reguła wyceny kart
 
