@@ -816,18 +816,18 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 4.1 Frontend tests pass: `cd frontend && npx ng test --watch=false`
-- [x] 4.2 Production build passes without a component style budget warning
-- [x] 4.3 No hex literal in match-table CSS
+- [x] 4.1 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 65075a8
+- [x] 4.2 Production build passes without a component style budget warning — 65075a8
+- [x] 4.3 No hex literal in match-table CSS — 65075a8
 
 #### Manual
 
-- [x] 4.4 At 1440×900 the board matches the canvas layout
-- [x] 4.5 At 1280×720 nothing is clipped and the hand stays reachable
-- [x] 4.6 A full match is playable with the mouse only
-- [x] 4.7 A full match is playable with the keyboard only, and screen-reader names include the card names
-- [x] 4.8 Lobby and new-match still show the header, and `/match` does not
-- [x] 4.9 While targeting, the selected card floats in the board centre click-through and the cursor is a viewfinder
+- [x] 4.4 At 1440×900 the board matches the canvas layout — 65075a8
+- [x] 4.5 At 1280×720 nothing is clipped and the hand stays reachable — 65075a8
+- [x] 4.6 A full match is playable with the mouse only — 65075a8
+- [x] 4.7 A full match is playable with the keyboard only, and screen-reader names include the card names — 65075a8
+- [x] 4.8 Lobby and new-match still show the header, and `/match` does not — 65075a8
+- [x] 4.9 While targeting, the selected card floats in the board centre click-through and the cursor is a viewfinder — 65075a8
 
 ### Phase 5: Overlays and states
 
