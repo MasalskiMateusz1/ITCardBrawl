@@ -3,7 +3,9 @@ package com.example.itcardbrawl.game;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SplittableRandom;
 import java.util.random.RandomGenerator;
 import java.util.stream.IntStream;
@@ -40,15 +42,57 @@ class MatchFactoryTests {
 	}
 
 	@Test
-	void bothSidesStartWithFiveCardsInHandAndTwentyFiveInDeck() {
+	void bothSidesStartWithFiveCardsFromDeckInHandAndTwentyFiveInDeck() {
 		Match match = create("developers", 1, true);
 
 		for (MatchSide side : List.of(match.player(), match.opponent())) {
-			assertThat(side.hand()).hasSize(MatchRules.STARTING_HAND);
 			assertThat(side.deck()).hasSize(MatchRules.DECK_SIZE - MatchRules.STARTING_HAND);
 		}
+		assertThat(match.player().hand()).hasSize(MatchRules.STARTING_HAND);
+		assertThat(match.opponent().hand()).hasSize(MatchRules.STARTING_HAND + 1);
 		assertThat(match.turnNumber()).isEqualTo(1);
 		assertThat(match.id()).isNotNull();
+	}
+
+	@Test
+	void realCatalogConfiguresNeutralSecondPlayerBonus() {
+		assertThat(CATALOG.secondPlayerBonus()).get().satisfies(card -> {
+			assertThat(card.id()).isEqualTo("neu-rubber-duck");
+			assertThat(CATALOG.isNeutral(card)).isTrue();
+		});
+	}
+
+	@Test
+	void nonStartingSideGetsSecondPlayerBonusOnTopOfStartingHand() {
+		Card bonus = CATALOG.secondPlayerBonus().orElseThrow();
+		for (boolean playerStarts : List.of(true, false)) {
+			Match match = create("testers", 5, playerStarts);
+			MatchSide starting = playerStarts ? match.player() : match.opponent();
+			MatchSide second = playerStarts ? match.opponent() : match.player();
+
+			assertThat(starting.hand()).as("strona zaczynająca").hasSize(MatchRules.STARTING_HAND);
+			assertThat(second.hand()).as("strona niezaczynająca").hasSize(MatchRules.STARTING_HAND + 1);
+			assertThat(second.hand().getLast().card()).isEqualTo(bonus);
+			assertThat(second.hand().getLast().instanceId()).isEqualTo(2 * MatchRules.DECK_SIZE + 1);
+			// The bonus comes from outside the deck: the deck keeps all its cards.
+			assertThat(second.deck()).hasSize(MatchRules.DECK_SIZE - MatchRules.STARTING_HAND);
+			assertThat(allCards(second).toList()).hasSize(MatchRules.DECK_SIZE + 1);
+		}
+	}
+
+	@Test
+	void catalogWithoutSecondPlayerBonusDealsFiveCardsToBothSides() {
+		CardCatalog withoutBonus = new CardCatalog(
+				List.of(CATALOG.faction("developers").orElseThrow(), CATALOG.faction("testers").orElseThrow(),
+						CATALOG.faction("neutral").orElseThrow()),
+				Stream.concat(CATALOG.deck("developers").stream(), CATALOG.deck("testers").stream()).distinct().toList(),
+				Map.of("developers", entries(CATALOG.deck("developers")), "testers",
+						entries(CATALOG.deck("testers"))));
+
+		Match match = new MatchFactory(withoutBonus, random(1, true)).create("developers");
+
+		assertThat(match.player().hand()).hasSize(MatchRules.STARTING_HAND);
+		assertThat(match.opponent().hand()).hasSize(MatchRules.STARTING_HAND);
 	}
 
 	@Test
@@ -125,7 +169,7 @@ class MatchFactoryTests {
 		List<Integer> ids = Stream.concat(instances(match.player()), instances(match.opponent()))
 			.map(CardInstance::instanceId)
 			.toList();
-		assertThat(ids).hasSize(2 * MatchRules.DECK_SIZE).doesNotHaveDuplicates();
+		assertThat(ids).hasSize(2 * MatchRules.DECK_SIZE + 1).doesNotHaveDuplicates();
 	}
 
 	@Test
@@ -167,10 +211,18 @@ class MatchFactoryTests {
 		Match match = create("developers", 42, true);
 
 		List<Integer> playerIds = instances(match.player()).map(CardInstance::instanceId).toList();
-		List<Integer> opponentIds = instances(match.opponent()).map(CardInstance::instanceId).toList();
+		// The opponent does not start, so its hand also holds the second player bonus, numbered after both decks.
+		List<Integer> opponentIds = instances(match.opponent()).map(CardInstance::instanceId).sorted().toList();
 		assertThat(playerIds).isEqualTo(IntStream.rangeClosed(1, MatchRules.DECK_SIZE).boxed().toList());
 		assertThat(opponentIds)
-			.isEqualTo(IntStream.rangeClosed(MatchRules.DECK_SIZE + 1, 2 * MatchRules.DECK_SIZE).boxed().toList());
+			.isEqualTo(IntStream.rangeClosed(MatchRules.DECK_SIZE + 1, 2 * MatchRules.DECK_SIZE + 1).boxed().toList());
+	}
+
+	// Collapses an expanded deck back into deck entries (copies per card id).
+	private static List<DeckEntry> entries(List<Card> deck) {
+		Map<String, Integer> copies = new LinkedHashMap<>();
+		deck.forEach(card -> copies.merge(card.id(), 1, Integer::sum));
+		return copies.entrySet().stream().map(e -> new DeckEntry(e.getKey(), e.getValue())).toList();
 	}
 
 	private static Stream<CardInstance> instances(MatchSide side) {

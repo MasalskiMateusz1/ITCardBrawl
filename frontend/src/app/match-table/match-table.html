@@ -158,6 +158,11 @@
           <p class="move-reason" role="status">{{ reason }}</p>
         }
       } @else {
+        @if (myTurn() && secondsLeft() !== null) {
+          <span class="turn-timer" role="timer" [class.urgent]="urgent()">
+            {{ texts().matchTable.timeLeft(secondsLeft()!) }}
+          </span>
+        }
         <button type="button" class="end-turn" [disabled]="busy() || !myTurn()" (click)="endTurn()">
           {{ texts().matchTable.endTurn }}
         </button>

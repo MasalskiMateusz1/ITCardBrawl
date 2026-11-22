@@ -1,6 +1,7 @@
 package com.example.itcardbrawl.game;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 import java.util.List;
 import java.util.UUID;
@@ -91,6 +92,61 @@ class PositionEvaluatorTests {
 				Side.OPPONENT).enemyBoard();
 
 		assertThat(danger).isLessThan(safe).isNegative();
+	}
+
+	@Test
+	void enemyDamageCountsInFullOnlyWhenItCanBeFinishedThisTurn() {
+		CardInstance enemy = character(1, 4, 6);
+		MatchSide undamaged = side(MatchRules.MAX_HP, List.of(new BoardCharacter(enemy, 0, false, false)));
+		MatchSide damaged = side(MatchRules.MAX_HP, List.of(new BoardCharacter(enemy, 3, false, false)));
+		MatchSide canFinish = side(MatchRules.MAX_HP, List.of(new BoardCharacter(character(2, 3, 5), 0, false, false)));
+		MatchSide attacked = side(MatchRules.MAX_HP, List.of(new BoardCharacter(character(2, 3, 5), 0, false, true)));
+		MatchSide tooWeak = side(MatchRules.MAX_HP, List.of(new BoardCharacter(character(2, 2, 5), 0, false, false)));
+
+		double full = EVALUATOR.score(match(undamaged, canFinish), Side.OPPONENT).enemyBoard();
+		double setup = EVALUATOR.score(match(damaged, canFinish), Side.OPPONENT).enemyBoard();
+		double afterAttack = EVALUATOR.score(match(damaged, attacked), Side.OPPONENT).enemyBoard();
+		double weak = EVALUATOR.score(match(damaged, tooWeak), Side.OPPONENT).enemyBoard();
+
+		// 3 of 6 health damaged and finishable: half of the value is gone.
+		assertThat(setup).isCloseTo(full * (1 - PositionEvaluator.SETUP_DAMAGE_SHARE * 0.5), within(1e-9));
+		// Damage that clears at the end of the turn counts only with the small discount.
+		double cleared = full * (1 - PositionEvaluator.DAMAGE_DISCOUNT * 0.5);
+		assertThat(afterAttack).isCloseTo(cleared, within(1e-9));
+		assertThat(weak).isCloseTo(cleared, within(1e-9));
+		assertThat(full).isLessThan(afterAttack);
+		assertThat(afterAttack).isLessThan(setup);
+	}
+
+	@Test
+	void oneFollowUpAttackFinishesOnlyOneDamagedEnemy() {
+		MatchSide enemy = side(MatchRules.MAX_HP, List.of(new BoardCharacter(character(1, 4, 6), 3, false, false),
+				new BoardCharacter(character(2, 1, 6), 3, false, false)));
+		MatchSide own = side(MatchRules.MAX_HP, List.of(new BoardCharacter(character(3, 3, 5), 0, false, false)));
+		double big = PositionEvaluator.CHARACTER_BASE + PositionEvaluator.ATTACK_WEIGHT * 4
+				+ PositionEvaluator.HEALTH_WEIGHT * 6;
+		double small = PositionEvaluator.CHARACTER_BASE + PositionEvaluator.ATTACK_WEIGHT * 1
+				+ PositionEvaluator.HEALTH_WEIGHT * 6;
+
+		// The capacity of 3 finishes the more valuable character; the other one's damage will clear.
+		assertThat(EVALUATOR.score(match(enemy, own), Side.OPPONENT).enemyBoard()).isCloseTo(
+				-(big * (1 - PositionEvaluator.SETUP_DAMAGE_SHARE * 0.5)
+						+ small * (1 - PositionEvaluator.DAMAGE_DISCOUNT * 0.5)),
+				within(1e-9));
+	}
+
+	@Test
+	void ownDamageDuringOwnTurnIsNearlyFree() {
+		CardInstance own = character(1, 3, 6);
+		MatchSide enemy = side(MatchRules.MAX_HP, List.of(new BoardCharacter(character(2, 5, 5), 0, false, false)));
+
+		double undamaged = EVALUATOR.score(match(enemy,
+				side(MatchRules.MAX_HP, List.of(new BoardCharacter(own, 0, false, true)))), Side.OPPONENT).ownBoard();
+		double damaged = EVALUATOR.score(match(enemy,
+				side(MatchRules.MAX_HP, List.of(new BoardCharacter(own, 3, false, true)))), Side.OPPONENT).ownBoard();
+
+		assertThat(damaged).isLessThan(undamaged)
+			.isCloseTo(undamaged * (1 - PositionEvaluator.DAMAGE_DISCOUNT * 0.5), within(1e-9));
 	}
 
 	private static double enemyHpScore(int enemyHp, MatchSide own) {

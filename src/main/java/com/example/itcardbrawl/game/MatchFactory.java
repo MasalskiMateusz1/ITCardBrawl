@@ -40,13 +40,16 @@ public class MatchFactory {
 		List<CardInstance> playerDeck = shuffledDeck(playerFaction, nextInstanceId);
 		List<CardInstance> opponentDeck = shuffledDeck(opponentFaction, nextInstanceId);
 		Match.Side activeSide = random.nextBoolean() ? Match.Side.PLAYER : Match.Side.OPPONENT;
+		// The bonus card is numbered after both decks, so deck instanceIds still reveal only the deck position.
+		CardInstance bonus = catalog.secondPlayerBonus().map(card -> new CardInstance(nextInstanceId[0]++, card))
+			.orElse(null);
 
 		// The starting state is already the start of turn 1: the starting side does not draw,
 		// so the log has only TurnStarted.
 		return new Match(UUID.randomUUID(), 1, activeSide,
-				deal(playerFaction, playerDeck, activeSide == Match.Side.PLAYER),
-				deal(opponentFaction, opponentDeck, activeSide == Match.Side.OPPONENT), Match.Status.IN_PROGRESS,
-				null, List.of(new MatchEvent.TurnStarted(activeSide, 1)));
+				deal(playerFaction, playerDeck, activeSide == Match.Side.PLAYER, bonus),
+				deal(opponentFaction, opponentDeck, activeSide == Match.Side.OPPONENT, bonus),
+				Match.Status.IN_PROGRESS, null, List.of(new MatchEvent.TurnStarted(activeSide, 1)));
 	}
 
 	private List<CardInstance> shuffledDeck(Faction faction, int[] nextInstanceId) {
@@ -60,8 +63,15 @@ public class MatchFactory {
 		return deck;
 	}
 
-	private static MatchSide deal(Faction faction, List<CardInstance> deck, boolean active) {
-		List<CardInstance> hand = deck.subList(0, MatchRules.STARTING_HAND);
+	/**
+	 * The non-starting side gets {@code bonus} (when configured) on top of its starting hand: compensation for the
+	 * starting side's tempo advantage (context/foundation/card-pricing.md, "Pomiar balansu").
+	 */
+	private static MatchSide deal(Faction faction, List<CardInstance> deck, boolean active, CardInstance bonus) {
+		List<CardInstance> hand = new ArrayList<>(deck.subList(0, MatchRules.STARTING_HAND));
+		if (!active && bonus != null) {
+			hand.add(bonus);
+		}
 		List<CardInstance> rest = deck.subList(MatchRules.STARTING_HAND, deck.size());
 		int budget = active ? 1 : 0;
 		return new MatchSide(faction, rest, hand, MatchRules.MAX_HP, budget, budget, List.of(), List.of(), List.of());

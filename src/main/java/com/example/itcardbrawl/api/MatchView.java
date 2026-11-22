@@ -79,10 +79,16 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	public record TurnView(int number, Match.Side active) {
+	/**
+	 * {@code timeLimitSeconds} is the player's turn limit ({@link MatchRules#TURN_LIMIT}) during the player's turn in
+	 * a match in progress, {@code null} otherwise. The SPA counts it down from the end of the replay; the server keeps
+	 * its own deadline, so the countdown does not depend on the client's clock.
+	 */
+	public record TurnView(int number, Match.Side active, Integer timeLimitSeconds) {
 
 		static TurnView of(Match match) {
-			return new TurnView(match.turnNumber(), match.activeSide());
+			return new TurnView(match.turnNumber(), match.activeSide(),
+					match.isPlayerTurn() ? (int) MatchRules.TURN_LIMIT.toSeconds() : null);
 		}
 
 	}

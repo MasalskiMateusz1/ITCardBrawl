@@ -84,6 +84,26 @@ class ComputerOpponentTests {
 	}
 
 	@Test
+	void playsThePlayerSideWhenConstructedForIt() {
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match match = new MatchFactory(CATALOG, factoryRandom(seed, true)).create("developers");
+			assertThat(match.activeSide()).isEqualTo(Side.PLAYER);
+			ComputerOpponent player = new ComputerOpponent(ENGINE, EVALUATOR, new SplittableRandom(seed), Side.PLAYER);
+
+			List<Match> steps = player.playTurnSteps(match);
+
+			assertThat(steps).as("ziarno %d", seed).isNotEmpty();
+			Match last = steps.getLast();
+			assertThat(last.status() == Status.FINISHED || last.activeSide() == Side.OPPONENT).isTrue();
+			assertThat(last.log()).contains(new TurnEnded(Side.PLAYER));
+			assertThat(last.log()).doesNotContain(new TurnEnded(Side.OPPONENT));
+			List<MoveExplained> reasons = reasons(match, steps);
+			assertThat(reasons).as("ziarno %d", seed).isNotEmpty();
+			assertThat(reasons).allSatisfy(reason -> assertThat(reason.side()).isEqualTo(Side.PLAYER));
+		}
+	}
+
+	@Test
 	void takesWinningAttackEvenWhenOtherGoodMovesExist() {
 		BoardCharacter attacker = ready(character(1, 1, 3, 3));
 		CardInstance playable = character(2, 1, 2, 2);
@@ -218,6 +238,31 @@ class ComputerOpponentTests {
 			assertThat(reasons(match, steps)).as("ziarno %d", seed).containsExactly(
 					new MoveExplained(Side.OPPONENT, MoveReason.REMOVE_THREAT, attacker.instance(), guard, 3),
 					new MoveExplained(Side.OPPONENT, MoveReason.END_NO_MOVES, null, null, 0));
+		}
+	}
+
+	@Test
+	void hitsLethalThreatThatTwoAttackersFinishTogetherInsteadOfPlayer() {
+		// Own HP 9: next turn the 9/4 Overtime character alone is lethal. Neither 2/10 attacker defeats it alone, but
+		// together they do - the first hit is a favorable trade that beats 2 points of player HP.
+		BoardCharacter first = ready(character(1, 1, 2, 10));
+		BoardCharacter second = ready(character(2, 1, 2, 10));
+		CardInstance threat = overtime(3, 9, 4);
+		Match match = opponentTurn(side(MatchRules.MAX_HP, List.of(), List.of(ready(threat)), 0),
+				side(9, List.of(), List.of(first, second), 0));
+
+		for (long seed = 0; seed < SEEDS; seed++) {
+			List<Match> steps = computer(seed).playTurnSteps(match);
+			List<MoveExplained> reasons = reasons(match, steps);
+
+			assertThat(reasons).as("ziarno %d", seed).hasSize(3);
+			assertThat(reasons.get(0).reason()).as("ziarno %d", seed).isEqualTo(MoveReason.FAVORABLE_TRADE);
+			assertThat(reasons.get(0).target()).isEqualTo(threat);
+			assertThat(reasons.get(1).reason()).as("ziarno %d", seed).isEqualTo(MoveReason.REMOVE_THREAT);
+			assertThat(reasons.get(1).target()).isEqualTo(threat);
+			assertThat(List.of(reasons.get(0).card(), reasons.get(1).card()))
+				.containsExactlyInAnyOrder(first.instance(), second.instance());
+			assertThat(steps.getLast().player().hp()).isEqualTo(MatchRules.MAX_HP);
 		}
 	}
 
@@ -459,6 +504,12 @@ class ComputerOpponentTests {
 	private static CardInstance guard(int instanceId, int attack, int health) {
 		return new CardInstance(instanceId, new Card("guard-" + instanceId, FACTION.id(), text("Ochroniarz"),
 				CardType.CHARACTER, 1, text("Opis"), attack, health, new Ability(AbilityKeyword.GUARD, 0), null, null));
+	}
+
+	private static CardInstance overtime(int instanceId, int attack, int health) {
+		return new CardInstance(instanceId, new Card("overtime-" + instanceId, FACTION.id(), text("Nadgodziny"),
+				CardType.CHARACTER, 1, text("Opis"), attack, health, new Ability(AbilityKeyword.OVERTIME, 0), null,
+				null));
 	}
 
 	private static CardInstance event(int instanceId, int cost, Effect effect) {

@@ -1,6 +1,7 @@
 package com.example.itcardbrawl.game;
 
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.util.random.RandomGenerator;
 
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,12 @@ public class GameConfig {
 	@Bean
 	public RandomGenerator gameRandom() {
 		return new SecureRandom();
+	}
+
+	// System UTC clock for turn deadlines; tests replace it with a fixed one.
+	@Bean
+	public Clock gameClock() {
+		return Clock.systemUTC();
 	}
 
 }

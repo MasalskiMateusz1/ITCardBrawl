@@ -33,6 +33,11 @@ public record Match(UUID id, int turnNumber, Side activeSide, MatchSide player, 
 		return side == Side.PLAYER ? player : opponent;
 	}
 
+	/** The match is in progress and it is the player's turn (the only time the player's turn limit runs). */
+	public boolean isPlayerTurn() {
+		return status == Status.IN_PROGRESS && activeSide == Side.PLAYER;
+	}
+
 	/**
 	 * A copy of the match with a log entry inserted at position {@code index}. The log is not rule state, so adding
 	 * an explanation outside {@link MatchEngine} does not change the course of the game.

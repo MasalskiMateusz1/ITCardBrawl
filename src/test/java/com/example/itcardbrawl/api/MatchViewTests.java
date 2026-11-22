@@ -202,8 +202,8 @@ class MatchViewTests {
 		MatchView.BoardCharacterView ownView = view.player().board().getFirst();
 		MatchView.BoardCharacterView enemyView = view.opponent().board().getFirst();
 
-		assertThat(ownView.attack()).isEqualTo(8);
-		assertThat(ownView.baseAttack()).isEqualTo(8);
+		assertThat(ownView.attack()).isEqualTo(7);
+		assertThat(ownView.baseAttack()).isEqualTo(7);
 		assertThat(ownView.health()).isEqualTo(8);
 		assertThat(ownView.keywords()).contains(AbilityKeyword.GUARD);
 		assertThat(ownView.trapped()).isTrue();
@@ -226,8 +226,8 @@ class MatchViewTests {
 		MatchView.BoardCharacterView ownView = view.player().board().getFirst();
 
 		// Attack −2 from the opponent's event, HP +2 from its own.
-		assertThat(ownView.baseAttack()).isEqualTo(8);
-		assertThat(ownView.attack()).isEqualTo(6);
+		assertThat(ownView.baseAttack()).isEqualTo(7);
+		assertThat(ownView.attack()).isEqualTo(5);
 		assertThat(ownView.baseHealth()).isEqualTo(8);
 		assertThat(ownView.health()).isEqualTo(10);
 	}

@@ -158,7 +158,7 @@ function matchView(active: Side = 'PLAYER'): MatchView {
   return {
     matchId: MATCH_ID,
     status: 'IN_PROGRESS',
-    turn: { number: 1, active },
+    turn: { number: 1, active, timeLimitSeconds: null },
     player: {
       faction: { id: 'developers', name: 'Developerzy' },
       hp: 30,
@@ -204,7 +204,7 @@ function boardView(opponentGuard = false, eventTargets: Target[] = []): MatchVie
   const match = matchView();
   return {
     ...match,
-    turn: { number: 5, active: 'PLAYER' },
+    turn: { number: 5, active: 'PLAYER', timeLimitSeconds: null },
     player: {
       ...match.player,
       budget: { current: 3, max: 3 },
@@ -955,7 +955,10 @@ describe('MatchTable', () => {
       url: `/api/matches/${MATCH_ID}/end-turn`,
     });
     expect(request.request.body).toEqual({ turn: 1 });
-    request.flush({ ...matchView(), turn: { number: 2, active: 'PLAYER' } });
+    request.flush({
+      ...matchView(),
+      turn: { number: 2, active: 'PLAYER', timeLimitSeconds: null },
+    });
     await fixture.whenStable();
 
     expect(text(element.querySelector('.turn'))).toBe('Tura 2 — Twoja tura');
@@ -974,7 +977,7 @@ describe('MatchTable', () => {
 
     httpTesting
       .expectOne({ method: 'GET', url: '/api/matches/current' })
-      .flush({ ...matchView(), turn: { number: 3, active: 'PLAYER' } });
+      .flush({ ...matchView(), turn: { number: 3, active: 'PLAYER', timeLimitSeconds: null } });
     await fixture.whenStable();
 
     expect(text(element.querySelector('.turn'))).toBe('Tura 3 — Twoja tura');
@@ -1232,6 +1235,206 @@ describe('MatchTable', () => {
     });
   });
 
+  describe('turn countdown', () => {
+    const LIMIT = 45;
+
+    function timed(match: MatchView, limit: number | null = LIMIT): MatchView {
+      return { ...match, turn: { ...match.turn, timeLimitSeconds: limit } };
+    }
+
+    /** endTurnResponse() whose final state is the player's turn with the time limit. */
+    function timedEndTurnResponse(): MatchView {
+      return timed(endTurnResponse());
+    }
+
+    /** Shows a match handed over by new-match under the fake clock, without GET /current. */
+    function renderStarted(match: MatchView): ComponentFixture<MatchTable> {
+      TestBed.inject(GameService).setStartedMatch(match);
+      vi.useFakeTimers();
+      const fixture = TestBed.createComponent(MatchTable);
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    function advance(fixture: ComponentFixture<MatchTable>, ms: number): void {
+      vi.advanceTimersByTime(ms);
+      fixture.detectChanges();
+    }
+
+    function timer(element: HTMLElement): string | null {
+      const found = element.querySelector('.turn-timer');
+      return found === null ? null : text(found);
+    }
+
+    it('starts after the playback and counts down from the turn limit', () => {
+      const fixture = renderStarted(timedEndTurnResponse());
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(text(element.querySelector('.opponent-moving'))).toBe('Ruch przeciwnika…');
+      expect(timer(element)).toBeNull();
+      advance(fixture, STEP_MS);
+      expect(timer(element)).toBeNull();
+
+      advance(fixture, STEP_MS);
+      expect(element.querySelector('.opponent-moving')).toBeNull();
+      expect(timer(element)).toBe('Pozostało: 45 s');
+      expect(element.querySelector('.turn-timer')?.getAttribute('role')).toBe('timer');
+      expect(element.querySelector('.turn-timer.urgent')).toBeNull();
+
+      advance(fixture, 1000);
+      expect(timer(element)).toBe('Pozostało: 44 s');
+      advance(fixture, 34_000);
+      expect(timer(element)).toBe('Pozostało: 10 s');
+      expect(element.querySelector('.turn-timer.urgent')).not.toBeNull();
+    });
+
+    it('shows the countdown in English', () => {
+      TestBed.inject(LanguageService).setLanguage('en');
+      const fixture = renderStarted(timed(boardView()));
+
+      expect(timer(fixture.nativeElement as HTMLElement)).toBe('Time left: 45 s');
+    });
+
+    it('sends end-turn when the countdown reaches zero', () => {
+      const fixture = renderStarted(timed(boardView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      expect(timer(element)).toBe('Pozostało: 1 s');
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+
+      advance(fixture, 1000);
+      const request = httpTesting.expectOne({
+        method: 'POST',
+        url: `/api/matches/${MATCH_ID}/end-turn`,
+      });
+      expect(request.request.body).toEqual({ turn: 5 });
+      request.flush(timedEndTurnResponse());
+      fixture.detectChanges();
+
+      // The playback of the computer turn stops the countdown; the next turn starts it again.
+      expect(timer(element)).toBeNull();
+      advance(fixture, STEP_MS * 2);
+      expect(timer(element)).toBe('Pozostało: 45 s');
+    });
+
+    it('sends end-turn at zero only after the request in flight settles', () => {
+      const fixture = renderStarted(timed(matchView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      playButtons(element)[0].click();
+      const play = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+
+      advance(fixture, 1000);
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+      expect(timer(element)).toBe('Pozostało: 0 s');
+
+      play.flush(timed(matchView()));
+      fixture.detectChanges();
+      const request = httpTesting.expectOne({
+        method: 'POST',
+        url: `/api/matches/${MATCH_ID}/end-turn`,
+      });
+      expect(request.request.body).toEqual({ turn: 1 });
+    });
+
+    it('drops the owed end-turn when the request in flight at zero gets a 409', () => {
+      const fixture = renderStarted(timed(matchView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      playButtons(element)[0].click();
+      const play = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+      advance(fixture, 1000);
+
+      play.flush({ message: 'stale' }, { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+      httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' });
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+    });
+
+    it('cancels the attack selection at zero and ends the turn', () => {
+      const fixture = renderStarted(timed(boardView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      button(element, '.player .character button.attack').click();
+      fixture.detectChanges();
+      expect(element.querySelector('.attack-player')).not.toBeNull();
+
+      advance(fixture, 1000);
+      expect(element.querySelector('.attack-player')).toBeNull();
+      expect(element.querySelector('.opponent .target')).toBeNull();
+      httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/attack` });
+    });
+
+    it('cancels the event target selection at zero and ends the turn', () => {
+      const fixture = renderStarted(timed(targetView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      playButtons(element)[2].click();
+      fixture.detectChanges();
+      expect(element.querySelector('.choose-target')).not.toBeNull();
+
+      advance(fixture, 1000);
+      expect(element.querySelector('.choose-target')).toBeNull();
+      expect(element.querySelector('.event-target')).toBeNull();
+      httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+    });
+
+    it('keeps counting through a move in the same turn', () => {
+      const fixture = renderStarted(timed(matchView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, 5000);
+      playButtons(element)[0].click();
+      httpTesting
+        .expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` })
+        .flush(timed(matchView()));
+      fixture.detectChanges();
+
+      expect(timer(element)).toBe('Pozostało: 40 s');
+    });
+
+    it('does not run without a time limit', () => {
+      const fixture = renderStarted(timed(matchView(), null));
+      const element = fixture.nativeElement as HTMLElement;
+      expect(timer(element)).toBeNull();
+
+      advance(fixture, LIMIT * 1000);
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+      fixture.destroy();
+    });
+
+    it('stops when the match ends', () => {
+      const fixture = renderStarted(timed(matchView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      button(element, '.end-turn').click();
+      httpTesting
+        .expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` })
+        .flush(finishedView('PLAYER', 'HP_DEPLETED'));
+      fixture.detectChanges();
+
+      expect(timer(element)).toBeNull();
+      advance(fixture, LIMIT * 1000);
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+    });
+
+    it('stops when the component is destroyed', () => {
+      const fixture = renderStarted(timed(matchView()));
+
+      fixture.destroy();
+      vi.advanceTimersByTime(LIMIT * 1000);
+
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+    });
+  });
+
   it('shows the win with its reason and a link to /new-match, without move buttons', async () => {
     const element = await renderWithMatch(finishedView('PLAYER', 'HP_DEPLETED'));
 
@@ -1298,7 +1501,7 @@ const LOG: LogEntry[] = [
  */
 function endTurnResponse(): MatchView {
   const before = boardView();
-  const opponentTurn = { number: 6, active: 'OPPONENT' } as const;
+  const opponentTurn = { number: 6, active: 'OPPONENT', timeLimitSeconds: null } as const;
   const opponent = {
     ...before.opponent,
     board: [...before.opponent.board, character(22, 'QA Senior', { canAttack: false })],
@@ -1328,14 +1531,19 @@ function endTurnResponse(): MatchView {
   });
   return {
     ...before,
-    turn: { number: 7, active: 'PLAYER' },
+    turn: { number: 7, active: 'PLAYER', timeLimitSeconds: null },
     player,
     opponent,
     log: LOG,
     replay: [
       step({ logSize: 2 }),
       step({ player, opponent, logSize: 3 }),
-      step({ turn: { number: 7, active: 'PLAYER' }, player, opponent, logSize: 5 }),
+      step({
+        turn: { number: 7, active: 'PLAYER', timeLimitSeconds: null },
+        player,
+        opponent,
+        logSize: 5,
+      }),
     ],
   };
 }

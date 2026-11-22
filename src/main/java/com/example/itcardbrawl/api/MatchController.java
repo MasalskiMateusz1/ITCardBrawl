@@ -73,10 +73,11 @@ public class MatchController {
 
 	@GetMapping("/matches/current")
 	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication, Locale locale) {
-		// The current state has no steps to replay.
-		return respond(matchService.current(playerKey(authentication))
-			.map(match -> new MatchOutcome(match, List.of()))
-			.orElse(null), locale);
+		// Deliberate side effect of a GET: the turn deadline is checked lazily (no background jobs), so a read past the
+		// deadline ends the player's turn and plays the computer turn. It only does what the next request would do
+		// anyway and is idempotent afterwards. Steps to replay only when the turn has just ended automatically (or
+		// was ended by a move rejected past the deadline).
+		return respond(matchService.current(playerKey(authentication)).orElse(null), locale);
 	}
 
 	@PostMapping(path = "/matches/{matchId}/play", consumes = MediaType.APPLICATION_JSON_VALUE)
