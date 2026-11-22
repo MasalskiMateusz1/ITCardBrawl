@@ -267,7 +267,8 @@ class MatchControllerTests {
 	}
 
 	// Who starts is random. When the computer starts, start plays its turn 1 right away — the player always
-	// gets the board on their own turn: turn 1 with a hand of 5, or turn 2 after drawing a sixth card.
+	// gets the board on their own turn: turn 1 with a hand of 5, or turn 2 with the second player bonus card
+	// and a drawn card on top of the 5.
 	@Test
 	void startAlwaysHandsTurnToPlayer() throws Exception {
 		DocumentContext match = start(newPlayer(), "testers");
@@ -292,7 +293,7 @@ class MatchControllerTests {
 		}
 		else {
 			assertThat((Integer) match.read("$.opponent.budget.max")).isEqualTo(1);
-			assertThat((List<?>) match.read("$.player.hand")).hasSize(6);
+			assertThat((List<?>) match.read("$.player.hand")).hasSize(7);
 			assertThat((Integer) match.read("$.player.deckCount")).isEqualTo(24);
 		}
 	}
@@ -533,7 +534,7 @@ class MatchControllerTests {
 
 	// --- Targeted events over HTTP (board set up in the store, so as not to depend on randomness) ---
 
-	private static final int TARGETED_EVENT = 900; // dev-force-push: DAMAGE TARGET 5
+	private static final int TARGETED_EVENT = 900; // dev-force-push: DAMAGE TARGET 3
 
 	private static final int UNTARGETED_EVENT = 901; // dev-stackoverflow: DRAW SELF 2
 
@@ -618,7 +619,7 @@ class MatchControllerTests {
 		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
 				playBody(match, TARGETED_EVENT, "{\"kind\":\"PLAYER\",\"side\":\"OPPONENT\"}"));
 
-		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(24);
+		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(27);
 		assertThat((List<Integer>) after.read("$.player.hand[*].instanceId")).doesNotContain(TARGETED_EVENT);
 	}
 
@@ -630,8 +631,9 @@ class MatchControllerTests {
 		DocumentContext after = move(player(sub), match.read("$.matchId"), "play",
 				playBody(match, TARGETED_EVENT, "{\"kind\":\"CHARACTER\",\"instanceId\":" + ENEMY_CHARACTER + "}"));
 
-		// The Manual Tester has less than 5 HP - five damage defeats it.
-		assertThat((List<Integer>) after.read("$.opponent.board[*].instanceId")).doesNotContain(ENEMY_CHARACTER);
+		// The Manual Tester has 5 HP - three damage hits it without defeating it.
+		assertThat((List<Integer>) after.read("$.opponent.board[?(@.instanceId == " + ENEMY_CHARACTER + ")].damage"))
+			.containsExactly(3);
 		assertThat((Integer) after.read("$.opponent.hp")).isEqualTo(30);
 	}
 

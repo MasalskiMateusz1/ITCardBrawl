@@ -31,7 +31,7 @@ public final class CardCatalogLoader {
 		if (data == null) {
 			throw new IllegalStateException("Pusty katalog kart: " + resource.getDescription());
 		}
-		return new CardCatalog(data.factions(), data.cards(), data.decks());
+		return new CardCatalog(data.factions(), data.cards(), data.decks(), data.secondPlayerBonus());
 	}
 
 }

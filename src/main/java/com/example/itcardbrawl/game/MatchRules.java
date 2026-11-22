@@ -4,7 +4,8 @@ package com.example.itcardbrawl.game;
  * Match rule constants in one place.
  *
  * <p>Starting state = the start of the starting side's turn 1: both sides have {@link #STARTING_HAND} cards in hand,
- * the starting side has a budget of 1/1, the other side 0/0. The budget grows by 1 per own turn up to
+ * the starting side has a budget of 1/1, the other side 0/0. The non-starting side also gets the catalog's second player
+ * bonus card ({@link CardCatalog#secondPlayerBonus()}) on top of its hand. The budget grows by 1 per own turn up to
  * {@link #BUDGET_CAP}. Every turn starts by drawing {@link #DRAW_PER_TURN} card, except the starting side's first turn
  * (rule enforced since S-03).
  */
