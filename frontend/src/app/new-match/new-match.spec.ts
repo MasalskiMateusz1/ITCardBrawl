@@ -32,6 +32,7 @@ const MATCH: MatchView = {
     activeEvents: [],
     graveyardCount: 0,
     lastEvent: null,
+    graveyard: [],
   },
   opponent: {
     faction: { id: 'testers', name: 'Testerzy' },
@@ -44,6 +45,7 @@ const MATCH: MatchView = {
     activeEvents: [],
     graveyardCount: 0,
     lastEvent: null,
+    graveyard: [],
   },
   result: null,
   log: [],

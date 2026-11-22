@@ -54,6 +54,7 @@ const CARDS: Omit<HandCard, 'playable' | 'targets'>[] = [
     duration: null,
     effects: [],
     requiresTarget: false,
+    faction: 'developers',
   },
   {
     instanceId: 2,
@@ -69,6 +70,7 @@ const CARDS: Omit<HandCard, 'playable' | 'targets'>[] = [
     duration: null,
     effects: [],
     requiresTarget: false,
+    faction: 'developers',
   },
   {
     instanceId: 3,
@@ -84,6 +86,7 @@ const CARDS: Omit<HandCard, 'playable' | 'targets'>[] = [
     duration: 2,
     effects: [BUFF],
     requiresTarget: true,
+    faction: 'developers',
   },
   {
     instanceId: 4,
@@ -99,6 +102,7 @@ const CARDS: Omit<HandCard, 'playable' | 'targets'>[] = [
     duration: 0,
     effects: [GAIN],
     requiresTarget: false,
+    faction: 'neutral',
   },
   {
     instanceId: 5,
@@ -114,6 +118,7 @@ const CARDS: Omit<HandCard, 'playable' | 'targets'>[] = [
     duration: null,
     effects: [],
     requiresTarget: false,
+    faction: 'neutral',
   },
 ];
 
@@ -150,6 +155,8 @@ function character(
     keywords: [],
     trapped: false,
     attackTargets: [],
+    cost: 2,
+    faction: 'developers',
     ...overrides,
   };
 }
@@ -170,6 +177,7 @@ function matchView(active: Side = 'PLAYER'): MatchView {
       activeEvents: [],
       graveyardCount: 0,
       lastEvent: null,
+      graveyard: [],
     },
     opponent: {
       faction: { id: 'testers', name: 'Testerzy' },
@@ -182,6 +190,7 @@ function matchView(active: Side = 'PLAYER'): MatchView {
       activeEvents: [],
       graveyardCount: 0,
       lastEvent: null,
+      graveyard: [],
     },
     result: null,
     log: [],
@@ -622,6 +631,8 @@ describe('MatchTable', () => {
             turnsLeft: 2,
             effects: [BUFF],
             targetName: 'Tech Lead',
+            cost: 3,
+            faction: 'neutral',
           },
         ],
       },
@@ -638,6 +649,8 @@ describe('MatchTable', () => {
               { kind: 'RUSH', scope: 'OWN_BOARD', amount: 0, text: 'Własne postacie: Szarża' },
             ],
             targetName: null,
+            cost: 4,
+            faction: 'testers',
           },
         ],
       },

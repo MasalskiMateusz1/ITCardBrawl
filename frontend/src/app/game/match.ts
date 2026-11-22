@@ -99,6 +99,8 @@ export type HandCard = {
   requiresTarget: boolean;
   playable: boolean;
   targets: Target[];
+  /** The card's own faction id (`neutral` for neutral cards in a faction deck). */
+  faction: string;
 };
 
 /**
@@ -119,6 +121,9 @@ export type BoardCharacter = {
   keywords: AbilityKeyword[];
   trapped: boolean;
   attackTargets: Target[];
+  cost: number;
+  /** The card's own faction id, the same ids as `FactionRef.id` (plus `neutral`). */
+  faction: string;
 };
 
 export type ActiveEvent = {
@@ -129,6 +134,19 @@ export type ActiveEvent = {
   effects: EffectView[];
   /** The target character's name, or `null` when the event has no character target. */
   targetName: string | null;
+  cost: number;
+  /** The card's own faction id, the same ids as `FactionRef.id` (plus `neutral`). */
+  faction: string;
+};
+
+/** A card in a side's graveyard, oldest first. */
+export type GraveyardCard = {
+  instanceId: number;
+  cardId: string;
+  name: string;
+  type: CardType;
+  cost: number;
+  faction: string;
 };
 
 export type PlayerView = {
@@ -142,6 +160,7 @@ export type PlayerView = {
   activeEvents: ActiveEvent[];
   graveyardCount: number;
   lastEvent: PlayedEvent | null;
+  graveyard: GraveyardCard[];
 };
 
 export type OpponentView = {
@@ -155,6 +174,7 @@ export type OpponentView = {
   activeEvents: ActiveEvent[];
   graveyardCount: number;
   lastEvent: PlayedEvent | null;
+  graveyard: GraveyardCard[];
 };
 
 export type MatchResult = {

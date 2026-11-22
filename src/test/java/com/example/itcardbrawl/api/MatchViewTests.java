@@ -281,7 +281,53 @@ class MatchViewTests {
 		assertThat((Integer) json.read("$.player.budget.max")).isEqualTo(4);
 		Map<String, Object> player = json.read("$.player");
 		assertThat(player).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
-				"activeEvents", "graveyardCount", "lastEvent");
+				"activeEvents", "graveyardCount", "lastEvent", "graveyard");
+	}
+
+	// The card data the SPA renders: cost and faction on the board and in active events, faction in the hand.
+	@Test
+	void boardEventsAndHandCarryCostAndCardFaction() {
+		CardInstance neutralInHand = card(80, "neu-coffee");
+		BoardCharacter ownCharacter = character(81, "dev-tech-lead");
+		CardInstance neutralEvent = card(82, "neu-sprint-planning");
+		Match match = matchWithSides(List.of(neutralInHand), List.of(ownCharacter), List.of(),
+				List.of(new ActiveEvent(neutralEvent, 2)), List.of(), List.of());
+
+		MatchView view = MatchView.of(match, List.of(), CATALOG, formatter, Language.PL, List.of());
+
+		assertThat(view.player().hand().getFirst().faction()).as("neutralna karta w ręce").isEqualTo("neutral");
+		assertThat(view.player().board().getFirst().cost()).as("koszt postaci na stole").isEqualTo(10);
+		assertThat(view.player().board().getFirst().faction()).as("frakcja postaci na stole").isEqualTo("developers");
+		assertThat(view.player().activeEvents().getFirst().cost()).as("koszt aktywnego wydarzenia").isEqualTo(3);
+		assertThat(view.player().activeEvents().getFirst().faction()).as("neutralne wydarzenie w talii frakcji")
+			.isEqualTo("neutral");
+	}
+
+	// A destroyed character and an expired event land in their owner's graveyard, oldest first.
+	@Test
+	void destroyedCharacterAndExpiredEventShowInOwnersGraveyard() {
+		BoardCharacter attacker = character(90, "dev-tech-lead");
+		BoardCharacter defender = character(91, "tst-manual");
+		CardInstance expiring = card(92, "neu-sprint-planning");
+		Match match = matchWithSides(List.of(), List.of(attacker), List.of(defender), List.of(),
+				List.of(new ActiveEvent(expiring, 1)), List.of());
+		MatchEngine engine = new MatchEngine();
+		Match afterAttack = engine.apply(match, Side.PLAYER, new Move.Attack(90, 91));
+		Match afterTurn = engine.apply(afterAttack, Side.PLAYER, new Move.EndTurn());
+
+		MatchView view = MatchView.of(afterTurn, List.of(), CATALOG, formatter, Language.PL, List.of());
+		DocumentContext json = JsonPath.parse(JsonMapper.builder().build().writeValueAsString(view));
+
+		assertThat(view.player().graveyard()).as("cmentarz gracza").isEmpty();
+		assertThat(view.opponent().graveyard()).as("cmentarz przeciwnika").containsExactly(
+				new MatchView.GraveyardCardView(91, "tst-manual", "Tester manualny",
+						com.example.itcardbrawl.game.CardType.CHARACTER, 3, "testers"),
+				new MatchView.GraveyardCardView(92, "neu-sprint-planning", "Planowanie sprintu",
+						com.example.itcardbrawl.game.CardType.EVENT, 3, "neutral"));
+		assertThat(view.opponent().graveyardCount()).as("licznik cmentarza").isEqualTo(2);
+		Map<String, Object> entry = json.read("$.opponent.graveyard[0]");
+		assertThat(entry).as("klucze karty na cmentarzu")
+			.containsOnlyKeys("instanceId", "cardId", "name", "type", "cost", "faction");
 	}
 
 	// A match whose log consists of consecutive TurnStarted entries (turn 1..logSize), sides without cards.

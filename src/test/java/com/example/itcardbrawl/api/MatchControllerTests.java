@@ -298,10 +298,10 @@ class MatchControllerTests {
 		// The player contract contains only hp/maxHp — the former counter is no longer in the JSON.
 		Map<String, Object> player = match.read("$.player");
 		assertThat(player).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
-				"activeEvents", "graveyardCount", "lastEvent");
+				"activeEvents", "graveyardCount", "lastEvent", "graveyard");
 		Map<String, Object> opponent = match.read("$.opponent");
 		assertThat(opponent).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "handCount", "board",
-				"activeEvents", "graveyardCount", "lastEvent");
+				"activeEvents", "graveyardCount", "lastEvent", "graveyard");
 		assertThat((Integer) match.read("$.player.budget.current")).isEqualTo(1);
 		assertThat((Integer) match.read("$.player.budget.max")).isEqualTo(1);
 		int turn = match.read("$.turn.number");
@@ -840,9 +840,9 @@ class MatchControllerTests {
 			assertThat(stepPlayer).containsKey("hp").containsEntry("maxHp", MatchRules.MAX_HP);
 			// The full list of keys: the budget is under budget, the former field name is gone.
 			assertThat(stepPlayer).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "hand", "board",
-					"activeEvents", "graveyardCount", "lastEvent");
+					"activeEvents", "graveyardCount", "lastEvent", "graveyard");
 			assertThat(opponent).containsOnlyKeys("faction", "hp", "maxHp", "budget", "deckCount", "handCount",
-					"board", "activeEvents", "graveyardCount", "lastEvent");
+					"board", "activeEvents", "graveyardCount", "lastEvent", "graveyard");
 			@SuppressWarnings("unchecked")
 			Map<String, Object> playerBudget = (Map<String, Object>) stepPlayer.get("budget");
 			assertThat(playerBudget).containsOnlyKeys("current", "max");
