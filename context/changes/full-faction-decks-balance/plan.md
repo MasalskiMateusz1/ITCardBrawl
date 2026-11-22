@@ -555,12 +555,12 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 7.1 `./mvnw -B verify` przechodzi (w tym testy z zegarem stałym)
-- [x] 7.2 Testy frontu przechodzą: `npx ng test --watch=false`
-- [x] 7.3 Build SPA przechodzi: `npm run build`
+- [x] 7.1 `./mvnw -B verify` przechodzi (w tym testy z zegarem stałym) — a057a99
+- [x] 7.2 Testy frontu przechodzą: `npx ng test --watch=false` — a057a99
+- [x] 7.3 Build SPA przechodzi: `npm run build` — a057a99
 
 #### Manual
 
-- [x] 7.4 Licznik startuje po odtwarzaniu, odlicza od 45 s, po zerze tura kończy się sama
-- [x] 7.5 Zamknięcie karty > 50 s i powrót pokazuje rozegraną turę komputera
+- [x] 7.4 Licznik startuje po odtwarzaniu, odlicza od 45 s, po zerze tura kończy się sama — a057a99
+- [x] 7.5 Zamknięcie karty > 50 s i powrót pokazuje rozegraną turę komputera — a057a99
 - [ ] 7.6 Na wdrożonej wersji 3 partie zmierzone stoperem, każda ≤ 15 min

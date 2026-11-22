@@ -115,6 +115,8 @@ export class MatchTable {
   private countdownTimer: ReturnType<typeof setInterval> | null = null;
   /** The match and turn the countdown runs for; a response for the same turn keeps it running. */
   private countdownTurn: string | null = null;
+  /** The countdown hit zero while a request was in flight; the turn is ended once it settles. */
+  private endTurnWhenIdle = false;
 
   constructor() {
     // The first run is the entry (the start response handed over by new-match, or GET /current);
@@ -232,27 +234,34 @@ export class MatchTable {
     }
     this.error.set(null);
     this.pending.set(true);
-    request.pipe(finalize(() => this.pending.set(false))).subscribe({
-      next: (match) => {
-        this.clearSelection();
-        this.show(match);
-      },
-      error: (error: unknown) => {
-        this.clearSelection();
-        if (!(error instanceof HttpErrorResponse)) {
-          this.error.set('moveFailed');
-        } else if (error.status === 409 || error.status === 404) {
-          // 409: the view was stale (another turn or match) — refresh it silently.
-          // 404: the match is gone (e.g. backend restart) — loadMatch sends the player to /new-match.
-          this.loadMatch();
-        } else if (error.status === 400) {
-          this.error.set('moveRejected');
-        } else if (error.status !== 401) {
-          // A 401 is handled by authInterceptor, which redirects to /sign-in.
-          this.error.set('moveFailed');
-        }
-      },
-    });
+    request
+      .pipe(
+        finalize(() => {
+          this.pending.set(false);
+          this.endTurnIfTimeUp();
+        }),
+      )
+      .subscribe({
+        next: (match) => {
+          this.clearSelection();
+          this.show(match);
+        },
+        error: (error: unknown) => {
+          this.clearSelection();
+          if (!(error instanceof HttpErrorResponse)) {
+            this.error.set('moveFailed');
+          } else if (error.status === 409 || error.status === 404) {
+            // 409: the view was stale (another turn or match) — refresh it silently.
+            // 404: the match is gone (e.g. backend restart) — loadMatch sends the player to /new-match.
+            this.loadMatch();
+          } else if (error.status === 400) {
+            this.error.set('moveRejected');
+          } else if (error.status !== 401) {
+            // A 401 is handled by authInterceptor, which redirects to /sign-in.
+            this.error.set('moveFailed');
+          }
+        },
+      });
   }
 
   private clearSelection(): void {
@@ -315,8 +324,8 @@ export class MatchTable {
 
   /**
    * Starts the countdown when the player's turn begins, keeps it for another response in the same
-   * turn and stops it outside the player's turn. At zero the turn is ended, unless a request is in
-   * flight.
+   * turn and stops it outside the player's turn. At zero the target selection is cancelled and the
+   * turn is ended.
    */
   private updateCountdown(match: MatchView): void {
     const limit = match.turn.timeLimitSeconds;
@@ -336,16 +345,33 @@ export class MatchTable {
       this.secondsLeft.set(left);
       if (left === 0) {
         this.clearCountdownTimer();
-        if (!this.busy()) {
-          this.endTurn();
-        }
+        this.timeUp();
       }
     }, 1000);
+  }
+
+  /**
+   * The turn time is up: any attack or event target selection is cancelled and the turn is ended.
+   * With a request in flight the end of turn waits until it settles (see `endTurnIfTimeUp`).
+   */
+  private timeUp(): void {
+    this.clearSelection();
+    this.endTurnWhenIdle = true;
+    this.endTurnIfTimeUp();
+  }
+
+  /** Sends the end of turn owed by an expired countdown once nothing is in flight. */
+  private endTurnIfTimeUp(): void {
+    if (this.endTurnWhenIdle && this.countdownTurn !== null && !this.busy()) {
+      this.endTurnWhenIdle = false;
+      this.endTurn();
+    }
   }
 
   private stopCountdown(): void {
     this.clearCountdownTimer();
     this.countdownTurn = null;
+    this.endTurnWhenIdle = false;
     this.secondsLeft.set(null);
   }
 
