@@ -47,8 +47,8 @@ ItCardBrawl to przeglądarkowa gra karciana dla ludzi z IT na wieczór po pracy:
 | S-02 | match-setup-table          | gracz wybiera frakcję, rozpoczyna partię i widzi stół ze stresem obu stron | S-01          | FR-002, FR-003, FR-007, US-01             | done     |
 | S-03 | first-full-match           | gracz rozgrywa pełną partię postaciami przeciw komputerowi aż do wyniku    | S-02          | FR-004, FR-006, FR-008, US-01             | done     |
 | S-04 | event-cards                | gracz i komputer zagrywają karty wydarzeń o przewidywalnych efektach       | S-03          | FR-005, US-01                             | done     |
-| S-05 | sensible-computer-opponent | gracz mierzy się z komputerem, który gra sensownie i pokazuje powód ruchu  | S-03          | FR-003, FR-006, US-01, Guardrails         | done        |
-| S-06 | full-faction-decks-balance | gracz gra jedną z 2 pełnych, zbalansowanych talii po 30 kart z humorem IT  | S-04, S-05    | FR-002, US-01, NFR (≤ 15 min), Guardrails | proposed |
+| S-05 | sensible-computer-opponent | gracz mierzy się z komputerem, który gra sensownie i pokazuje powód ruchu  | S-03          | FR-003, FR-006, US-01, Guardrails         | done     |
+| S-06 | full-faction-decks-balance | gracz gra jedną z 2 pełnych, zbalansowanych talii po 30 kart z humorem IT  | S-04, S-05    | FR-002, US-01, NFR (≤ 15 min), Guardrails | in-progress |
 
 ## Streams
 
@@ -183,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Treść kart obu frakcji (nazwy, żarty, wartości) — Owner: user. Block: no. Nazwy, opisy i teksty kart i frakcji muszą powstać po polsku i po angielsku (`factions.json` trzyma każde pole jako `{ "pl", "en" }`, a walidacja katalogu wymaga obu języków — zmiana ui-in-english-and-polish).
   - Jak sprawdzamy balans i czas partii przed udostępnieniem znajomym? — Owner: user. Block: no.
 - **Risk:** Balans ma sens dopiero przy kompletnych zasadach (wydarzenia) i sensownym przeciwniku, więc idzie na końcu; treść kart to praca autorska, której agent nie wymyśli za autora.
-- **Status:** proposed
+- **Status:** in-progress
 
 ## Backlog Handoff
 
