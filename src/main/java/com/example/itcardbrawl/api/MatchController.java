@@ -73,10 +73,8 @@ public class MatchController {
 
 	@GetMapping("/matches/current")
 	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication, Locale locale) {
-		// The current state has no steps to replay.
-		return respond(matchService.current(playerKey(authentication))
-			.map(match -> new MatchOutcome(match, List.of()))
-			.orElse(null), locale);
+		// Steps to replay only when the player's turn has just ended automatically (deadline passed).
+		return respond(matchService.current(playerKey(authentication)).orElse(null), locale);
 	}
 
 	@PostMapping(path = "/matches/{matchId}/play", consumes = MediaType.APPLICATION_JSON_VALUE)

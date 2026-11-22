@@ -31,6 +31,9 @@ export const REPLAY_STEP_MS = new InjectionToken<number>('REPLAY_STEP_MS', {
   factory: () => 700,
 });
 
+/** The countdown is highlighted from this many seconds left. */
+const URGENT_SECONDS = 10;
+
 @Component({
   imports: [RouterLink],
   selector: 'app-match-table',
@@ -84,6 +87,15 @@ export class MatchTable {
    * not from the log: the first step's log still ends with the previous turn's reasons.
    */
   protected readonly moveReason = computed(() => (this.replaying() ? this.replayReason() : null));
+  /**
+   * Seconds left in the player's turn, counted from `turn.timeLimitSeconds` once playback ends;
+   * null when no countdown runs.
+   */
+  protected readonly secondsLeft = signal<number | null>(null);
+  protected readonly urgent = computed(() => {
+    const seconds = this.secondsLeft();
+    return seconds !== null && seconds <= URGENT_SECONDS;
+  });
   /** The legal attack targets of the selected attacker, as sent by the backend. */
   private readonly attackTargets = computed(() => {
     const attackerId = this.selectedAttacker();
@@ -100,6 +112,9 @@ export class MatchTable {
   private replayTimer: ReturnType<typeof setTimeout> | null = null;
   /** A language change during playback refetches the table once playback ends. */
   private reloadAfterReplay = false;
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
+  /** The match and turn the countdown runs for; a response for the same turn keeps it running. */
+  private countdownTurn: string | null = null;
 
   constructor() {
     // The first run is the entry (the start response handed over by new-match, or GET /current);
@@ -121,6 +136,7 @@ export class MatchTable {
     });
     inject(DestroyRef).onDestroy(() => {
       this.stopReplay();
+      this.stopCountdown();
       this.loadRequest?.unsubscribe();
     });
   }
@@ -253,8 +269,11 @@ export class MatchTable {
     const steps = match.replay;
     if (steps.length <= 1) {
       this.match.set(match);
+      this.updateCountdown(match);
       return;
     }
+    // The turn changes with the playback — the countdown starts again once it ends.
+    this.stopCountdown();
     // A GET /current still in flight would overwrite the playback — redo it once playback ends.
     if (this.loadRequest !== null && !this.loadRequest.closed) {
       this.loadRequest.unsubscribe();
@@ -276,6 +295,7 @@ export class MatchTable {
 
   private finishReplay(match: MatchView): void {
     this.match.set(match);
+    this.updateCountdown(match);
     this.replaying.set(false);
     this.replayReason.set(null);
     if (this.reloadAfterReplay) {
@@ -293,6 +313,49 @@ export class MatchTable {
     this.replayReason.set(null);
   }
 
+  /**
+   * Starts the countdown when the player's turn begins, keeps it for another response in the same
+   * turn and stops it outside the player's turn. At zero the turn is ended, unless a request is in
+   * flight.
+   */
+  private updateCountdown(match: MatchView): void {
+    const limit = match.turn.timeLimitSeconds;
+    if (match.status !== 'IN_PROGRESS' || match.turn.active !== 'PLAYER' || limit === null) {
+      this.stopCountdown();
+      return;
+    }
+    const turn = `${match.matchId}:${match.turn.number}`;
+    if (turn === this.countdownTurn) {
+      return;
+    }
+    this.stopCountdown();
+    this.countdownTurn = turn;
+    this.secondsLeft.set(limit);
+    this.countdownTimer = setInterval(() => {
+      const left = Math.max(0, (this.secondsLeft() ?? 0) - 1);
+      this.secondsLeft.set(left);
+      if (left === 0) {
+        this.clearCountdownTimer();
+        if (!this.busy()) {
+          this.endTurn();
+        }
+      }
+    }, 1000);
+  }
+
+  private stopCountdown(): void {
+    this.clearCountdownTimer();
+    this.countdownTurn = null;
+    this.secondsLeft.set(null);
+  }
+
+  private clearCountdownTimer(): void {
+    if (this.countdownTimer !== null) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+  }
+
   private loadMatch(): void {
     this.loadRequest?.unsubscribe();
     this.loadRequest = this.gameService.currentMatch().subscribe({
@@ -308,6 +371,7 @@ export class MatchTable {
           // A 401 is handled by authInterceptor, which redirects to /sign-in.
           // Drop data from an earlier load so it isn't shown in the old language next to the error.
           this.match.set(null);
+          this.stopCountdown();
           this.error.set('loadMatch');
         }
       },

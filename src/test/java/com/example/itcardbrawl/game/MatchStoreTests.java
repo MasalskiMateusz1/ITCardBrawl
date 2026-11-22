@@ -3,6 +3,7 @@ package com.example.itcardbrawl.game;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -26,7 +27,7 @@ class MatchStoreTests {
 	@Test
 	void parallelUpdatesDoNotLoseChanges() throws Exception {
 		MatchStore store = new MatchStore();
-		store.save(KEY, match(0));
+		store.save(KEY, entry(match(0)));
 		int updatesPerThread = 5_000;
 		CountDownLatch start = new CountDownLatch(1);
 		Runnable worker = () -> {
@@ -57,7 +58,7 @@ class MatchStoreTests {
 	void exceptionInChangeKeepsPreviousMatchAndPropagates() {
 		MatchStore store = new MatchStore();
 		Match before = match(3);
-		store.save(KEY, before);
+		store.save(KEY, entry(before));
 
 		assertThatThrownBy(() -> store.update(KEY, m -> {
 			throw new IllegalMoveException("Odrzucony ruch");
@@ -69,9 +70,9 @@ class MatchStoreTests {
 	@Test
 	void updateReturnsNewStateAndStoresIt() {
 		MatchStore store = new MatchStore();
-		store.save(KEY, match(1));
+		store.save(KEY, entry(match(1)));
 
-		Match updated = store.update(KEY, MatchStoreTests::nextTurn).orElseThrow();
+		Match updated = store.update(KEY, MatchStoreTests::nextTurn).orElseThrow().match();
 
 		assertThat(updated.turnNumber()).isEqualTo(2);
 		assertThat(store.findCurrent(KEY)).containsSame(updated);
@@ -80,17 +81,17 @@ class MatchStoreTests {
 	@Test
 	void changeIsRetriedOnTheNewStateWhenAnotherWriteWins() {
 		MatchStore store = new MatchStore();
-		store.save(KEY, match(1));
+		store.save(KEY, entry(match(1)));
 		Match concurrent = match(10);
 		AtomicInteger calls = new AtomicInteger();
 
 		Match updated = store.update(KEY, m -> {
 			if (calls.incrementAndGet() == 1) {
 				// Another write wins the race while the first attempt is still computing.
-				store.save(KEY, concurrent);
+				store.save(KEY, entry(concurrent));
 			}
 			return nextTurn(m);
-		}).orElseThrow();
+		}).orElseThrow().match();
 
 		assertThat(calls).hasValue(2);
 		assertThat(updated.id()).isEqualTo(concurrent.id());
@@ -106,6 +107,26 @@ class MatchStoreTests {
 			throw new AssertionError("Zmiana nie powinna zostać wywołana");
 		})).isEmpty();
 		assertThat(store.findCurrent(KEY)).isEmpty();
+	}
+
+	@Test
+	void updateKeepsDeadlineAlongsideMatch() {
+		MatchStore store = new MatchStore();
+		Instant deadline = Instant.parse("2026-01-01T12:00:00Z");
+		store.save(KEY, new MatchStore.Entry(match(1), deadline));
+
+		MatchStore.Entry updated = store.update(KEY, MatchStoreTests::nextTurn).orElseThrow();
+
+		assertThat(updated.playerTurnDeadline()).isEqualTo(deadline);
+		assertThat(store.find(KEY)).containsSame(updated);
+	}
+
+	private static MatchStore.Entry entry(Match match) {
+		return new MatchStore.Entry(match, null);
+	}
+
+	private static MatchStore.Entry nextTurn(MatchStore.Entry entry) {
+		return entry.withMatch(nextTurn(entry.match()));
 	}
 
 	private static Match nextTurn(Match match) {

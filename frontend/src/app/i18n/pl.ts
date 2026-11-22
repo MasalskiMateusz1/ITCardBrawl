@@ -47,6 +47,7 @@ export const pl: Messages = {
     target: 'Cel',
     attackPlayer: 'Atakuj gracza',
     endTurn: 'Zakończ turę',
+    timeLeft: (s) => `Pozostało: ${s} s`,
     cancelAttack: 'Anuluj atak',
     opponentMoving: 'Ruch przeciwnika…',
     board: 'Stół',

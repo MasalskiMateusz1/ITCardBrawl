@@ -170,6 +170,16 @@
   flex: 1;
 }
 
+.turn-timer {
+  font-variant-numeric: tabular-nums;
+  color: #555;
+}
+
+.turn-timer.urgent {
+  font-weight: bold;
+  color: #c62828;
+}
+
 .opponent-moving,
 .move-reason {
   margin: 0;

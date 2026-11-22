@@ -1,5 +1,7 @@
 package com.example.itcardbrawl.game;
 
+import java.time.Duration;
+
 /**
  * Match rule constants in one place.
  *
@@ -27,6 +29,15 @@ public final class MatchRules {
 
 	/** Maximum number of characters on one side's board. */
 	public static final int BOARD_LIMIT = 5;
+
+	/** Time the player has for one turn; after it the server ends the turn on the next request. */
+	public static final Duration TURN_LIMIT = Duration.ofSeconds(45);
+
+	/** Extra server-side allowance on top of the turn limit for network and rendering delays. */
+	public static final Duration TURN_GRACE = Duration.ofSeconds(3);
+
+	/** Delay between replayed computer moves in the SPA (mirror of its {@code REPLAY_STEP_MS}). */
+	public static final Duration REPLAY_STEP = Duration.ofMillis(700);
 
 	private MatchRules() {
 	}

@@ -172,7 +172,11 @@ export type LogEntry = {
   reason: boolean;
 };
 
-export type TurnView = { number: number; active: Side };
+/**
+ * `timeLimitSeconds` is the player's turn limit (null outside the player's turn); the SPA counts it
+ * down from the end of the playback, the backend keeps its own deadline.
+ */
+export type TurnView = { number: number; active: Side; timeLimitSeconds: number | null };
 
 /**
  * The table after one computer move. The log is sent once, in the final state:

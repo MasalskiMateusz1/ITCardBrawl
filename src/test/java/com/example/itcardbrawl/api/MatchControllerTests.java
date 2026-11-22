@@ -23,6 +23,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -43,6 +45,7 @@ import com.example.itcardbrawl.game.MatchService;
 import com.example.itcardbrawl.game.MatchSide;
 import com.example.itcardbrawl.game.MatchStore;
 import com.example.itcardbrawl.game.Move;
+import com.example.itcardbrawl.game.MutableClock;
 import com.example.itcardbrawl.game.Target;
 
 import com.jayway.jsonpath.DocumentContext;
@@ -51,6 +54,9 @@ import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -82,6 +88,21 @@ class MatchControllerTests {
 
 	@Autowired
 	private MatchStore store;
+
+	@Autowired
+	private MutableClock clock;
+
+	// A fixed clock moved forward by hand; it only ever advances, so the tests sharing the context stay independent.
+	@TestConfiguration
+	static class FixedClockConfig {
+
+		@Bean
+		@Primary
+		MutableClock testClock() {
+			return new MutableClock(Instant.parse("2026-01-01T12:00:00Z"));
+		}
+
+	}
 
 	// The match store is shared in the Spring context - each test uses its own player.
 	// oauth2Login() takes the principal name from the "sub" attribute.
@@ -545,19 +566,21 @@ class MatchControllerTests {
 	// Starts a match over HTTP, then replaces the hand, budget and boards with known cards.
 	private DocumentContext seededTable(String sub) throws Exception {
 		DocumentContext started = start(player(sub), "developers");
-		store.update("github:" + sub, m -> {
-			MatchSide p = m.player();
-			MatchSide o = m.opponent();
-			MatchSide player = new MatchSide(p.faction(), p.deck(),
-					List.of(instance(TARGETED_EVENT, "dev-force-push"), instance(UNTARGETED_EVENT, "dev-stackoverflow")),
-					30, MatchRules.BUDGET_CAP, MatchRules.BUDGET_CAP, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
-					p.graveyard(), List.of());
-			MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 30, o.budgetCurrent(),
-					o.budgetMax(), List.of(new BoardCharacter(instance(ENEMY_CHARACTER, "tst-manual"), 0, false, false)),
-					o.graveyard(), List.of());
-			return new Match(m.id(), m.turnNumber(), m.activeSide(), player, opponent, m.status(), m.result(), m.log());
-		});
+		store.update("github:" + sub, entry -> entry.withMatch(seeded(entry.match())));
 		return started;
+	}
+
+	private Match seeded(Match m) {
+		MatchSide p = m.player();
+		MatchSide o = m.opponent();
+		MatchSide player = new MatchSide(p.faction(), p.deck(),
+				List.of(instance(TARGETED_EVENT, "dev-force-push"), instance(UNTARGETED_EVENT, "dev-stackoverflow")),
+				30, MatchRules.BUDGET_CAP, MatchRules.BUDGET_CAP, List.of(new BoardCharacter(instance(OWN_CHARACTER, "dev-tech-lead"), 0, false, false)),
+				p.graveyard(), List.of());
+		MatchSide opponent = new MatchSide(o.faction(), o.deck(), o.hand(), 30, o.budgetCurrent(),
+				o.budgetMax(), List.of(new BoardCharacter(instance(ENEMY_CHARACTER, "tst-manual"), 0, false, false)),
+				o.graveyard(), List.of());
+		return new Match(m.id(), m.turnNumber(), m.activeSide(), player, opponent, m.status(), m.result(), m.log());
 	}
 
 	private CardInstance instance(int instanceId, String cardId) {
@@ -888,6 +911,70 @@ class MatchControllerTests {
 		}
 		assertThat(polishTexts).contains("Kończysz turę");
 		assertThat(englishTexts).contains("You end your turn");
+	}
+
+	// --- Turn time limit ---
+
+	@Test
+	void turnCarriesTimeLimitOnlyOnPlayersTurn() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext match = endTurn(player, start(player, "developers"));
+
+		if ("IN_PROGRESS".equals(match.read("$.status"))) {
+			assertThat((Integer) match.read("$.turn.timeLimitSeconds")).isEqualTo(45);
+		}
+		assertThat((Integer) match.read("$.replay[0].turn.timeLimitSeconds")).isNull();
+		assertThat((Integer) current(player, "pl").read("$.turn.timeLimitSeconds"))
+			.isEqualTo("IN_PROGRESS".equals(match.read("$.status")) ? 45 : null);
+	}
+
+	@Test
+	void currentBeforeDeadlineReturnsUnchangedTurn() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext started = start(player, "developers");
+		clock.advance(Duration.ofSeconds(10));
+
+		DocumentContext current = current(player, "pl");
+
+		assertThat((Integer) current.read("$.turn.number")).isEqualTo(started.read("$.turn.number"));
+		assertThat((String) current.read("$.turn.active")).isEqualTo("PLAYER");
+		assertThat((List<?>) current.read("$.replay")).isEmpty();
+	}
+
+	@Test
+	void currentAfterDeadlineReturnsComputerTurnReplay() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext started = start(player, "developers");
+		int turn = started.read("$.turn.number");
+		clock.advance(Duration.ofMinutes(10));
+
+		DocumentContext current = current(player, "pl");
+
+		List<String> texts = current.read("$.log[*].text");
+		assertThat(texts).contains("Kończysz turę", "Tura przeciwnika " + (turn + 1));
+		assertThat((List<?>) current.read("$.replay")).hasSizeGreaterThanOrEqualTo(2);
+		assertThat((String) current.read("$.replay[0].turn.active")).isEqualTo("OPPONENT");
+		if ("IN_PROGRESS".equals(current.read("$.status"))) {
+			assertThat((Integer) current.read("$.turn.number")).isEqualTo(turn + 2);
+			assertThat((String) current.read("$.turn.active")).isEqualTo("PLAYER");
+		}
+	}
+
+	@Test
+	void moveAfterDeadlineReturns409AndTurnIsEnded() throws Exception {
+		RequestPostProcessor player = newPlayer();
+		DocumentContext started = start(player, "developers");
+		int turn = started.read("$.turn.number");
+		clock.advance(Duration.ofMinutes(10));
+
+		mockMvc.perform(movePost(started.read("$.matchId"), "end-turn", "{\"turn\":" + turn + "}").with(player))
+			.andExpect(status().isConflict());
+
+		DocumentContext current = current(player, "pl");
+		assertThat((List<?>) current.read("$.replay")).isEmpty();
+		List<String> texts = current.read("$.log[*].text");
+		assertThat(texts).containsOnlyOnce("Kończysz turę");
+		assertThat(texts).contains("Tura przeciwnika " + (turn + 1));
 	}
 
 }
