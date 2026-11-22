@@ -30,6 +30,22 @@ jobs:
       - name: Testy backendu
         run: ./mvnw -B verify
 
+      # Balance simulation report (BalanceSimulationTests): always published, also when the tests fail
+      - name: Raport balansu (artefakt)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-report
+          path: target/balance/
+          if-no-files-found: warn
+
+      - name: Raport balansu (podsumowanie joba)
+        if: always()
+        run: |
+          if [ -f target/balance/summary.md ]; then
+            cat target/balance/summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
