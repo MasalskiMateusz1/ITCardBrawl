@@ -84,6 +84,26 @@ class ComputerOpponentTests {
 	}
 
 	@Test
+	void playsThePlayerSideWhenConstructedForIt() {
+		for (long seed = 0; seed < SEEDS; seed++) {
+			Match match = new MatchFactory(CATALOG, factoryRandom(seed, true)).create("developers");
+			assertThat(match.activeSide()).isEqualTo(Side.PLAYER);
+			ComputerOpponent player = new ComputerOpponent(ENGINE, EVALUATOR, new SplittableRandom(seed), Side.PLAYER);
+
+			List<Match> steps = player.playTurnSteps(match);
+
+			assertThat(steps).as("ziarno %d", seed).isNotEmpty();
+			Match last = steps.getLast();
+			assertThat(last.status() == Status.FINISHED || last.activeSide() == Side.OPPONENT).isTrue();
+			assertThat(last.log()).contains(new TurnEnded(Side.PLAYER));
+			assertThat(last.log()).doesNotContain(new TurnEnded(Side.OPPONENT));
+			List<MoveExplained> reasons = reasons(match, steps);
+			assertThat(reasons).as("ziarno %d", seed).isNotEmpty();
+			assertThat(reasons).allSatisfy(reason -> assertThat(reason.side()).isEqualTo(Side.PLAYER));
+		}
+	}
+
+	@Test
 	void takesWinningAttackEvenWhenOtherGoodMovesExist() {
 		BoardCharacter attacker = ready(character(1, 1, 3, 3));
 		CardInstance playable = character(2, 1, 2, 2);

@@ -1339,6 +1339,21 @@ describe('MatchTable', () => {
       expect(request.request.body).toEqual({ turn: 1 });
     });
 
+    it('drops the owed end-turn when the request in flight at zero gets a 409', () => {
+      const fixture = renderStarted(timed(matchView()));
+      const element = fixture.nativeElement as HTMLElement;
+
+      advance(fixture, (LIMIT - 1) * 1000);
+      playButtons(element)[0].click();
+      const play = httpTesting.expectOne({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
+      advance(fixture, 1000);
+
+      play.flush({ message: 'stale' }, { status: 409, statusText: 'Conflict' });
+      fixture.detectChanges();
+      httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' });
+      httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/end-turn` });
+    });
+
     it('cancels the attack selection at zero and ends the turn', () => {
       const fixture = renderStarted(timed(boardView()));
       const element = fixture.nativeElement as HTMLElement;

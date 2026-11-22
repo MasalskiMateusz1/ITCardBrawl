@@ -298,6 +298,19 @@ Przewaga Developerów i strony zaczynającej zmalała, ale nadal jest duża. Dal
 
 ---
 
+## Wagi AI (faza 5)
+
+`PositionEvaluator` ocenia postacie tym samym modelem co ta reguła. Przelicznik to `HP_PER_COST_POINT = ENEMY_HP_WEIGHT / PLAYER_DAMAGE_PRICE`, czyli punkt kosztu wyrażony w punktach HP wroga. Z niego wynikają `ATTACK_WEIGHT`, `HEALTH_WEIGHT`, `GUARD_VALUE` i `OVERTIME_VALUE` (ceny z sekcji Postacie × przelicznik).
+
+Plan fazy 5 zakładał samo przestrojenie istniejących stałych. Żeby korzystna wymiana na postać (`FAVORABLE_TRADE`) mogła wygrać z atakiem w gracza, potrzebne były też zmiany w strukturze oceny (`Score` bez zmian):
+
+- **`DAMAGE_DISCOUNT` = 0,1** zmienia znaczenie. Wcześniej było to 0,5 odejmowane od zdrowia. Teraz to udział wartości, który uszkodzona postać traci proporcjonalnie do `damage / health`. Obrażenia znikają na koniec tury, więc takie, które nie prowadzą do pokonania postaci, są prawie bezwartościowe. Wartość jest trochę powyżej zera, żeby z dwóch równych ruchów wygrywał ten z mniejszym kontratakiem.
+- **`SETUP_DAMAGE_SHARE` = 1,0** (nowa stała) to pełny udział dla uszkodzonej postaci strony nieaktywnej, którą strona aktywna może jeszcze dobić w tej turze. Taki cios przygotowuje dobicie, więc liczy się w całości.
+- **`finishable()`** (nowa heurystyka) wybiera te postacie. Pojemność dobicia to suma ataku postaci strony aktywnej, które mogą jeszcze zaatakować (bez ataku w tej turze, bez Trap, wystawione wcześniej albo z Rush). Cele są brane zachłannie według wartości przygotowania, z uwzględnieniem Guard. Karty w ręce się nie liczą (ręka jest ukryta). To przybliżenie „uderz, potem dobij drugą postacią” w ocenie na jeden ruch do przodu.
+- `characterValue(stats, damage, damageShare, extraGuard)` przyjmuje udział obrażeń jako parametr.
+
+Skutek: `FAVORABLE_TRADE` występuje w symulacji (ok. 900 na 1000 partii), a test `ComputerOpponentTests` z 20 ziarnami sprawdza wybór korzystnej wymiany. Każda zmiana tych stałych albo heurystyki wymaga pełnego pomiaru (sekcja niżej).
+
 ## Pomiar balansu
 
 Reguła wyceny daje ocenę z góry. O tym, czy przekłada się na balans, rozstrzyga symulacja komputer kontra komputer (`BalanceSimulationTests`, ślad w artefakcie CI `balance-report`).

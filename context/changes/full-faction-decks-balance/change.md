@@ -1,7 +1,7 @@
 ---
 change_id: full-faction-decks-balance
 title: Pełne talie frakcji i balans
-status: implemented
+status: impl_reviewed
 created: 2026-11-21
 updated: 2026-11-22
 archived_at: null

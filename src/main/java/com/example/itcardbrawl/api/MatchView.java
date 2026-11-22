@@ -87,9 +87,8 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 	public record TurnView(int number, Match.Side active, Integer timeLimitSeconds) {
 
 		static TurnView of(Match match) {
-			boolean playerTurn = match.status() == Match.Status.IN_PROGRESS && match.activeSide() == Match.Side.PLAYER;
 			return new TurnView(match.turnNumber(), match.activeSide(),
-					playerTurn ? (int) MatchRules.TURN_LIMIT.toSeconds() : null);
+					match.isPlayerTurn() ? (int) MatchRules.TURN_LIMIT.toSeconds() : null);
 		}
 
 	}

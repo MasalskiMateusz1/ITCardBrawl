@@ -1,6 +1,7 @@
 package com.example.itcardbrawl.game;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,16 +23,29 @@ public class MatchStore {
 	 *
 	 * @param playerTurnDeadline the moment after which the player's turn ends automatically; {@code null} when it is
 	 * not the player's turn (or the match is finished)
+	 * @param pendingReplay the computer turn of a turn ended automatically by a rejected (stale) move, kept until the
+	 * next read shows it once; empty when there is nothing to show
 	 */
-	public record Entry(Match match, Instant playerTurnDeadline) {
+	public record Entry(Match match, Instant playerTurnDeadline, List<Match> pendingReplay) {
 
 		public Entry {
 			Objects.requireNonNull(match, "match");
+			pendingReplay = List.copyOf(Objects.requireNonNull(pendingReplay, "pendingReplay"));
 		}
 
-		/** The same deadline with a different match state (e.g. a move within the same turn). */
+		/** An entry with nothing pending to replay. */
+		public Entry(Match match, Instant playerTurnDeadline) {
+			this(match, playerTurnDeadline, List.of());
+		}
+
+		/** The same deadline with a different match state (e.g. a move within the same turn); nothing pending. */
 		public Entry withMatch(Match next) {
 			return new Entry(next, playerTurnDeadline);
+		}
+
+		/** The same state with the given computer turn kept for the next read. */
+		public Entry withPendingReplay(List<Match> replay) {
+			return new Entry(match, playerTurnDeadline, replay);
 		}
 
 	}
