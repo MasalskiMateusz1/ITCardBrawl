@@ -3,7 +3,7 @@ project: ItCardBrawl
 version: 1
 status: draft                    # draft | active | locked
 created: 2026-11-16
-updated: 2026-11-21
+updated: 2026-11-22
 prd_version: 1
 main_goal: learn
 top_blocker: skills
@@ -48,7 +48,7 @@ ItCardBrawl to przeglądarkowa gra karciana dla ludzi z IT na wieczór po pracy:
 | S-03 | first-full-match           | gracz rozgrywa pełną partię postaciami przeciw komputerowi aż do wyniku    | S-02          | FR-004, FR-006, FR-008, US-01             | done     |
 | S-04 | event-cards                | gracz i komputer zagrywają karty wydarzeń o przewidywalnych efektach       | S-03          | FR-005, US-01                             | done     |
 | S-05 | sensible-computer-opponent | gracz mierzy się z komputerem, który gra sensownie i pokazuje powód ruchu  | S-03          | FR-003, FR-006, US-01, Guardrails         | done     |
-| S-06 | full-faction-decks-balance | gracz gra jedną z 2 pełnych, zbalansowanych talii po 30 kart z humorem IT  | S-04, S-05    | FR-002, US-01, NFR (≤ 15 min), Guardrails | in-progress |
+| S-06 | full-faction-decks-balance | gracz gra jedną z 2 pełnych, zbalansowanych talii po 30 kart z humorem IT  | S-04, S-05    | FR-002, US-01, NFR (≤ 15 min), Guardrails | done        |
 
 ## Streams
 
@@ -183,7 +183,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
   - Treść kart obu frakcji (nazwy, żarty, wartości) — Owner: user. Block: no. Nazwy, opisy i teksty kart i frakcji muszą powstać po polsku i po angielsku (`factions.json` trzyma każde pole jako `{ "pl", "en" }`, a walidacja katalogu wymaga obu języków — zmiana ui-in-english-and-polish).
   - Jak sprawdzamy balans i czas partii przed udostępnieniem znajomym? — Owner: user. Block: no.
 - **Risk:** Balans ma sens dopiero przy kompletnych zasadach (wydarzenia) i sensownym przeciwniku, więc idzie na końcu; treść kart to praca autorska, której agent nie wymyśli za autora.
-- **Status:** in-progress
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -228,3 +228,4 @@ This table is the clean handoff to Jira/Linear or any MCP-backed backlog. Includ
 - **S-03: gracz zagrywa karty postaci na stół, komputer rozgrywa własne tury, gracz widzi każde zagranie komputera i jego skutek, stres rośnie, a partia kończy się przy stresie 30 albo pustej talii — gracz widzi wynik i może od razu zagrać ponownie.** — Archived 2026-11-20 → `context/archive/2026-11-20-first-full-match/`. Lesson: —.
 - **S-04: gracz i komputer mogą zagrywać karty wydarzeń (np. „Nagła zmiana założeń projektowych”), których efekt jest opisany na karcie i przewidywalny przed zagraniem.** — Archived 2026-11-21 → `context/archive/2026-11-20-event-cards/`. Lesson: —.
 - **S-05: gracz mierzy się z komputerem, który wybiera zagrania na podstawie oceny sytuacji na stole (nie losowo), a przy każdym ruchu widzi krótki powód zagrania.** — Archived 2026-11-21 → `context/archive/2026-11-21-sensible-computer-opponent/`. Lesson: —.
+- **S-06: gracz wybiera jedną z 2 frakcji z pełną talią 30 kart z żartami rozpoznawalnymi dla ludzi z IT; obie frakcje mają realną szansę na zwycięstwo, a partia mieści się w ≤ 15 minutach.** — Archived 2026-11-22 → `context/archive/2026-11-21-full-faction-decks-balance/`. Lesson: —.
