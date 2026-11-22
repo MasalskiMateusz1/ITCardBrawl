@@ -21,7 +21,7 @@ At 1440×900 the board looks as drawn, and at 1280×720 nothing clips. The main 
 with compact cards, the turn bar and a scrolling hand. The aside holds the status panels, a full-card
 preview, the language switch and the exit link. Every move is a click on a card (or a status panel). Log,
 graveyard and game over are overlays. Every state has a token-based look, and Playwright screenshots
-guard it in CI.
+guard it in CI. Each card's art window shows its own image, or a placeholder when the file is missing.
 
 ## Key Decisions Made
 
@@ -41,6 +41,9 @@ guard it in CI.
 | Existing spec | Keep selectors, change only forced lookups | The behaviour suite stays the safety net | Plan |
 | Game over | Non-closable overlay over the dimmed board | Reuses the overlay pattern; clearly ends the match | Plan |
 | Visual gate | Playwright now, mocked API, screenshots in CI | Repeatable regression instead of manual screenshots | Plan |
+| Card art source | Participant supplies 31 files; plan only wires them in | No licensing/generation risk; art quality stays the participant's call | Plan |
+| Card art lookup | `/media/cards/<cardId>.webp`, placeholder on load error | No data/API change; images can land card by card without breaking the board | Plan |
+| Card art phase | New Phase 8 after the visual gate | Placeholder baselines first (art mocked to 404), art state added at the end | Plan |
 
 ## Scope
 
@@ -55,8 +58,9 @@ guard it in CI.
 - i18n for all new text
 - `AGENTS.md` UI rule
 - Playwright setup with a CI job and screenshot baselines
+- Card art slot with placeholder fallback, then the participant's 31 card images (Phase 8)
 
-**Out of scope:** other screens, mobile, light theme, graveyard how/turn, flavor text, self-hosted fonts,
+**Out of scope:** producing card art (supplied by the participant), other screens, mobile, light theme, graveyard how/turn, flavor text, self-hosted fonts,
 a role-based spec rewrite, and npm dependencies beyond `@playwright/test`.
 
 ## Architecture / Approach
@@ -73,19 +77,21 @@ log, graveyard and game over. Playwright drives the built SPA against JSON fixtu
 | --- | --- | --- |
 | 1. Backend data | cost/faction, graveyard list, tests, TS mirror | Spec fixtures needing new defaults everywhere |
 | 2. Tokens, fonts, backgrounds | `:root` tokens, Google Fonts, 3 bg images, AGENTS.md rule | Bg artboards may not export cleanly to SVG |
-| 3. Card component | `ui/card` full/compact with states + spec | Undrawn markers (modified/damaged) need invented looks |
+| 3. Card component | `ui/card` full/compact with states, art slot + placeholder fallback, spec | Undrawn markers (modified/damaged) need invented looks |
 | 4. Board + clicks | Layout, header hidden, click-a-card, status targets, preview, targeting lift + viewfinder, spec changes | About 45 spec lookups to remap; CSS budget |
 | 5. Overlays + states | Log/graveyard/game-over overlays, state matrix | Focus management; contrast of muted text |
 | 6. Playwright setup | `/10x-e2e-setup`, mocked API fixtures, CI job | New dependency + CI time |
-| 7. Visual gate | 12 states × 2 viewports screenshot baselines | Font anti-aliasing flakiness between machines |
+| 7. Visual gate | 12 states × 2 viewports screenshot baselines (art mocked to 404) | Font anti-aliasing flakiness between machines |
+| 8. Card images | 31 WebP files in `public/media/cards/`, completeness check vs `factions.json`, "with art" screenshots | Blocks on the participant's files; possible conversion tool needed |
 
-**Prerequisites:** canvas access for the `Bg*` artboards. `main` is green.
-**Estimated effort:** about 5–7 sessions across 7 phases (phase 4 is the largest).
+**Prerequisites:** canvas access for the `Bg*` artboards; 31 card images (one per `cardId`) before Phase 8. `main` is green.
+**Estimated effort:** about 6–8 sessions across 8 phases (phase 4 is the largest).
 
 ## Open Risks & Assumptions
 
 - Google Fonts are fetched during CI screenshot runs. A network hiccup can fail the gate. Fallback: block the
   font request in tests and accept fallback fonts in baselines.
+- Image files must be named exactly by `cardId`; the completeness check catches typos and renamed cards.
 - Click-to-play has no confirmation, so a misclick plays a card. This is accepted by decision.
 - States the canvas doesn't draw (modified/damaged stats, targeting, game over) are designed in the plan
   from the palette and may need a canvas follow-up.
