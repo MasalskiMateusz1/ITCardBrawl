@@ -32,6 +32,14 @@ ItCardBrawl is a browser card game. It has a Spring Boot 4 / Java 21 JSON API (`
 - TypeScript: Prettier (@frontend/.prettierrc, width 100, single quotes), 2-space indent.
 - Angular: standalone components with signals, split into `name.ts/.html/.css/.spec.ts` per file. Interceptors are functional (`HttpInterceptorFn`).
 
+## UI
+
+- Colours, radii, fonts, spacing and shadows come from the tokens in @frontend/src/styles.css. No hex or px-radius literals in component CSS.
+- Faction looks come from the `data-faction` attribute plus `--faction-*` properties. Never name a faction hex or background file in a component.
+- Render cards with `ui/card`. No per-screen card markup.
+- Assets referenced by CSS live under `frontend/src/` (e.g. `frontend/src/assets-media/`) and are referenced via `url()` from `styles.css`. The build emits them under `/media/`.
+- Card art lives in `frontend/public/media/cards/<cardId>.webp`. No other naming and no art field in the data. The Card component is the only place that builds that URL.
+
 ## Testing
 
 - Backend tests use JUnit plus MockMvc (`*Tests.java` in `src/test/java`). Run a single class with `./mvnw -B test -Dtest=MatchControllerTests`.

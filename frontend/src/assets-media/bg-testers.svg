@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="450" viewBox="0 0 720 450" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <!-- Exported from the BgTesters artboard (720x450, base #1B1209, accent #FF9F43, intensity 1). -->
+  <defs>
+    <pattern id="fine" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="1" fill="rgba(255,159,67,0.07)"/>
+      <rect width="1" height="16" fill="rgba(255,159,67,0.07)"/>
+    </pattern>
+    <pattern id="coarse" width="80" height="80" patternUnits="userSpaceOnUse">
+      <rect width="80" height="1" fill="rgba(255,159,67,0.13)"/>
+      <rect width="1" height="80" fill="rgba(255,159,67,0.13)"/>
+    </pattern>
+  </defs>
+  <rect width="720" height="450" fill="#1B1209"/>
+  <rect width="720" height="450" fill="url(#coarse)"/>
+  <rect width="720" height="450" fill="url(#fine)"/>
+  <circle cx="488" cy="152" r="91" fill="none" stroke="#FF9F43" stroke-width="2" stroke-opacity="0.16"/>
+  <circle cx="488" cy="152" r="51" fill="none" stroke="#FF9F43" stroke-width="2" stroke-opacity="0.22"/>
+  <rect x="489" y="40" width="2" height="220" fill="#FF9F43" fill-opacity="0.16"/>
+  <rect x="380" y="149" width="220" height="2" fill="#FF9F43" fill-opacity="0.16"/>
+  <g font-family="'JetBrains Mono', ui-monospace, monospace" font-size="13">
+    <text x="40" y="41" letter-spacing="1.04" fill="rgba(255,159,67,0.30)">PASS 128 · FAIL 3 · SKIP 41</text>
+    <g fill="rgba(255,159,67,0.28)">
+    <text x="40" y="334">BUG-404 Krytyczny · Nie można odtworzyć</text>
+    <text x="40" y="360">BUG-418 Wysoki · Działa tylko w piątek</text>
+    <text x="40" y="386">BUG-500 Blocker · Kroki: „kliknąłem coś”</text>
+    <text x="40" y="412">BUG-503 Średni · Flaky na CI, zielony lokalnie</text>
+    </g>
+  </g>
+</svg>
