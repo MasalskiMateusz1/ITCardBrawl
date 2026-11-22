@@ -73,7 +73,10 @@ public class MatchController {
 
 	@GetMapping("/matches/current")
 	public ResponseEntity<MatchView> current(OAuth2AuthenticationToken authentication, Locale locale) {
-		// Steps to replay only when the player's turn has just ended automatically (deadline passed).
+		// Deliberate side effect of a GET: the turn deadline is checked lazily (no background jobs), so a read past the
+		// deadline ends the player's turn and plays the computer turn. It only does what the next request would do
+		// anyway and is idempotent afterwards. Steps to replay only when the turn has just ended automatically (or
+		// was ended by a move rejected past the deadline).
 		return respond(matchService.current(playerKey(authentication)).orElse(null), locale);
 	}
 

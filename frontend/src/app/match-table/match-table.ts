@@ -253,6 +253,8 @@ export class MatchTable {
           } else if (error.status === 409 || error.status === 404) {
             // 409: the view was stale (another turn or match) — refresh it silently.
             // 404: the match is gone (e.g. backend restart) — loadMatch sends the player to /new-match.
+            // The refreshed view decides the turn — an end of turn owed by the countdown is dropped.
+            this.endTurnWhenIdle = false;
             this.loadMatch();
           } else if (error.status === 400) {
             this.error.set('moveRejected');

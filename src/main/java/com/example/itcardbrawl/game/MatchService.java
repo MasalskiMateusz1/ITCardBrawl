@@ -69,7 +69,8 @@ public class MatchService {
 	 * Applies a player move; after an end of turn in a match in progress it also plays the computer turn.
 	 * {@code replay} is then the state after the player's end of turn and the state after each computer move; for
 	 * any other move it is empty. When the player's turn deadline has passed, the turn is ended automatically first
-	 * (and stored) and the move is rejected as stale, because the turn number has changed.
+	 * (and stored) and the move is rejected as stale, because the turn number has changed; the computer turn is kept
+	 * in the entry so that the next {@link #current} replays it.
 	 *
 	 * @return the new match state, or {@link Optional#empty()} when the player has no current match
 	 * @throws StaleMoveException when {@code matchId} or {@code turn} does not match the current match, or the turn
@@ -87,9 +88,10 @@ public class MatchService {
 			timedOut.set(false);
 			Instant now = clock.instant();
 			if (expired(current, now)) {
-				// The expired turn is ended and stored; the move itself is stale (thrown after the update).
+				// The expired turn is ended and stored with its computer turn for the next read (the SPA reloads
+				// after the 409); the move itself is stale (thrown after the update).
 				timedOut.set(true);
-				return endPlayerTurn(current.match(), now, replay);
+				return endPlayerTurn(current.match(), now, replay).withPendingReplay(replay.get());
 			}
 			Match match = current.match();
 			if (!match.id().equals(matchId)) {
@@ -102,7 +104,7 @@ public class MatchService {
 				return endPlayerTurn(match, now, replay);
 			}
 			Match after = engine.apply(match, Side.PLAYER, move);
-			return playerTurn(after) ? current.withMatch(after) : new Entry(after, null);
+			return after.isPlayerTurn() ? current.withMatch(after) : new Entry(after, null);
 		});
 		if (timedOut.get()) {
 			throw new StaleMoveException("Tura zakończyła się automatycznie po upływie limitu czasu");
@@ -112,14 +114,22 @@ public class MatchService {
 
 	/**
 	 * The player's current match. When the player's turn deadline has passed, the turn is ended automatically first;
-	 * {@code replay} is then the computer turn as after a manual end of turn, otherwise it is empty.
+	 * {@code replay} is then the computer turn as after a manual end of turn. A computer turn kept by a move rejected
+	 * after the deadline is returned once and cleared. Otherwise {@code replay} is empty.
 	 */
 	public Optional<MatchOutcome> current(String playerKey) {
 		AtomicReference<List<Match>> replay = new AtomicReference<>(List.of());
 		return store.update(playerKey, current -> {
 			replay.set(List.of());
 			Instant now = clock.instant();
-			return expired(current, now) ? endPlayerTurn(current.match(), now, replay) : current;
+			if (expired(current, now)) {
+				return endPlayerTurn(current.match(), now, replay);
+			}
+			if (!current.pendingReplay().isEmpty()) {
+				replay.set(current.pendingReplay());
+				return current.withPendingReplay(List.of());
+			}
+			return current;
 		}).map(entry -> outcome(entry, replay.get()));
 	}
 
@@ -135,17 +145,13 @@ public class MatchService {
 	}
 
 	private static boolean expired(Entry entry, Instant now) {
-		return playerTurn(entry.match()) && entry.playerTurnDeadline() != null
+		return entry.match().isPlayerTurn() && entry.playerTurnDeadline() != null
 				&& now.isAfter(entry.playerTurnDeadline());
-	}
-
-	private static boolean playerTurn(Match match) {
-		return match.status() == Status.IN_PROGRESS && match.activeSide() == Side.PLAYER;
 	}
 
 	// The SPA starts counting the turn limit after the replay, so the server allows for it and for a grace period.
 	private static Instant deadline(Match match, int replaySteps, Instant now) {
-		if (!playerTurn(match)) {
+		if (!match.isPlayerTurn()) {
 			return null;
 		}
 		return now.plus(MatchRules.TURN_LIMIT)

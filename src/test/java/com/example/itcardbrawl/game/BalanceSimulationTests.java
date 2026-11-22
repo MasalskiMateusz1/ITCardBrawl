@@ -53,8 +53,8 @@ class BalanceSimulationTests {
 
 	/**
 	 * Number of simulated matches (divisible by 4: equal cells). Measured on the local machine: 1000 matches take
-	 * about 0.8 s (plus 0.3 s for the aggro matches; the whole test run with Maven about 10 s), well within the 120 s
-	 * budget, so N stays at 1000.
+	 * about 1.2-1.4 s (plus 0.3 s for the aggro matches; see "Pomiar balansu" in card-pricing.md), well within the
+	 * 120 s budget, so N stays at 1000.
 	 */
 	private static final int MATCHES = 1000;
 
@@ -88,8 +88,8 @@ class BalanceSimulationTests {
 	/** Assumed duration of a human turn, for the estimated match length. */
 	static final double ASSUMED_HUMAN_TURN_SECONDS = 20;
 
-	/** Duration of one replayed computer step in the SPA (REPLAY_STEP_MS = 700 ms). */
-	private static final double REPLAY_STEP_SECONDS = 0.7;
+	/** Duration of one replayed computer step in the SPA (REPLAY_STEP_MS, mirrored by MatchRules.REPLAY_STEP). */
+	private static final double REPLAY_STEP_SECONDS = MatchRules.REPLAY_STEP.toMillis() / 1000.0;
 
 	/** z for the 95% Wilson score interval. */
 	private static final double Z_95 = 1.96;

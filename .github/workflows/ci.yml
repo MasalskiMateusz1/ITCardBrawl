@@ -30,9 +30,9 @@ jobs:
       - name: Testy backendu
         run: ./mvnw -B verify
 
-      # Balance simulation report (BalanceSimulationTests): always published, also when the tests fail
+      # Balance simulation report (BalanceSimulationTests): published also when the tests fail, not when the run is cancelled
       - name: Raport balansu (artefakt)
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: balance-report
@@ -40,7 +40,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Raport balansu (podsumowanie joba)
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           if [ -f target/balance/summary.md ]; then
             cat target/balance/summary.md >> "$GITHUB_STEP_SUMMARY"

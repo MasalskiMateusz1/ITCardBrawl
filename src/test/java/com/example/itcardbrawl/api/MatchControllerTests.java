@@ -970,11 +970,15 @@ class MatchControllerTests {
 		mockMvc.perform(movePost(started.read("$.matchId"), "end-turn", "{\"turn\":" + turn + "}").with(player))
 			.andExpect(status().isConflict());
 
+		// The SPA reloads after the 409: the computer turn ended by the server is replayed once.
 		DocumentContext current = current(player, "pl");
-		assertThat((List<?>) current.read("$.replay")).isEmpty();
+		assertThat((List<?>) current.read("$.replay")).hasSizeGreaterThanOrEqualTo(2);
+		assertThat((String) current.read("$.replay[0].turn.active")).isEqualTo("OPPONENT");
 		List<String> texts = current.read("$.log[*].text");
 		assertThat(texts).containsOnlyOnce("Kończysz turę");
 		assertThat(texts).contains("Tura przeciwnika " + (turn + 1));
+
+		assertThat((List<?>) current(player, "pl").read("$.replay")).isEmpty();
 	}
 
 }

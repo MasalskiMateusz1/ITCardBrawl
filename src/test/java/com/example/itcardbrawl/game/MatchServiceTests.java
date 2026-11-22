@@ -295,6 +295,25 @@ class MatchServiceTests {
 	}
 
 	@Test
+	void currentReplaysTheComputerTurnOnceAfterAMoveRejectedPastTheDeadline() {
+		MatchService service = service(true);
+		Match match = service.start(KEY, "developers").match();
+		clock.advance(Duration.ofMinutes(5));
+		assertThatThrownBy(() -> service.move(KEY, match.id(), 1, new Move.EndTurn()))
+			.isInstanceOf(StaleMoveException.class);
+
+		MatchOutcome first = service.current(KEY).orElseThrow();
+		assertThat(first.replay()).hasSizeGreaterThan(1);
+		assertThat(first.replay().getFirst().activeSide()).isEqualTo(Side.OPPONENT);
+		assertThat(first.replay().getLast()).isEqualTo(first.match());
+		assertThat(first.match().turnNumber()).isEqualTo(3);
+
+		MatchOutcome second = service.current(KEY).orElseThrow();
+		assertThat(second.replay()).isEmpty();
+		assertThat(second.match()).isEqualTo(first.match());
+	}
+
+	@Test
 	void finishedMatchHasNoDeadline() {
 		MatchService service = service(true);
 		Match match = service.start(KEY, "developers").match();
