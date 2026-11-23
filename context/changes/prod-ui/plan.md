@@ -784,85 +784,85 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 1.1 Backend tests pass: `./mvnw -B verify` — 956eefb
-- [x] 1.2 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 956eefb
-- [x] 1.3 Production build passes: `cd frontend && npm run build` — 956eefb
+- [x] 1.1 Backend tests pass: `./mvnw -B verify` — 4544bc5
+- [x] 1.2 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 4544bc5
+- [x] 1.3 Production build passes: `cd frontend && npm run build` — 4544bc5
 
 #### Manual
 
-- [x] 1.4 `GET /api/matches/current` shows cost/faction on board characters and events, and a graveyard list that grows when a character dies — 956eefb
+- [x] 1.4 `GET /api/matches/current` shows cost/faction on board characters and events, and a graveyard list that grows when a character dies — 4544bc5
 
 ### Phase 2: Tokens, fonts, backgrounds
 
 #### Automated
 
-- [x] 2.1 Production build passes and emits the three backgrounds under `media/` — 9f81684
-- [x] 2.2 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 9f81684
+- [x] 2.1 Production build passes and emits the three backgrounds under `media/` — a3fc6cd
+- [x] 2.2 Frontend tests pass: `cd frontend && npx ng test --watch=false` — a3fc6cd
 
 #### Manual
 
-- [x] 2.3 Lobby, new-match and sign-in look unchanged after the token block lands — 9f81684
-- [x] 2.4 The three exported backgrounds match their canvas artboards by eye — 9f81684
+- [x] 2.3 Lobby, new-match and sign-in look unchanged after the token block lands — a3fc6cd
+- [x] 2.4 The three exported backgrounds match their canvas artboards by eye — a3fc6cd
 
 ### Phase 3: Card component
 
 #### Automated
 
-- [x] 3.1 Card spec covers variants, character vs event, markers, not-playable state, `data-faction` and the art slot fallback — 31bb0a8
-- [x] 3.2 Full frontend suite passes: `cd frontend && npx ng test --watch=false` — 31bb0a8
-- [x] 3.3 `card.css` contains no hex literal — 31bb0a8
+- [x] 3.1 Card spec covers variants, character vs event, markers, not-playable state, `data-faction` and the art slot fallback — 78fd3c9
+- [x] 3.2 Full frontend suite passes: `cd frontend && npx ng test --watch=false` — 78fd3c9
+- [x] 3.3 `card.css` contains no hex literal — 78fd3c9
 
 ### Phase 4: Board layout and click interactions
 
 #### Automated
 
-- [x] 4.1 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 65075a8
-- [x] 4.2 Production build passes without a component style budget warning — 65075a8
-- [x] 4.3 No hex literal in match-table CSS — 65075a8
+- [x] 4.1 Frontend tests pass: `cd frontend && npx ng test --watch=false` — beccb97
+- [x] 4.2 Production build passes without a component style budget warning — beccb97
+- [x] 4.3 No hex literal in match-table CSS — beccb97
 
 #### Manual
 
-- [x] 4.4 At 1440×900 the board matches the canvas layout — 65075a8
-- [x] 4.5 At 1280×720 nothing is clipped and the hand stays reachable — 65075a8
-- [x] 4.6 A full match is playable with the mouse only — 65075a8
-- [x] 4.7 A full match is playable with the keyboard only, and screen-reader names include the card names — 65075a8
-- [x] 4.8 Lobby and new-match still show the header, and `/match` does not — 65075a8
-- [x] 4.9 While targeting, the selected card floats in the board centre click-through and the cursor is a viewfinder — 65075a8
+- [x] 4.4 At 1440×900 the board matches the canvas layout — beccb97
+- [x] 4.5 At 1280×720 nothing is clipped and the hand stays reachable — beccb97
+- [x] 4.6 A full match is playable with the mouse only — beccb97
+- [x] 4.7 A full match is playable with the keyboard only, and screen-reader names include the card names — beccb97
+- [x] 4.8 Lobby and new-match still show the header, and `/match` does not — beccb97
+- [x] 4.9 While targeting, the selected card floats in the board centre click-through and the cursor is a viewfinder — beccb97
 
 ### Phase 5: Overlays and states
 
 #### Automated
 
-- [x] 5.1 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 86ce038
-- [x] 5.2 Production build passes without a component style budget warning — 86ce038
-- [x] 5.3 No hex literal in component CSS of the board — 86ce038
+- [x] 5.1 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 08e91d9
+- [x] 5.2 Production build passes without a component style budget warning — 08e91d9
+- [x] 5.3 No hex literal in component CSS of the board — 08e91d9
 
 #### Manual
 
-- [x] 5.4 Each state of the matrix plus urgent timer, opponent's turn, targeting and game over is visible and readable at 1440×900 — 86ce038
-- [x] 5.5 Text contrast at least 4.5:1 for muted labels on panel/surface — 86ce038
-- [x] 5.6 Overlays open, close with Escape, and return focus to their button — 86ce038
+- [x] 5.4 Each state of the matrix plus urgent timer, opponent's turn, targeting and game over is visible and readable at 1440×900 — 08e91d9
+- [x] 5.5 Text contrast at least 4.5:1 for muted labels on panel/surface — 08e91d9
+- [x] 5.6 Overlays open, close with Escape, and return focus to their button — 08e91d9
 
 ### Phase 6: Playwright setup
 
 #### Automated
 
-- [x] 6.1 Seed test passes locally: `cd frontend && npm run e2e` — 464a4c1
-- [x] 6.2 Unit tests still pass: `cd frontend && npx ng test --watch=false` — 464a4c1
-- [x] 6.3 CI e2e job is green on the PR — 464a4c1
+- [x] 6.1 Seed test passes locally: `cd frontend && npm run e2e` — 5b3a5e5
+- [x] 6.2 Unit tests still pass: `cd frontend && npx ng test --watch=false` — 5b3a5e5
+- [x] 6.3 CI e2e job is green on the PR — 5b3a5e5
 
 ### Phase 7: Visual gate
 
 #### Automated
 
-- [x] 7.1 Screenshot suite passes against committed baselines: `cd frontend && npm run e2e` — 4d0f698
-- [x] 7.2 CI e2e job is green on the PR — 4d0f698
+- [x] 7.1 Screenshot suite passes against committed baselines: `cd frontend && npm run e2e` — ad91077
+- [x] 7.2 CI e2e job is green on the PR — ad91077
 
 #### Manual
 
-- [x] 7.3 Baselines at 1440×900 match `Board.dc.html` / `Card.dc.html` — 4d0f698
-- [x] 7.4 Baselines at 1280×720 show no clipping — 4d0f698
-- [x] 7.5 Mobile cell recorded as N/A in the PR description — 4d0f698
+- [x] 7.3 Baselines at 1440×900 match `Board.dc.html` / `Card.dc.html` — ad91077
+- [x] 7.4 Baselines at 1280×720 show no clipping — ad91077
+- [x] 7.5 Mobile cell recorded as N/A in the PR description — ad91077
 
 ### Phase 8: Card images
 

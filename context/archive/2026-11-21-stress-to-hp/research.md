@@ -1,7 +1,7 @@
 ---
 date: 2026-11-21T10:02:00+01:00
 researcher: Claude (claude-opus-5-5)
-git_commit: e5d0eed
+git_commit: cdc84d3
 branch: main
 repository: ITCardBrawl
 topic: "Zastąpienie stresu gracza (0→30 = przegrana) przez HP gracza (30→0 = przegrana)"
@@ -15,7 +15,7 @@ last_updated_by: Claude (claude-opus-5-5)
 
 **Date**: 2026-11-21T10:02:00+01:00
 **Researcher**: Claude (claude-opus-5-5)
-**Git Commit**: e5d0eed
+**Git Commit**: cdc84d3
 **Branch**: main
 **Repository**: ITCardBrawl
 

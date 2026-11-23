@@ -1,7 +1,7 @@
 ---
 date: 2026-11-21T17:19:38+01:00
 researcher: Claude (claude-opus-5-5)
-git_commit: ffe2d90
+git_commit: 7d5c40b
 branch: main
 repository: ITCardBrawl
 topic: "Zmiana nazwy zasobu na zagrywanie kart (resource / „Zasób”) na budżet we wszystkich warstwach"
@@ -15,7 +15,7 @@ last_updated_by: Claude (claude-opus-5-5)
 
 **Date**: 2026-11-21T17:19:38+01:00
 **Researcher**: Claude (claude-opus-5-5)
-**Git Commit**: ffe2d90
+**Git Commit**: 7d5c40b
 **Branch**: main
 **Repository**: ITCardBrawl
 

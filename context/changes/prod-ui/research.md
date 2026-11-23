@@ -1,7 +1,7 @@
 ---
 date: 2026-11-22T14:55:55+01:00
 researcher: Claude (Opus 5.5) for Mateusz Masalski
-git_commit: bb3eb646db58ed125d91ba44eeff1e70d6de5430
+git_commit: 32e658da03939d79c5a0b3b110778996dbd47c94
 branch: main
 repository: ITCardBrawl
 topic: "Production UI for the match table (/match) against the Claude Design Battle board + Card frame"
@@ -16,7 +16,7 @@ last_updated_note: "Participant decisions on Open Questions 1–5 (Google Fonts,
 
 **Date**: 2026-11-22T14:55:55+01:00
 **Researcher**: Claude (Opus 5.5) for Mateusz Masalski
-**Git Commit**: bb3eb646db58ed125d91ba44eeff1e70d6de5430
+**Git Commit**: 32e658da03939d79c5a0b3b110778996dbd47c94
 **Branch**: main
 **Repository**: ITCardBrawl
 

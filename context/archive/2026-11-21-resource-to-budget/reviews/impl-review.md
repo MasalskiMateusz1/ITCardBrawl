@@ -19,7 +19,7 @@
 | Pattern Consistency | WARNING |
 | Success Criteria | PASS |
 
-Automated criteria re-run 2026-11-21: `./mvnw -B verify` PASS, `npx ng test --watch=false` PASS (93/93), `npm run build` PASS, grep z wykluczeniami po `src frontend/src` — 0 linii, `grep -niE "zas[oó]b|zasob" context/foundation/prd.md` pusty. Wszystkie wiersze Manual odhaczone przez użytkownika. Commit 6e6031f (teksty obrażeń zdolności) jest poza planem, ale na wyraźną prośbę użytkownika — spójny, bez resztek starych tekstów.
+Automated criteria re-run 2026-11-21: `./mvnw -B verify` PASS, `npx ng test --watch=false` PASS (93/93), `npm run build` PASS, grep z wykluczeniami po `src frontend/src` — 0 linii, `grep -niE "zas[oó]b|zasob" context/foundation/prd.md` pusty. Wszystkie wiersze Manual odhaczone przez użytkownika. Commit c5f9631 (teksty obrażeń zdolności) jest poza planem, ale na wyraźną prośbę użytkownika — spójny, bez resztek starych tekstów.
 
 ## Findings
 
@@ -49,7 +49,7 @@ Automated criteria re-run 2026-11-21: `./mvnw -B verify` PASS, `npx ng test --wa
 - **Impact**: 🏃 LOW — quick decision; fix is obvious and narrowly scoped
 - **Dimension**: Pattern Consistency
 - **Location**: src/main/java/com/example/itcardbrawl/api/MatchLogFormatter.java:111-114
-- **Detail**: Po 6e6031f zdolności logują „Tech Lead zadaje przeciwnikowi 4 obrażenia”, a atak w gracza nadal „Tech Lead atakuje przeciwnika: −8” / „atakuje Cię: −8”.
+- **Detail**: Po c5f9631 zdolności logują „Tech Lead zadaje przeciwnikowi 4 obrażenia”, a atak w gracza nadal „Tech Lead atakuje przeciwnika: −8” / „atakuje Cię: −8”.
 - **Fix**: Zostawić (atak to inne zdarzenie) albo ujednolicić: „%s atakuje przeciwnika i zadaje N obrażeń” / „%s attacks the opponent for N damage” (+ testy formatera i fixture SPA).
 - **Decision**: FIXED (atak w gracza: „atakuje przeciwnika / Cię i zadaje N obrażeń” / „attacks the opponent / you for N damage”)
 

@@ -253,35 +253,35 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 92e0db7
-- [x] 1.2 Brak nazw zasobu w backendzie: grep z wykluczeniami (Testing Strategy) ograniczony do `src` zwraca pusty wynik — 92e0db7
-- [x] 1.3 Kontrola celowego uszkodzenia: przywrócenie nazwy składnika `PlayerView.budget` na `resource` łamie asercje `budget` w `MatchControllerTests` (przywrócone przed commitem) — 92e0db7
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 9e1a1a6
+- [x] 1.2 Brak nazw zasobu w backendzie: grep z wykluczeniami (Testing Strategy) ograniczony do `src` zwraca pusty wynik — 9e1a1a6
+- [x] 1.3 Kontrola celowego uszkodzenia: przywrócenie nazwy składnika `PlayerView.budget` na `resource` łamie asercje `budget` w `MatchControllerTests` (przywrócone przed commitem) — 9e1a1a6
 
 #### Manual
 
-- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 2 pola `kind`, żadnych innych pól — 92e0db7
+- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 2 pola `kind`, żadnych innych pól — 9e1a1a6
 
 ### Phase 2: SPA — budżet w typach, stole i i18n
 
 #### Automated
 
-- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — f6bbfca
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — f6bbfca
-- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify` — f6bbfca
-- [x] 2.4 Brak nazw zasobu we froncie: grep z wykluczeniami (Testing Strategy) ograniczony do `frontend/src` zwraca pusty wynik — f6bbfca
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — 517e233
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 517e233
+- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify` — 517e233
+- [x] 2.4 Brak nazw zasobu we froncie: grep z wykluczeniami (Testing Strategy) ograniczony do `frontend/src` zwraca pusty wynik — 517e233
 
 #### Manual
 
-- [x] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem — f6bbfca
-- [x] 2.6 Na wdrożonej wersji panel „Budżet” po obu stronach pokazuje 1/1 i 0/0 na starcie, rośnie co turę, zagranie karty obniża bieżący budżet, a „Kawa z automatu” pokazuje „Zwiększ budżet o 2” (pl i en) — f6bbfca
+- [x] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem — 517e233
+- [x] 2.6 Na wdrożonej wersji panel „Budżet” po obu stronach pokazuje 1/1 i 0/0 na starcie, rośnie co turę, zagranie karty obniża bieżący budżet, a „Kawa z automatu” pokazuje „Zwiększ budżet o 2” (pl i en) — 517e233
 
 ### Phase 3: PRD i kontrola resztek
 
 #### Automated
 
-- [x] 3.1 Brak „zasób” w PRD: `grep -niE "zas[oó]b|zasob" context/foundation/prd.md` zwraca pusty wynik — 0bc5076
-- [x] 3.2 Brak nazw zasobu w kodzie: grep z wykluczeniami (Testing Strategy) po `src frontend/src` zwraca pusty wynik — 0bc5076
+- [x] 3.1 Brak „zasób” w PRD: `grep -niE "zas[oó]b|zasob" context/foundation/prd.md` zwraca pusty wynik — b9cf0f5
+- [x] 3.2 Brak nazw zasobu w kodzie: grep z wykluczeniami (Testing Strategy) po `src frontend/src` zwraca pusty wynik — b9cf0f5
 
 #### Manual
 
-- [x] 3.3 Przegląd PRD: opis budżetu odpowiada zachowaniu silnika (start 1/1 i 0/0, +1 na własną turę do 10, koszt karty) — 0bc5076
+- [x] 3.3 Przegląd PRD: opis budżetu odpowiada zachowaniu silnika (start 1/1 i 0/0, +1 na własną turę do 10, koszt karty) — b9cf0f5

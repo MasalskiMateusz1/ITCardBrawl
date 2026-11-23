@@ -19,7 +19,7 @@
 | Pattern Consistency | PASS |
 | Success Criteria | PASS |
 
-The automated criteria were re-run over `1acc367^..b59c3ab` and all pass:
+The automated criteria were re-run over `99f595c^..62951c2` and all pass:
 - comment-only diffs for Java and for the nine files;
 - the leftover-Polish greps;
 - both YAML files parse, and `bash -n deploy/deploy.sh` passes;

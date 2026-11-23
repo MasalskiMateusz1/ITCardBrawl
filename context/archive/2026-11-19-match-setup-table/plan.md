@@ -311,48 +311,48 @@ Brak danych do migracji. Wdrożenie (F-02) restartuje kontener i kasuje trwając
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 4b1f338
-- [x] 1.2 `CardCatalogTests` pokrywa każdy przypadek walidacji katalogu i wczytanie prawdziwego `factions.json` — 4b1f338
-- [x] 1.3 `MatchFactoryTests` pokrywa obie gałęzie zaczynającego i odrzucenie frakcji neutralnej — 4b1f338
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — f0771a6
+- [x] 1.2 `CardCatalogTests` pokrywa każdy przypadek walidacji katalogu i wczytanie prawdziwego `factions.json` — f0771a6
+- [x] 1.3 `MatchFactoryTests` pokrywa obie gałęzie zaczynającego i odrzucenie frakcji neutralnej — f0771a6
 
 #### Manual
 
-- [x] 1.4 Przegląd placeholderów w `factions.json`: nazwy kart czytelne dla ludzi z IT, obie frakcje mają postacie i wydarzenia w różnych kosztach — 4b1f338
+- [x] 1.4 Przegląd placeholderów w `factions.json`: nazwy kart czytelne dla ludzi z IT, obie frakcje mają postacie i wydarzenia w różnych kosztach — f0771a6
 
 ### Phase 2: API partii
 
 #### Automated
 
-- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 365780e
-- [x] 2.2 `MatchControllerTests` pokrywa 201/400/404/401/403, zastępowanie partii i izolację graczy — 365780e
-- [x] 2.3 `BackendRoutesTests` dalej zielone (nowe endpointy tylko pod `/api`) — 365780e
+- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 4bf3339
+- [x] 2.2 `MatchControllerTests` pokrywa 201/400/404/401/403, zastępowanie partii i izolację graczy — 4bf3339
+- [x] 2.3 `BackendRoutesTests` dalej zielone (nowe endpointy tylko pod `/api`) — 4bf3339
 
 #### Manual
 
-- [x] 2.4 Lokalnie po zalogowaniu `GET /api/factions` i `GET /api/matches/current` (404) w przeglądarce zwracają oczekiwany JSON — 365780e
+- [x] 2.4 Lokalnie po zalogowaniu `GET /api/factions` i `GET /api/matches/current` (404) w przeglądarce zwracają oczekiwany JSON — 4bf3339
 
 ### Phase 3: Ekran wyboru frakcji
 
 #### Automated
 
-- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — e5b09b5
-- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — e5b09b5
+- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — aeaceeb
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — aeaceeb
 
 #### Manual
 
-- [x] 3.3 Lokalnie: lobby → „Nowa partia” → widać Developerów i Testerów, start przenosi na `/match` — e5b09b5
+- [x] 3.3 Lokalnie: lobby → „Nowa partia” → widać Developerów i Testerów, start przenosi na `/match` — aeaceeb
 
 ### Phase 4: Stół partii
 
 #### Automated
 
-- [x] 4.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — 77de410
-- [x] 4.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 77de410
-- [x] 4.3 Testy backendu dalej zielone: `./mvnw -B verify` — 77de410
+- [x] 4.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — bbff8a0
+- [x] 4.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — bbff8a0
+- [x] 4.3 Testy backendu dalej zielone: `./mvnw -B verify` — bbff8a0
 
 #### Manual
 
-- [x] 4.4 Pełny przepływ lokalnie: logowanie → lobby → `/new-match` → wybór frakcji → stół z 5 kartami, 25/25 w taliach, stresem 0/30 obu stron, zasobem i turą — 77de410
-- [x] 4.5 Odświeżenie `/match` pokazuje tę samą rękę; nowy start z `/new-match` daje inną partię — 77de410
-- [x] 4.6 Wejście na `/match` po restarcie backendu przenosi na `/new-match` — 77de410
-- [x] 4.7 Stół czytelny w Chrome i Firefox na szerokości desktopowej — 77de410
+- [x] 4.4 Pełny przepływ lokalnie: logowanie → lobby → `/new-match` → wybór frakcji → stół z 5 kartami, 25/25 w taliach, stresem 0/30 obu stron, zasobem i turą — bbff8a0
+- [x] 4.5 Odświeżenie `/match` pokazuje tę samą rękę; nowy start z `/new-match` daje inną partię — bbff8a0
+- [x] 4.6 Wejście na `/match` po restarcie backendu przenosi na `/new-match` — bbff8a0
+- [x] 4.7 Stół czytelny w Chrome i Firefox na szerokości desktopowej — bbff8a0

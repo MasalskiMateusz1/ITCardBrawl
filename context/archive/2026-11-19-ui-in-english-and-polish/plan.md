@@ -308,38 +308,38 @@ Brak danych do migracji (partie w pamięci). Wdrożenie restartuje serwer, więc
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 4c8a55a
-- [x] 1.2 `CardCatalogTests` pokrywa brak/pustą wartość `pl` i `en` dla nazwy i opisu frakcji oraz nazwy i tekstu karty — 4c8a55a
-- [x] 1.3 `MatchControllerTests` pokrywa domyślny polski, `Accept-Language: en`, dopasowanie `de, en;q=0.9` → angielski i tę samą partię w obu językach — 4c8a55a
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — a01ec7a
+- [x] 1.2 `CardCatalogTests` pokrywa brak/pustą wartość `pl` i `en` dla nazwy i opisu frakcji oraz nazwy i tekstu karty — a01ec7a
+- [x] 1.3 `MatchControllerTests` pokrywa domyślny polski, `Accept-Language: en`, dopasowanie `de, en;q=0.9` → angielski i tę samą partię w obu językach — a01ec7a
 
 #### Manual
 
-- [x] 1.4 Przegląd angielskich placeholderów w `factions.json`: czytelne dla ludzi z IT, z zachowanym humorem — 4c8a55a
-- [x] 1.5 Lokalnie po zalogowaniu `GET /api/factions` w przeglądarce zwraca polskie nazwy; z nagłówkiem `Accept-Language: en` (np. DevTools / curl z ciasteczkiem sesji) — angielskie — 4c8a55a
+- [x] 1.4 Przegląd angielskich placeholderów w `factions.json`: czytelne dla ludzi z IT, z zachowanym humorem — a01ec7a
+- [x] 1.5 Lokalnie po zalogowaniu `GET /api/factions` w przeglądarce zwraca polskie nazwy; z nagłówkiem `Accept-Language: en` (np. DevTools / curl z ciasteczkiem sesji) — angielskie — a01ec7a
 
 ### Phase 2: Warstwa tłumaczeń i przełącznik języka
 
 #### Automated
 
-- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — abae3b6
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — abae3b6
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — 5a9c6ff
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 5a9c6ff
 
 #### Manual
 
-- [x] 2.3 Lokalnie: przełącznik PL | EN widoczny na `/sign-in` i w lobby; klik zmienia `<html lang>` i zaznaczenie, a wybór przeżywa odświeżenie strony i logowanie przez GitHub/Google — abae3b6
-- [x] 2.4 W DevTools żądania `/api/*` mają `Accept-Language` zgodny z wybranym językiem — abae3b6
+- [x] 2.3 Lokalnie: przełącznik PL | EN widoczny na `/sign-in` i w lobby; klik zmienia `<html lang>` i zaznaczenie, a wybór przeżywa odświeżenie strony i logowanie przez GitHub/Google — 5a9c6ff
+- [x] 2.4 W DevTools żądania `/api/*` mają `Accept-Language` zgodny z wybranym językiem — 5a9c6ff
 
 ### Phase 3: Tłumaczenie ekranów
 
 #### Automated
 
-- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — ddc1338
-- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — ddc1338
-- [x] 3.3 Testy backendu dalej zielone: `./mvnw -B verify` — ddc1338
+- [x] 3.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — 9184a3f
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 9184a3f
+- [x] 3.3 Testy backendu dalej zielone: `./mvnw -B verify` — 9184a3f
 
 #### Manual
 
-- [x] 3.4 Pełny przepływ po angielsku: logowanie → lobby → `/new-match` → start → stół; wszystkie teksty interfejsu, frakcje i karty po angielsku — ddc1338
-- [x] 3.5 Przełączenie na `/match` w trakcie partii zmienia etykiety i teksty kart bez zmiany ręki; przełączenie na `/new-match` zachowuje wybraną frakcję — ddc1338
-- [x] 3.6 Pierwsza wizyta w czystym profilu przeglądarki z językiem polskim → polski, z angielskim → angielski — ddc1338
-- [x] 3.7 Brak polskich tekstów interfejsu po wybraniu EN (poza nazwą marki i treścią kart celowo identyczną w obu językach) — ddc1338
+- [x] 3.4 Pełny przepływ po angielsku: logowanie → lobby → `/new-match` → start → stół; wszystkie teksty interfejsu, frakcje i karty po angielsku — 9184a3f
+- [x] 3.5 Przełączenie na `/match` w trakcie partii zmienia etykiety i teksty kart bez zmiany ręki; przełączenie na `/new-match` zachowuje wybraną frakcję — 9184a3f
+- [x] 3.6 Pierwsza wizyta w czystym profilu przeglądarki z językiem polskim → polski, z angielskim → angielski — 9184a3f
+- [x] 3.7 Brak polskich tekstów interfejsu po wybraniu EN (poza nazwą marki i treścią kart celowo identyczną w obu językach) — 9184a3f

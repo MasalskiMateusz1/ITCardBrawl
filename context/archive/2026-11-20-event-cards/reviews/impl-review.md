@@ -68,9 +68,9 @@ Automated gates at review time: `./mvnw -B verify` PASS (222 tests), `npx ng tes
 - **Impact**: 🏃 LOW — quick decision; fix is obvious and narrowly scoped
 - **Dimension**: Success Criteria
 - **Location**: context/changes/event-cards/plan.md (Progress 1.1–3.2)
-- **Detail**: Rows reference b9b821e / 6658abf / c1dffa7, but none of these are on any branch (the history was rewritten). On `main` the phases are 42f3db9 (p1), 72408d9 (p2) and 0477b1c (p3).
-- **Fix**: Replace the SHAs in Progress with 42f3db9, 72408d9 and 0477b1c.
-- **Decision**: FIXED (Progress SHAs → 42f3db9 / 72408d9 / 0477b1c)
+- **Detail**: Rows reference 55443f1 / 5a5aab5 / d2f8da5, but none of these are on any branch (the history was rewritten). On `main` the phases are 55443f1 (p1), 5a5aab5 (p2) and d2f8da5 (p3).
+- **Fix**: Replace the SHAs in Progress with 55443f1, 5a5aab5 and d2f8da5.
+- **Decision**: FIXED (Progress SHAs → 55443f1 / 5a5aab5 / d2f8da5)
 
 ### F5 — Gaps in tests required by the plan's contracts
 

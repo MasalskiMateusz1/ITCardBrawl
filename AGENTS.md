@@ -49,5 +49,5 @@ ItCardBrawl is a browser card game. It has a Spring Boot 4 / Java 21 JSON API (`
 
 ## Commits
 
-- Conventional Commits scoped to the change id, with a Polish title, e.g. `feat(<change-id>): Stół partii (p4)`. Also used: `fix`, `chore(archive)`, `docs(roadmap)`.
+- Conventional Commits scoped to the change id, in English (subject and body), e.g. `feat(<change-id>): Match table (p4)`. Translate a Polish phase title for the subject. Also used: `fix`, `chore(archive)`, `docs(roadmap)`.
 - CI (@.github/workflows/ci.yml) runs on PRs and on `main`. Each push to `main` builds the image and deploys automatically.

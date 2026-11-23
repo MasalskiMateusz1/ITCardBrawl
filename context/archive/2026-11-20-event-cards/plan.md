@@ -440,52 +440,52 @@ Partie trzymane w pamięci (`MatchStore`) nie przeżywają restartu, więc zmian
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 42f3db9
-- [x] 1.2 `CardCatalogTests` pokrywa każdą nową regułę walidacji efektów i prawdziwy katalog (16 wydarzeń z efektami, talie po 30 kart) — 42f3db9
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 55443f1
+- [x] 1.2 `CardCatalogTests` pokrywa każdą nową regułę walidacji efektów i prawdziwy katalog (16 wydarzeń z efektami, talie po 30 kart) — 55443f1
 
 #### Manual
 
-- [x] 1.3 Przegląd tabeli efektów 16 wydarzeń: wartości do przyjęcia jako szkic, opisy generowane pl/en czytelne — 42f3db9
+- [x] 1.3 Przegląd tabeli efektów 16 wydarzeń: wartości do przyjęcia jako szkic, opisy generowane pl/en czytelne — 55443f1
 
 ### Phase 2: Efekty natychmiastowe i cele w silniku
 
 #### Automated
 
-- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 72408d9
-- [x] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu — 72408d9
-- [x] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu — 72408d9
+- [x] 2.1 Testy backendu przechodzą: `./mvnw -B verify` — 5a5aab5
+- [x] 2.2 `MatchEngineTests` pokrywa każdy rodzaj i zasięg efektu natychmiastowego, przegraną przez efekt (stres własny, dobieranie z pustej talii) i walidację celu — 5a5aab5
+- [x] 2.3 `RandomOpponentTests` pokrywa wybór najpierw akcji, potem celu — 5a5aab5
 
 ### Phase 3: Efekty trwające
 
 #### Automated
 
-- [x] 3.1 Testy backendu przechodzą: `./mvnw -B verify` — 0477b1c
-- [x] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki — 0477b1c
+- [x] 3.1 Testy backendu przechodzą: `./mvnw -B verify` — d2f8da5
+- [x] 3.2 `MatchEngineTests` pokrywa aurę, sumowanie, dolny limit ataku, pokonanie przez −HP, wygaśnięcie, nadaną Szarżę i Ochronę oraz każdą regułę pułapki — d2f8da5
 
 ### Phase 4: API — cele, efekty i legalność w widoku
 
 #### Automated
 
-- [x] 4.1 Testy backendu przechodzą: `./mvnw -B verify` — 7bb04fb
-- [x] 4.2 `MatchControllerTests` pokrywa zagranie z celem postaci i gracza, błędy celu (400) oraz `targets`/`playable`/`attackTargets` w odpowiedzi — 7bb04fb
-- [x] 4.3 `MatchViewTests` pokrywa statystyki efektywne, `trapped`, `lastEvent` (także w kroku odtwarzania) i opisy efektów w pl i en — 7bb04fb
+- [x] 4.1 Testy backendu przechodzą: `./mvnw -B verify` — 01e1953
+- [x] 4.2 `MatchControllerTests` pokrywa zagranie z celem postaci i gracza, błędy celu (400) oraz `targets`/`playable`/`attackTargets` w odpowiedzi — 01e1953
+- [x] 4.3 `MatchViewTests` pokrywa statystyki efektywne, `trapped`, `lastEvent` (także w kroku odtwarzania) i opisy efektów w pl i en — 01e1953
 
 #### Manual
 
-- [x] 4.4 Lokalnie po zalogowaniu odpowiedź `GET /api/matches/current` zawiera `effects`, `targets` i `lastEvent` w języku z `Accept-Language` — 7bb04fb
+- [x] 4.4 Lokalnie po zalogowaniu odpowiedź `GET /api/matches/current` zawiera `effects`, `targets` i `lastEvent` w języku z `Accept-Language` — 01e1953
 
 ### Phase 5: Stół w SPA — wybór celu, ostatnio zagrane, opisy efektów
 
 #### Automated
 
-- [x] 5.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — f7460ca
-- [x] 5.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — f7460ca
-- [x] 5.3 Testy backendu dalej zielone: `./mvnw -B verify` — f7460ca
+- [x] 5.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — c9126fa
+- [x] 5.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — c9126fa
+- [x] 5.3 Testy backendu dalej zielone: `./mvnw -B verify` — c9126fa
 
 #### Manual
 
-- [x] 5.4 Lokalnie rozegranie partii każdą frakcją: zagranie wydarzenia bez celu, z celem-postacią obu stron i z celem-graczem; efekty zgodne z opisem na karcie — f7460ca
-- [x] 5.5 Pułapka: uwięziona postać nie atakuje i nie jest celem; efekt obszarowy ją trafia; jej Ochrona nie blokuje ataku — f7460ca
-- [x] 5.6 Aura: postać zagrana w czasie działania wzmocnienia dostaje bonus; po wygaśnięciu wartości wracają — f7460ca
-- [x] 5.7 „Ostatnio zagrane” i wpisy logu pokazują wydarzenie gracza i komputera (także w odtwarzaniu tury komputera); `duration 0` ma „Natychmiastowe” — f7460ca
-- [x] 5.8 Po przełączeniu na EN opisy efektów, log i nowe etykiety są po angielsku — f7460ca
+- [x] 5.4 Lokalnie rozegranie partii każdą frakcją: zagranie wydarzenia bez celu, z celem-postacią obu stron i z celem-graczem; efekty zgodne z opisem na karcie — c9126fa
+- [x] 5.5 Pułapka: uwięziona postać nie atakuje i nie jest celem; efekt obszarowy ją trafia; jej Ochrona nie blokuje ataku — c9126fa
+- [x] 5.6 Aura: postać zagrana w czasie działania wzmocnienia dostaje bonus; po wygaśnięciu wartości wracają — c9126fa
+- [x] 5.7 „Ostatnio zagrane” i wpisy logu pokazują wydarzenie gracza i komputera (także w odtwarzaniu tury komputera); `duration 0` ma „Natychmiastowe” — c9126fa
+- [x] 5.8 Po przełączeniu na EN opisy efektów, log i nowe etykiety są po angielsku — c9126fa

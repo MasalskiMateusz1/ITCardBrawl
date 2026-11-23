@@ -269,7 +269,7 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 - Decyzja: `context/archive/2026-11-20-event-cards/follow-ups/review-fixes.md:3-7`
 - Wcześniejsza decyzja o realnej wartości ponad limit: `context/archive/2026-11-20-first-full-match/plan.md:42`
 - Wąskie gardło: `src/main/java/com/example/itcardbrawl/game/MatchEngine.java:526-537`
-- **Prerequisite**: `/10x-archive event-cards` przed Fazą 1 — wykonane (52d5efa)
+- **Prerequisite**: `/10x-archive event-cards` przed Fazą 1 — wykonane (d741879)
 
 ## Progress
 
@@ -279,35 +279,35 @@ Brak bazy; partie w pamięci giną przy wdrożeniu jak dotąd. Kontrakt zmienia 
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — bf1bc14
-- [x] 1.2 Brak „stres” w backendzie: `grep -rni "stres" src` zwraca pusty wynik — bf1bc14
-- [x] 1.3 Kontrola celowego uszkodzenia: usunięcie sufitu w `changeHp` łamie `healIsCappedAtMaxHp` (przywrócone przed commitem) — bf1bc14
+- [x] 1.1 Testy backendu przechodzą: `./mvnw -B verify` — 4f8a494
+- [x] 1.2 Brak „stres” w backendzie: `grep -rni "stres" src` zwraca pusty wynik — 4f8a494
+- [x] 1.3 Kontrola celowego uszkodzenia: usunięcie sufitu w `changeHp` łamie `healIsCappedAtMaxHp` (przywrócone przed commitem) — 4f8a494
 
 #### Manual
 
-- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 3 `kind` i 5 `keyword`, żadnych innych pól — bf1bc14
+- [x] 1.4 Przegląd diffu `factions.json`: zmieniono wyłącznie 3 `kind` i 5 `keyword`, żadnych innych pól — 4f8a494
 
 ### Phase 2: SPA — HP w typach, stole i i18n
 
 #### Automated
 
-- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — 9cc4fb8
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 9cc4fb8
-- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify` — 9cc4fb8
-- [x] 2.4 Brak „stres” we froncie: `grep -rni "stres" frontend/src` zwraca pusty wynik — 9cc4fb8
+- [x] 2.1 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — ff20cdd
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — ff20cdd
+- [x] 2.3 Testy backendu dalej zielone: `./mvnw -B verify` — ff20cdd
+- [x] 2.4 Brak „stres” we froncie: `grep -rni "stres" frontend/src` zwraca pusty wynik — ff20cdd
 
 #### Manual
 
-- [x] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem — 9cc4fb8
-- [x] 2.6 Na wdrożonej wersji partia startuje z 30/30 po obu stronach, atak i wydarzenie obniżają HP, leczenie nie przekracza 30, a spadek do 0 lub poniżej kończy partię komunikatem o HP (pl i en) — 9cc4fb8
+- [x] 2.5 Po pushu workflow CI (test → image → deploy ze smoke testem) kończy się sukcesem — ff20cdd
+- [x] 2.6 Na wdrożonej wersji partia startuje z 30/30 po obu stronach, atak i wydarzenie obniżają HP, leczenie nie przekracza 30, a spadek do 0 lub poniżej kończy partię komunikatem o HP (pl i en) — ff20cdd
 
 ### Phase 3: PRD i kontrola resztek
 
 #### Automated
 
-- [x] 3.1 Brak „stres” w PRD: `grep -ni "stres" context/foundation/prd.md` zwraca pusty wynik — 3d87ff1
-- [x] 3.2 Brak „stres” w kodzie: `grep -rni "stres" src frontend/src` zwraca pusty wynik — 3d87ff1
+- [x] 3.1 Brak „stres” w PRD: `grep -ni "stres" context/foundation/prd.md` zwraca pusty wynik — 8342c7d
+- [x] 3.2 Brak „stres” w kodzie: `grep -rni "stres" src frontend/src` zwraca pusty wynik — 8342c7d
 
 #### Manual
 
-- [x] 3.3 Przegląd PRD: reguła wygranej/przegranej odpowiada zachowaniu silnika (start 30, sufit 30, HP ≤ 0, wartość ujemna widoczna) — 3d87ff1
+- [x] 3.3 Przegląd PRD: reguła wygranej/przegranej odpowiada zachowaniu silnika (start 30, sufit 30, HP ≤ 0, wartość ujemna widoczna) — 8342c7d

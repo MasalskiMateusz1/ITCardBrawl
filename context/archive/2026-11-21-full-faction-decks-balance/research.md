@@ -1,7 +1,7 @@
 ---
 date: 2026-11-21T22:17:19+01:00
 researcher: Claude (Opus 5.5) dla Mateusz Masalski
-git_commit: 325492809b08cdf9bf383aadcfe2578adbd3008a
+git_commit: 624b91591a0da07a6d4c5cecb724a59acd997b3e
 branch: main
 repository: ITCardBrawl
 topic: "full-faction-decks-balance (S-06): stan talii, narzędzia do pomiaru balansu i długości partii"
@@ -16,7 +16,7 @@ last_updated_note: "Follow-up (7) 2026-11-21: Q6 — wagi AI stroimy w S-06"
 
 **Date**: 2026-11-21T22:17:19+01:00
 **Researcher**: Claude (Opus 5.5) dla Mateusz Masalski
-**Git Commit**: 325492809b08cdf9bf383aadcfe2578adbd3008a (drzewo robocze: niezatwierdzona zmiana tylko w `context/foundation/roadmap.md`)
+**Git Commit**: 624b91591a0da07a6d4c5cecb724a59acd997b3e (drzewo robocze: niezatwierdzona zmiana tylko w `context/foundation/roadmap.md`)
 **Branch**: main
 **Repository**: ITCardBrawl
 

@@ -477,90 +477,90 @@ Wprowadza limit 45 s na turę gracza: backend pilnuje terminu i kończy turę au
 
 #### Automated
 
-- [x] 1.1 `pricing-sources.md` ma sekcje MTG, Hearthstone, Lorcana, Prace naukowe, Mapowanie, Wnioski z linkami — 88295f5
-- [x] 1.2 ≥ 3 źródła na grę, ≥ 3 prace naukowe (lub jawny brak), sekcja „Log wyszukiwania” z zapytaniami Exa — 88295f5
-- [x] 1.3 Brak zmian w kodzie i danych poza folderem zmiany — 88295f5
+- [x] 1.1 `pricing-sources.md` ma sekcje MTG, Hearthstone, Lorcana, Prace naukowe, Mapowanie, Wnioski z linkami — 8366d8a
+- [x] 1.2 ≥ 3 źródła na grę, ≥ 3 prace naukowe (lub jawny brak), sekcja „Log wyszukiwania” z zapytaniami Exa — 8366d8a
+- [x] 1.3 Brak zmian w kodzie i danych poza folderem zmiany — 8366d8a
 
 #### Manual
 
-- [x] 1.4 Autor akceptuje wnioski z `pricing-sources.md` — 88295f5
+- [x] 1.4 Autor akceptuje wnioski z `pricing-sources.md` — 8366d8a
 
 ### Phase 2: Symulacja komputer kontra komputer i ślad w CI
 
 #### Automated
 
-- [x] 2.1 Wszystkie testy backendu przechodzą: `./mvnw -B verify` — b937e77
-- [x] 2.2 `ComputerOpponentTests` (w tym ≥ 80% z graczem losowym) przechodzi bez zmiany progu — b937e77
-- [x] 2.3 Po `./mvnw -B verify` istnieją `target/balance/matches.csv`, `cards.csv`, `summary.md` — b937e77
-- [x] 2.4 Dwukrotne uruchomienie daje identyczny `matches.csv` (determinizm ziaren) — b937e77
+- [x] 2.1 Wszystkie testy backendu przechodzą: `./mvnw -B verify` — ba21c99
+- [x] 2.2 `ComputerOpponentTests` (w tym ≥ 80% z graczem losowym) przechodzi bez zmiany progu — ba21c99
+- [x] 2.3 Po `./mvnw -B verify` istnieją `target/balance/matches.csv`, `cards.csv`, `summary.md` — ba21c99
+- [x] 2.4 Dwukrotne uruchomienie daje identyczny `matches.csv` (determinizm ziaren) — ba21c99
 
 #### Manual
 
-- [x] 2.5 `summary.md` czytelny; zanotowany stan wyjściowy (komórki, p90 czasu, czas działania) — b937e77
-- [x] 2.6 Na PR widać artefakt `balance-report` i podsumowanie joba — b937e77
+- [x] 2.5 `summary.md` czytelny; zanotowany stan wyjściowy (komórki, p90 czasu, czas działania) — ba21c99
+- [x] 2.6 Na PR widać artefakt `balance-report` i podsumowanie joba — ba21c99
 
 ### Phase 3: Reguła wyceny kart
 
 #### Automated
 
-- [x] 3.1 `./mvnw -B verify` przechodzi — 334615f
-- [x] 3.2 `CardPricingTests` pokrywa każdą wartość `AbilityKeyword` i `EffectKind` — 334615f
-- [x] 3.3 Test dominacji wykrywa parę `tst-automation` → `neu-devops` — 334615f
+- [x] 3.1 `./mvnw -B verify` przechodzi — 59d2ce9
+- [x] 3.2 `CardPricingTests` pokrywa każdą wartość `AbilityKeyword` i `EffectKind` — 59d2ce9
+- [x] 3.3 Test dominacji wykrywa parę `tst-automation` → `neu-devops` — 59d2ce9
 
 #### Manual
 
-- [x] 3.4 Autor akceptuje `card-pricing.md` (wzór, ceny, tolerancja) — 334615f
+- [x] 3.4 Autor akceptuje `card-pricing.md` (wzór, ceny, tolerancja) — 59d2ce9
 
 ### Phase 4: Przeliczenie kart
 
 #### Automated
 
-- [x] 4.1 `./mvnw -B verify` przechodzi — 17f4412
-- [x] 4.2 Lista tymczasowych wyjątków w `CardPricingTests` jest pusta — 17f4412
-- [x] 4.3 `ComputerOpponentTests` z graczem losowym nadal ≥ 80% — 17f4412
+- [x] 4.1 `./mvnw -B verify` przechodzi — 9d8fa00
+- [x] 4.2 Lista tymczasowych wyjątków w `CardPricingTests` jest pusta — 9d8fa00
+- [x] 4.3 `ComputerOpponentTests` z graczem losowym nadal ≥ 80% — 9d8fa00
 
 #### Manual
 
-- [x] 4.4 Porównanie `summary.md` z fazą 2 zanotowane — 17f4412
-- [x] 4.5 Autor przegląda wartości kart pod kątem żartów — 17f4412
+- [x] 4.4 Porównanie `summary.md` z fazą 2 zanotowane — 9d8fa00
+- [x] 4.5 Autor przegląda wartości kart pod kątem żartów — 9d8fa00
 
 ### Phase 5: Strojenie wag AI
 
 #### Automated
 
-- [x] 5.1 `./mvnw -B verify` przechodzi — 044f20a
-- [x] 5.2 Komputer wygrywa ≥ 80% z graczem losowym — 044f20a
-- [x] 5.3 Nowy test `FAVORABLE_TRADE` przechodzi — 044f20a
-- [x] 5.4 `summary.md` raportuje `FAVORABLE_TRADE` > 0 — 044f20a
+- [x] 5.1 `./mvnw -B verify` przechodzi — 42e9a7b
+- [x] 5.2 Komputer wygrywa ≥ 80% z graczem losowym — 42e9a7b
+- [x] 5.3 Nowy test `FAVORABLE_TRADE` przechodzi — 42e9a7b
+- [x] 5.4 `summary.md` raportuje `FAVORABLE_TRADE` > 0 — 42e9a7b
 
 #### Manual
 
-- [x] 5.5 Partia lokalna: powody ruchów komputera brzmią sensownie — 044f20a
+- [x] 5.5 Partia lokalna: powody ruchów komputera brzmią sensownie — 42e9a7b
 
 ### Phase 6: Bramki balansu i długości partii
 
 #### Automated
 
-- [x] 6.1 `./mvnw -B verify` przechodzi z włączonymi bramkami — 9f127a5
-- [x] 6.2 Każda komórka 45–55%, wszystkie w 40–60%, p90 czasu ≤ 15 min — 9f127a5
-- [x] 6.3 `CardPricingTests` przechodzi bez nieuzasadnionych wyjątków — 9f127a5
-- [x] 6.4 `ComputerOpponentTests` z graczem losowym ≥ 80% — 9f127a5
-- [x] 6.5 Celowe zepsucie karty wywala bramkę (sprawdzone i cofnięte) — 9f127a5
+- [x] 6.1 `./mvnw -B verify` przechodzi z włączonymi bramkami — e86e201
+- [x] 6.2 Każda komórka 45–55%, wszystkie w 40–60%, p90 czasu ≤ 15 min — e86e201
+- [x] 6.3 `CardPricingTests` przechodzi bez nieuzasadnionych wyjątków — e86e201
+- [x] 6.4 `ComputerOpponentTests` z graczem losowym ≥ 80% — e86e201
+- [x] 6.5 Celowe zepsucie karty wywala bramkę (sprawdzone i cofnięte) — e86e201
 
 #### Manual
 
-- [x] 6.6 Autor rozgrywa po partii każdą frakcją i ocenia grywalność — 9f127a5
+- [x] 6.6 Autor rozgrywa po partii każdą frakcją i ocenia grywalność — e86e201
 
 ### Phase 7: Limit czasu tury 45 s
 
 #### Automated
 
-- [x] 7.1 `./mvnw -B verify` przechodzi (w tym testy z zegarem stałym) — a057a99
-- [x] 7.2 Testy frontu przechodzą: `npx ng test --watch=false` — a057a99
-- [x] 7.3 Build SPA przechodzi: `npm run build` — a057a99
+- [x] 7.1 `./mvnw -B verify` przechodzi (w tym testy z zegarem stałym) — 3c33303
+- [x] 7.2 Testy frontu przechodzą: `npx ng test --watch=false` — 3c33303
+- [x] 7.3 Build SPA przechodzi: `npm run build` — 3c33303
 
 #### Manual
 
-- [x] 7.4 Licznik startuje po odtwarzaniu, odlicza od 45 s, po zerze tura kończy się sama — a057a99
-- [x] 7.5 Zamknięcie karty > 50 s i powrót pokazuje rozegraną turę komputera — a057a99
+- [x] 7.4 Licznik startuje po odtwarzaniu, odlicza od 45 s, po zerze tura kończy się sama — 3c33303
+- [x] 7.5 Zamknięcie karty > 50 s i powrót pokazuje rozegraną turę komputera — 3c33303
 - [x] 7.6 Na wdrożonej wersji 3 partie zmierzone stoperem, każda ≤ 15 min

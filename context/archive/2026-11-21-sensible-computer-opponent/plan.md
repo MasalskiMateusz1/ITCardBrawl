@@ -292,35 +292,35 @@ Brak danych do migracji: partie żyją w pamięci (`MatchStore`). Po wdrożeniu 
 
 #### Automated
 
-- [x] 1.1 Testy strategii przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,PositionEvaluatorTests,MatchServiceTests'` — ffe1a5b
-- [x] 1.2 Symulacja 200 partii z ziarnem daje ≥ 80% wygranych komputera przeciwko losowemu graczowi (w `ComputerOpponentTests`) — ffe1a5b
-- [x] 1.3 `RandomOpponent` nie występuje w `src/main`: `grep -rn RandomOpponent src/main` zwraca pusty wynik — ffe1a5b
-- [x] 1.4 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify` — ffe1a5b
+- [x] 1.1 Testy strategii przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,PositionEvaluatorTests,MatchServiceTests'` — 5c1c75d
+- [x] 1.2 Symulacja 200 partii z ziarnem daje ≥ 80% wygranych komputera przeciwko losowemu graczowi (w `ComputerOpponentTests`) — 5c1c75d
+- [x] 1.3 `RandomOpponent` nie występuje w `src/main`: `grep -rn RandomOpponent src/main` zwraca pusty wynik — 5c1c75d
+- [x] 1.4 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify` — 5c1c75d
 
 #### Manual
 
-- [x] 1.5 W lokalnej partii komputer zagrywa postacie, wymienia się korzystnie i nie leczy gracza ani nie rani własnych postaci (kilka tur obserwacji) — ffe1a5b
+- [x] 1.5 W lokalnej partii komputer zagrywa postacie, wymienia się korzystnie i nie leczy gracza ani nie rani własnych postaci (kilka tur obserwacji) — 5c1c75d
 
 ### Phase 2: Powód ruchu w logu
 
 #### Automated
 
-- [x] 2.1 Testy powodów i formatera przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,MatchLogFormatterTests,MatchViewTests,MatchControllerTests'` — 2e62acd
-- [x] 2.2 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify` — 2e62acd
+- [x] 2.1 Testy powodów i formatera przechodzą: `./mvnw -B test -Dtest='ComputerOpponentTests,MatchLogFormatterTests,MatchViewTests,MatchControllerTests'` — f8d9c9c
+- [x] 2.2 Pełny zestaw testów backendu przechodzi: `./mvnw -B verify` — f8d9c9c
 
 #### Manual
 
-- [x] 2.3 W lokalnej partii log pokazuje przed każdym ruchem komputera zrozumiały powód po polsku i po angielsku (przełącznik języka) — 2e62acd
+- [x] 2.3 W lokalnej partii log pokazuje przed każdym ruchem komputera zrozumiały powód po polsku i po angielsku (przełącznik języka) — f8d9c9c
 
 ### Phase 3: Podpis powodu w SPA
 
 #### Automated
 
-- [x] 3.1 Testy SPA przechodzą: `cd frontend && npx ng test --watch=false` — dfbffdd
-- [x] 3.2 Build produkcyjny SPA przechodzi: `cd frontend && npm run build` — dfbffdd
+- [x] 3.1 Testy SPA przechodzą: `cd frontend && npx ng test --watch=false` — 433ccb0
+- [x] 3.2 Build produkcyjny SPA przechodzi: `cd frontend && npm run build` — 433ccb0
 
 #### Manual
 
-- [x] 3.3 Podczas tury komputera nad stołem widać przy każdym kroku jego powód, w tempie pozwalającym go przeczytać lub doczytać w logu — dfbffdd
-- [x] 3.4 Wpisy z powodem są w logu wizualnie odróżnione od skutków ruchów — dfbffdd
-- [x] 3.5 Po zagraniu kilku partii komputer sprawia wrażenie grającego sensownie, a partia mieści się w ≤ 15 minutach — dfbffdd
+- [x] 3.3 Podczas tury komputera nad stołem widać przy każdym kroku jego powód, w tempie pozwalającym go przeczytać lub doczytać w logu — 433ccb0
+- [x] 3.4 Wpisy z powodem są w logu wizualnie odróżnione od skutków ruchów — 433ccb0
+- [x] 3.5 Po zagraniu kilku partii komputer sprawia wrażenie grającego sensownie, a partia mieści się w ≤ 15 minutach — 433ccb0

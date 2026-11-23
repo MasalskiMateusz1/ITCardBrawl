@@ -648,65 +648,65 @@ Partie trzymane są tylko w pamięci, więc stare partie znikają przy restarcie
 
 #### Automated
 
-- [x] 1.1 Testy katalogu przechodzą: `./mvnw -B test -Dtest=CardCatalogTests` — 2a7305d
-- [x] 1.2 Pełny build backendu przechodzi: `./mvnw -B verify` — 2a7305d
+- [x] 1.1 Testy katalogu przechodzą: `./mvnw -B test -Dtest=CardCatalogTests` — c66f910
+- [x] 1.2 Pełny build backendu przechodzi: `./mvnw -B verify` — c66f910
 
 #### Manual
 
-- [x] 1.3 Przegląd `factions.json`: wartości zgadzają się z tabelą z planu, a teksty zdolności pl/en czytają się naturalnie — 2a7305d
+- [x] 1.3 Przegląd `factions.json`: wartości zgadzają się z tabelą z planu, a teksty zdolności pl/en czytają się naturalnie — c66f910
 
 ### Phase 2: Silnik reguł partii
 
 #### Automated
 
-- [x] 2.1 Testy silnika przechodzą: `./mvnw -B test -Dtest=MatchEngineTests` — 0e6830f
-- [x] 2.2 Testy fabryki nadal przechodzą: `./mvnw -B test -Dtest=MatchFactoryTests` — 0e6830f
-- [x] 2.3 Pełny build backendu przechodzi: `./mvnw -B verify` — 0e6830f
+- [x] 2.1 Testy silnika przechodzą: `./mvnw -B test -Dtest=MatchEngineTests` — 10dd257
+- [x] 2.2 Testy fabryki nadal przechodzą: `./mvnw -B test -Dtest=MatchFactoryTests` — 10dd257
+- [x] 2.3 Pełny build backendu przechodzi: `./mvnw -B verify` — 10dd257
 
 ### Phase 3: Komputer i atomowy magazyn partii
 
 #### Automated
 
-- [x] 3.1 Testy komputera, magazynu i serwisu przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchStoreTests,MatchServiceTests"` — 83a8e55
-- [x] 3.2 Pełny build backendu przechodzi: `./mvnw -B verify` — 83a8e55
+- [x] 3.1 Testy komputera, magazynu i serwisu przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchStoreTests,MatchServiceTests"` — af7a393
+- [x] 3.2 Pełny build backendu przechodzi: `./mvnw -B verify` — af7a393
 
 ### Phase 4: API ruchów i rozszerzony widok
 
 #### Automated
 
-- [x] 4.1 Testy API i logu przechodzą: `./mvnw -B test -Dtest="MatchControllerTests,MatchLogFormatterTests"` — d2b8aea
-- [x] 4.2 Trasy backendu są pod `/api`: `./mvnw -B test -Dtest=BackendRoutesTests` — d2b8aea
-- [x] 4.3 Pełny build backendu przechodzi: `./mvnw -B verify` — d2b8aea
+- [x] 4.1 Testy API i logu przechodzą: `./mvnw -B test -Dtest="MatchControllerTests,MatchLogFormatterTests"` — 58b3f72
+- [x] 4.2 Trasy backendu są pod `/api`: `./mvnw -B test -Dtest=BackendRoutesTests` — 58b3f72
+- [x] 4.3 Pełny build backendu przechodzi: `./mvnw -B verify` — 58b3f72
 
 ### Phase 5: Pętla gry we froncie
 
 #### Automated
 
-- [x] 5.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 22a82cf
-- [x] 5.2 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build` — 22a82cf
-- [x] 5.3 Pełny build backendu przechodzi: `./mvnw -B verify` — 22a82cf
+- [x] 5.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 1b65ee3
+- [x] 5.2 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build` — 1b65ee3
+- [x] 5.3 Pełny build backendu przechodzi: `./mvnw -B verify` — 1b65ee3
 
 #### Manual
 
-- [x] 5.4 Pełna partia od wyboru frakcji do wyniku (`npm start` + `./mvnw spring-boot:run`): zagranie postaci, atak w postać i w stres, koniec tury, widoczne ruchy komputera w logu, wynik i „Zagraj ponownie” → `/new-match` — 22a82cf
-- [x] 5.5 Partia, w której zaczyna komputer, otwiera się z jego ruchami w logu i turą gracza — 22a82cf
-- [x] 5.6 Ochrona przeciwnika blokuje atak w stres; Szarża atakuje od razu; obrażenia znikają po turze — 22a82cf
-- [x] 5.7 Przełączenie PL/EN w trakcie partii zmienia język logu i etykiet bez utraty stanu — 22a82cf
-- [x] 5.8 Podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury — 329dda6
-- [x] 5.9 Partia mieści się mniej więcej w 15 minutach (NFR), z uwagą o balansie do S-06 — 22a82cf
+- [x] 5.4 Pełna partia od wyboru frakcji do wyniku (`npm start` + `./mvnw spring-boot:run`): zagranie postaci, atak w postać i w stres, koniec tury, widoczne ruchy komputera w logu, wynik i „Zagraj ponownie” → `/new-match` — 1b65ee3
+- [x] 5.5 Partia, w której zaczyna komputer, otwiera się z jego ruchami w logu i turą gracza — 1b65ee3
+- [x] 5.6 Ochrona przeciwnika blokuje atak w stres; Szarża atakuje od razu; obrażenia znikają po turze — 1b65ee3
+- [x] 5.7 Przełączenie PL/EN w trakcie partii zmienia język logu i etykiet bez utraty stanu — 1b65ee3
+- [x] 5.8 Podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury — cb8b6e6
+- [x] 5.9 Partia mieści się mniej więcej w 15 minutach (NFR), z uwagą o balansie do S-06 — 1b65ee3
 
 ### Phase 6: Odtwarzanie tury komputera krok po kroku
 
 #### Automated
 
-- [x] 6.1 Testy domeny i API przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchServiceTests,MatchControllerTests"` — 329dda6
-- [x] 6.2 Pełny build backendu przechodzi: `./mvnw -B verify` — 329dda6
-- [x] 6.3 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 329dda6
-- [x] 6.4 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build` — 329dda6
+- [x] 6.1 Testy domeny i API przechodzą: `./mvnw -B test -Dtest="RandomOpponentTests,MatchServiceTests,MatchControllerTests"` — cb8b6e6
+- [x] 6.2 Pełny build backendu przechodzi: `./mvnw -B verify` — cb8b6e6
+- [x] 6.3 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — cb8b6e6
+- [x] 6.4 Build produkcyjny frontendu przechodzi: `cd frontend && npm run build` — cb8b6e6
 
 #### Manual
 
-- [x] 6.5 Po „Zakończ turę” ruchy komputera pojawiają się na stole i w logu po kolei, z etykietą „Ruch przeciwnika…”, a potem wraca tura gracza — 329dda6
-- [x] 6.6 Partia, w której zaczyna komputer, odtwarza jego pierwszą turę po wejściu na `/match` — 329dda6
-- [x] 6.7 Ponowne sprawdzenie 5.8: podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury — 329dda6
-- [x] 6.8 Przełączenie PL/EN w trakcie odtwarzania nie przerywa go, a po nim log i etykiety są w nowym języku — 329dda6
+- [x] 6.5 Po „Zakończ turę” ruchy komputera pojawiają się na stole i w logu po kolei, z etykietą „Ruch przeciwnika…”, a potem wraca tura gracza — cb8b6e6
+- [x] 6.6 Partia, w której zaczyna komputer, odtwarza jego pierwszą turę po wejściu na `/match` — cb8b6e6
+- [x] 6.7 Ponowne sprawdzenie 5.8: podwójny klik „Zakończ turę” nie zabiera graczowi kolejnej tury — cb8b6e6
+- [x] 6.8 Przełączenie PL/EN w trakcie odtwarzania nie przerywa go, a po nim log i etykiety są w nowym języku — cb8b6e6

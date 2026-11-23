@@ -215,37 +215,37 @@ None. Existing archived plans keep their Polish quotes of old comments. `git bla
 
 #### Automated
 
-- [x] 1.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/game` — 1acc367
-- [x] 1.2 Leftover Polish check prints nothing for comment lines in `src/main/java/com/example/itcardbrawl/game` — 1acc367
-- [x] 1.3 Full backend suite passes: `./mvnw -B verify` — 1acc367
+- [x] 1.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/game` — 99f595c
+- [x] 1.2 Leftover Polish check prints nothing for comment lines in `src/main/java/com/example/itcardbrawl/game` — 99f595c
+- [x] 1.3 Full backend suite passes: `./mvnw -B verify` — 99f595c
 
 #### Manual
 
-- [x] 1.4 Spot-read 3 translated files (`PositionEvaluator`, `ComputerOpponent`, `MatchEngine`): the javadoc is accurate and reads naturally in English — 1acc367
+- [x] 1.4 Spot-read 3 translated files (`PositionEvaluator`, `ComputerOpponent`, `MatchEngine`): the javadoc is accurate and reads naturally in English — 99f595c
 
 ### Phase 2: Remaining Java (`api`, `config`, `web`, `src/test`)
 
 #### Automated
 
-- [x] 2.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/{api,config,web}` and `src/test/java` — d89de2a
-- [x] 2.2 Leftover Polish check prints nothing for comment lines in all of `src/**/*.java` — d89de2a
-- [x] 2.3 Full backend suite passes: `./mvnw -B verify` — d89de2a
+- [x] 2.1 Comment-only diff check prints nothing for `src/main/java/com/example/itcardbrawl/{api,config,web}` and `src/test/java` — e5a102b
+- [x] 2.2 Leftover Polish check prints nothing for comment lines in all of `src/**/*.java` — e5a102b
+- [x] 2.3 Full backend suite passes: `./mvnw -B verify` — e5a102b
 
 #### Manual
 
-- [x] 2.4 Spot-read `MatchView`, `SecurityConfig` and one test file: the translations are accurate, and the security and fairness notes keep their meaning — d89de2a
+- [x] 2.4 Spot-read `MatchView`, `SecurityConfig` and one test file: the translations are accurate, and the security and fairness notes keep their meaning — e5a102b
 
 ### Phase 3: Config, deploy and rule
 
 #### Automated
 
-- [x] 3.1 Comment-only diff check prints nothing for the nine files — b59c3ab
-- [x] 3.2 Leftover Polish check prints nothing for `#` comment lines in the nine files — b59c3ab
-- [x] 3.3 YAML still parses: `python3 -c "import yaml,sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" .github/workflows/ci.yml deploy/compose.yaml` — b59c3ab
-- [x] 3.4 Shell script still parses: `bash -n deploy/deploy.sh` — b59c3ab
-- [x] 3.5 `AGENTS.md` no longer mandates Polish comments: `grep -n "Comments, javadoc and validation messages are in Polish" AGENTS.md` prints nothing — b59c3ab
-- [x] 3.6 Full backend suite passes: `./mvnw -B verify` — b59c3ab
+- [x] 3.1 Comment-only diff check prints nothing for the nine files — 62951c2
+- [x] 3.2 Leftover Polish check prints nothing for `#` comment lines in the nine files — 62951c2
+- [x] 3.3 YAML still parses: `python3 -c "import yaml,sys; [yaml.safe_load(open(f)) for f in sys.argv[1:]]" .github/workflows/ci.yml deploy/compose.yaml` — 62951c2
+- [x] 3.4 Shell script still parses: `bash -n deploy/deploy.sh` — 62951c2
+- [x] 3.5 `AGENTS.md` no longer mandates Polish comments: `grep -n "Comments, javadoc and validation messages are in Polish" AGENTS.md` prints nothing — 62951c2
+- [x] 3.6 Full backend suite passes: `./mvnw -B verify` — 62951c2
 
 #### Manual
 
-- [x] 3.7 After the merge to `main`, the CI run and the automatic deploy succeed (comment-only change to `ci.yml`, `Dockerfile` and `deploy/`) — b59c3ab
+- [x] 3.7 After the merge to `main`, the CI run and the automatic deploy succeed (comment-only change to `ci.yml`, `Dockerfile` and `deploy/`) — 62951c2

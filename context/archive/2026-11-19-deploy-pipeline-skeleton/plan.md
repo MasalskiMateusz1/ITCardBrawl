@@ -343,62 +343,62 @@ Push na `main` po zielonych testach buduje obraz, publikuje go w GHCR, wdraża n
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw verify` — cac0a06
-- [x] 1.2 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — cac0a06
+- [x] 1.1 Testy backendu przechodzą: `./mvnw verify` — f00d8c9
+- [x] 1.2 Testy frontu przechodzą: `cd frontend && npx ng test --watch=false` — f00d8c9
 
 #### Manual
 
-- [x] 1.3 Lokalnie `http://localhost:8080/sign-in` ładuje SPA z jara, odświeżenie nie daje 401 — cac0a06
+- [x] 1.3 Lokalnie `http://localhost:8080/sign-in` ładuje SPA z jara, odświeżenie nie daje 401 — f00d8c9
 
 ### Phase 2: Obraz kontenera
 
 #### Automated
 
-- [x] 2.1 Obraz się buduje: `docker build -t itcardbrawl:local .` — ce7041a
-- [x] 2.2 W obrazie nie ma sekretów (`.env.properties`) — ce7041a
-- [x] 2.3 Kontener startuje i jest `healthy` — ce7041a
-- [x] 2.4 `/api/ping` zwraca `{"status":"ok"}`, a `/` zawiera `<app-root>` — ce7041a
+- [x] 2.1 Obraz się buduje: `docker build -t itcardbrawl:local .` — 001ebb5
+- [x] 2.2 W obrazie nie ma sekretów (`.env.properties`) — 001ebb5
+- [x] 2.3 Kontener startuje i jest `healthy` — 001ebb5
+- [x] 2.4 `/api/ping` zwraca `{"status":"ok"}`, a `/` zawiera `<app-root>` — 001ebb5
 
 #### Manual
 
-- [x] 2.5 `http://localhost:8080/` przekierowuje na `/sign-in` z przyciskami logowania — ce7041a
+- [x] 2.5 `http://localhost:8080/` przekierowuje na `/sign-in` z przyciskami logowania — 001ebb5
 
 ### Phase 3: CI — testy na PR i main
 
 #### Automated
 
-- [x] 3.1 Ostatnie uruchomienie `ci.yml` na `main` zakończone `success` — d571eeb
-- [x] 3.2 Gałąź domyślna na GitHubie to `main` — d571eeb
+- [x] 3.1 Ostatnie uruchomienie `ci.yml` na `main` zakończone `success` — ed0992c
+- [x] 3.2 Gałąź domyślna na GitHubie to `main` — ed0992c
 
 #### Manual
 
-- [x] 3.3 PR z zepsutym testem ma czerwony check `test`, po cofnięciu zielony — d571eeb
+- [x] 3.3 PR z zepsutym testem ma czerwony check `test`, po cofnięciu zielony — ed0992c
 
 ### Phase 4: Serwer i skrypt wdrożenia
 
 #### Automated
 
-- [x] 4.1 `deploy.sh` przechodzi shellcheck — d6299ae
-- [x] 4.2 `docker compose -f deploy/compose.yaml config` kończy się kodem 0 — d6299ae
+- [x] 4.1 `deploy.sh` przechodzi shellcheck — 172f597
+- [x] 4.2 `docker compose -f deploy/compose.yaml config` kończy się kodem 0 — 172f597
 
 #### Manual
 
-- [x] 4.3 VPS, DNS i produkcyjne aplikacje OAuth skonfigurowane według runbooka — d6299ae
-- [x] 4.4 Ręczny `./deploy.sh <tag>` działa, `https://<domena>/api/ping` odpowiada z ważnym certyfikatem — d6299ae
-- [x] 4.5 Logowanie GitHubem i Google na produkcji prowadzi do lobby — d6299ae
-- [x] 4.6 Nieudany deploy zostawia lub przywraca działającą wersję — d6299ae
+- [x] 4.3 VPS, DNS i produkcyjne aplikacje OAuth skonfigurowane według runbooka — 172f597
+- [x] 4.4 Ręczny `./deploy.sh <tag>` działa, `https://<domena>/api/ping` odpowiada z ważnym certyfikatem — 172f597
+- [x] 4.5 Logowanie GitHubem i Google na produkcji prowadzi do lobby — 172f597
+- [x] 4.6 Nieudany deploy zostawia lub przywraca działającą wersję — 172f597
 
 ### Phase 5: CD z main
 
 #### Automated
 
-- [x] 5.1 Workflow przechodzi actionlint — b3e0281
-- [x] 5.2 Joby `test`, `image`, `deploy` zakończone `success` po merge do `main` — b3e0281
-- [x] 5.3 Obraz `:<sha>` istnieje w GHCR — b3e0281
+- [x] 5.1 Workflow przechodzi actionlint — 37fdce8
+- [x] 5.2 Joby `test`, `image`, `deploy` zakończone `success` po merge do `main` — 37fdce8
+- [x] 5.3 Obraz `:<sha>` istnieje w GHCR — 37fdce8
 
 #### Manual
 
-- [x] 5.4 Zmiana zmergowana do `main` pojawia się na produkcji bez ręcznych kroków — b3e0281
-- [x] 5.5 PR nie uruchamia jobów `image` ani `deploy` — b3e0281
-- [x] 5.6 Zepsuta wersja: `deploy` czerwony, produkcja działa na poprzedniej wersji — b3e0281
-- [x] 5.7 Logowanie → lobby → wylogowanie działa w czterech przeglądarkach — b3e0281
+- [x] 5.4 Zmiana zmergowana do `main` pojawia się na produkcji bez ręcznych kroków — 37fdce8
+- [x] 5.5 PR nie uruchamia jobów `image` ani `deploy` — 37fdce8
+- [x] 5.6 Zepsuta wersja: `deploy` czerwony, produkcja działa na poprzedniej wersji — 37fdce8
+- [x] 5.7 Logowanie → lobby → wylogowanie działa w czterech przeglądarkach — 37fdce8

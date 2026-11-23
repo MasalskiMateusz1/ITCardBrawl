@@ -68,7 +68,7 @@ Documented decisions, not findings:
   - a new signature `characterValue(stats, damage, damageShare, extraGuard)`;
   - a new meaning for `DAMAGE_DISCOUNT` (0.5 subtracted → 0.1 as a multiplier).
 
-  This serves the plan's goal (FAVORABLE_TRADE > 0) and `Score` is unchanged. The explanation is only in the javadoc and the commit message of 044f20a; neither `card-pricing.md` nor the plan mentions it.
+  This serves the plan's goal (FAVORABLE_TRADE > 0) and `Score` is unchanged. The explanation is only in the javadoc and the commit message of 42e9a7b; neither `card-pricing.md` nor the plan mentions it.
 - **Fix**: Add a short "Wagi AI (faza 5)" note to `card-pricing.md` describing `finishable()`, `SETUP_DAMAGE_SHARE` and the new meaning of `DAMAGE_DISCOUNT`.
 - **Decision**: FIXED (2026-11-22) — section "Wagi AI (faza 5)" in card-pricing.md
 
@@ -97,13 +97,13 @@ Documented decisions, not findings:
 - **Severity**: 💡 OBSERVATION
 - **Impact**: 🏃 LOW — quick decision; fix is obvious and narrowly scoped
 - **Dimension**: Scope Discipline
-- **Location**: .github/workflows/ci.yml:22-49 (commit 592e626)
+- **Location**: .github/workflows/ci.yml:22-49 (commit 7c60229)
 - **Detail**:
-  - Commit 592e626 bumps actions in all three jobs to versions running on Node 24, including the build/deploy jobs, which have nothing to do with S-06. The plan required `upload-artifact@v4`.
+  - Commit 7c60229 bumps actions in all three jobs to versions running on Node 24, including the build/deploy jobs, which have nothing to do with S-06. The plan required `upload-artifact@v4`.
   - `actions/*` actions use mutable tags (`@v7`), while `docker/*` in the same file are pinned by SHA.
   - The report steps use `if: always()`, so they also run when the workflow is cancelled.
-- **Fix**: Mention 592e626 in the PR description as a separate CI change, and switch the report steps to `if: ${{ !cancelled() }}`.
-- **Decision**: FIXED (2026-11-22) — report steps use `if: ${{ !cancelled() }}`; 592e626 to be called out in the PR description
+- **Fix**: Mention 7c60229 in the PR description as a separate CI change, and switch the report steps to `if: ${{ !cancelled() }}`.
+- **Decision**: FIXED (2026-11-22) — report steps use `if: ${{ !cancelled() }}`; 7c60229 to be called out in the PR description
 
 ### F7 — GET /api/matches/current changes state (lazy turn expiry)
 

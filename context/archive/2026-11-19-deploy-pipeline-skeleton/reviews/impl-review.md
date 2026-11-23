@@ -19,9 +19,9 @@
 | Pattern Consistency | PASS |
 | Success Criteria | PASS |
 
-Automated criteria (all phases) re-run 2026-11-19: `./mvnw verify` OK, `ng test` 5/5 files OK, `docker build` OK, no `.env.properties` in image, container healthy + `/api/ping` + `<app-root>`, CI default branch `main`, shellcheck OK, compose config OK, actionlint OK, run 44530077836 test/image/deploy success, GHCR manifest `:b3e0281…` OK, prod `/api/ping` OK.
+Automated criteria (all phases) re-run 2026-11-19: `./mvnw verify` OK, `ng test` 5/5 files OK, `docker build` OK, no `.env.properties` in image, container healthy + `/api/ping` + `<app-root>`, CI default branch `main`, shellcheck OK, compose config OK, actionlint OK, run 44530077836 test/image/deploy success, GHCR manifest `:37fdce8…` OK, prod `/api/ping` OK.
 
-Unplanned but benign changes: `.gitattributes` (`*.sh eol=lf`), `.gitignore` (server secrets/state), `mvnw` mode 755, `SecurityFlowTests` (CSRF via cookie, d571eeb).
+Unplanned but benign changes: `.gitattributes` (`*.sh eol=lf`), `.gitignore` (server secrets/state), `mvnw` mode 755, `SecurityFlowTests` (CSRF via cookie, ed0992c).
 
 ## Findings
 

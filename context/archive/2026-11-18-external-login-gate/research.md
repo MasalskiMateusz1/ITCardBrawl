@@ -1,7 +1,7 @@
 ---
 date: 2026-11-18T14:02:26+01:00
 researcher: Claude (Opus 5.5) for Mateusz Masalski
-git_commit: 0b9271b
+git_commit: e54aecd
 branch: master
 repository: a-cards (ItCardBrawl)
 topic: "S-01 external-login-gate — logowanie GitHub + Google (Spring oauth2Login) w SPA Angular za proxy dev servera"
@@ -15,7 +15,7 @@ last_updated_by: Claude (Opus 5.5)
 
 **Date**: 2026-11-18T14:02:26+01:00
 **Researcher**: Claude (Opus 5.5)
-**Git Commit**: 0b9271b
+**Git Commit**: e54aecd
 **Branch**: master
 **Repository**: a-cards (ItCardBrawl)
 

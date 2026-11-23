@@ -50,7 +50,7 @@ Najpierw backend, w pełni testowalny MockMvc bez prawdziwych dostawców (post-p
 - **Atrapy klientów w testach bez przesłaniania głównej konfiguracji**: plik testowy musi leżeć w `src/test/resources/config/application.properties`, a nie w `src/test/resources/application.properties` — ten drugi przesłoniłby na classpath główny `application.properties` (znikną rejestracje i import `.env.properties`, a testy przestałyby sprawdzać prawdziwą konfigurację). `classpath:/config/` jest ładowany dodatkowo, z wyższym priorytetem, więc wystarczy w nim podać wartości placeholderów. Testy nie mogą asertować konkretnego `client_id` (lokalny `.env.properties` dewelopera może mieć pierwszeństwo).
 - **Komunikaty z parametrów bez wartości**: `?error`, `?unavailable`, `?logout` nie mają wartości — wykrywać obecność (`queryParamMap.has(...)`), nie prawdziwość wartości (pusty string jest falsy).
 - **Kolejność CSRF po logowaniu**: po callbacku token jest wyczyszczony; nowe cookie `XSRF-TOKEN` powstaje dopiero przy sondzie `/api/me` wykonywanej przez guard lobby — dlatego `/api/me` musi wołać `getToken()`, a przycisk „Wyloguj” jest dostępny wyłącznie w lobby (za guardem).
-  - **Odstępstwo (wdrożenie, 61f0fa8)**: `getToken()` w `/api/me` pominięto — w Spring Security 7.1.2 `csrf(c -> c.spa())` sam wystawia cookie `XSRF-TOKEN` (zweryfikowane na działającej aplikacji). Pilnuje tego test `MeControllerTests.responseIssuesXsrfTokenCookie` oraz ręczna weryfikacja 3.4; jeśli test zacznie padać po aktualizacji Springa, przywrócić parametr `CsrfToken` i `getToken()`.
+  - **Odstępstwo (wdrożenie, 03df857)**: `getToken()` w `/api/me` pominięto — w Spring Security 7.1.2 `csrf(c -> c.spa())` sam wystawia cookie `XSRF-TOKEN` (zweryfikowane na działającej aplikacji). Pilnuje tego test `MeControllerTests.responseIssuesXsrfTokenCookie` oraz ręczna weryfikacja 3.4; jeśli test zacznie padać po aktualizacji Springa, przywrócić parametr `CsrfToken` i `getToken()`.
 
 ## Phase 1: Backend — oauth2Login, /api/me, CSRF, wylogowanie
 
@@ -345,44 +345,44 @@ Brak danych do migracji. Po wdrożeniu S-01 każdy deweloper potrzebuje `.env.pr
 
 #### Automated
 
-- [x] 1.1 Testy backendu przechodzą: `./mvnw test` — 61f0fa8
-- [x] 1.2 `.env.properties` jest ignorowany: `git check-ignore .env.properties` zwraca ścieżkę — 61f0fa8
-- [x] 1.3 W repo brak sekretów: `git grep -nE "client-secret=[^$]"` zwraca pusto — 61f0fa8
+- [x] 1.1 Testy backendu przechodzą: `./mvnw test` — 03df857
+- [x] 1.2 `.env.properties` jest ignorowany: `git check-ignore .env.properties` zwraca ścieżkę — 03df857
+- [x] 1.3 W repo brak sekretów: `git grep -nE "client-secret=[^$]"` zwraca pusto — 03df857
 
 #### Manual
 
-- [x] 1.4 Aplikacje zarejestrowane u GitHuba i Google z callbackami `http://localhost:4200/login/oauth2/code/{github,google}`, wartości w `.env.properties` — 61f0fa8
-- [x] 1.5 `./mvnw spring-boot:run` startuje; `curl -i http://localhost:8080/api/me` → `401` bez `Location` — 61f0fa8
-- [x] 1.6 `curl -i http://localhost:8080/oauth2/authorization/github` → `302` na `github.com/login/oauth/authorize` z prawdziwym `client_id` — 61f0fa8
+- [x] 1.4 Aplikacje zarejestrowane u GitHuba i Google z callbackami `http://localhost:4200/login/oauth2/code/{github,google}`, wartości w `.env.properties` — 03df857
+- [x] 1.5 `./mvnw spring-boot:run` startuje; `curl -i http://localhost:8080/api/me` → `401` bez `Location` — 03df857
+- [x] 1.6 `curl -i http://localhost:8080/oauth2/authorization/github` → `302` na `github.com/login/oauth/authorize` z prawdziwym `client_id` — 03df857
 
 ### Phase 2: Frontend — bramka logowania
 
 #### Automated
 
-- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 61f2bf3
-- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 61f2bf3
-- [x] 2.3 Brak odwołań do pinga we frontendzie: `git grep -nE "PingService|/api/ping" frontend/src` zwraca pusto — 61f2bf3
-- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test` — 61f2bf3
+- [x] 2.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 6d9d904
+- [x] 2.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 6d9d904
+- [x] 2.3 Brak odwołań do pinga we frontendzie: `git grep -nE "PingService|/api/ping" frontend/src` zwraca pusto — 6d9d904
+- [x] 2.4 Testy backendu nadal przechodzą: `./mvnw test` — 6d9d904
 
 #### Manual
 
-- [x] 2.5 Niezalogowany: `http://localhost:4200/` → `/sign-in` z dwoma przyciskami — 61f2bf3
-- [x] 2.6 Logowanie GitHubem → powrót na `http://localhost:4200/`, lobby z nazwą i awatarem — 61f2bf3
-- [x] 2.7 Logowanie Google (w nowym oknie incognito) → lobby z nazwą i awatarem — 61f2bf3
-- [x] 2.8 Anulowanie zgody u dostawcy → `/sign-in?error` z komunikatem błędu — 61f2bf3
-- [x] 2.9 Spring zatrzymany, odświeżenie `/` → `/sign-in?unavailable` z komunikatem — 61f2bf3
-- [x] 2.10 DevTools → Network: callback idzie na `localhost:4200/login/oauth2/code/...`, żadnych błędów CORS; po wejściu do lobby istnieje cookie `XSRF-TOKEN` — 61f2bf3
+- [x] 2.5 Niezalogowany: `http://localhost:4200/` → `/sign-in` z dwoma przyciskami — 6d9d904
+- [x] 2.6 Logowanie GitHubem → powrót na `http://localhost:4200/`, lobby z nazwą i awatarem — 6d9d904
+- [x] 2.7 Logowanie Google (w nowym oknie incognito) → lobby z nazwą i awatarem — 6d9d904
+- [x] 2.8 Anulowanie zgody u dostawcy → `/sign-in?error` z komunikatem błędu — 6d9d904
+- [x] 2.9 Spring zatrzymany, odświeżenie `/` → `/sign-in?unavailable` z komunikatem — 6d9d904
+- [x] 2.10 DevTools → Network: callback idzie na `localhost:4200/login/oauth2/code/...`, żadnych błędów CORS; po wejściu do lobby istnieje cookie `XSRF-TOKEN` — 6d9d904
 
 ### Phase 3: Frontend — cykl sesji
 
 #### Automated
 
-- [x] 3.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — a05b33f
-- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — a05b33f
-- [x] 3.3 Testy backendu nadal przechodzą: `./mvnw test` — a05b33f
+- [x] 3.1 Testy frontendu przechodzą: `cd frontend && npx ng test --watch=false` — 197f925
+- [x] 3.2 Build produkcyjny przechodzi: `cd frontend && npm run build` — 197f925
+- [x] 3.3 Testy backendu nadal przechodzą: `./mvnw test` — 197f925
 
 #### Manual
 
-- [x] 3.4 Klik „Wyloguj” w lobby → `/sign-in?logout` z „Wylogowano.”; w DevTools żądanie `POST /api/logout` ma nagłówek `X-XSRF-TOKEN` i status `204` — a05b33f
-- [x] 3.5 Po wylogowaniu wejście na `/` → `/sign-in` (sesja naprawdę zakończona) — a05b33f
-- [x] 3.6 Wygaśnięcie sesji: usunięcie cookie `JSESSIONID` w DevTools (lub restart Springa) i odświeżenie `/` → `/sign-in` — a05b33f
+- [x] 3.4 Klik „Wyloguj” w lobby → `/sign-in?logout` z „Wylogowano.”; w DevTools żądanie `POST /api/logout` ma nagłówek `X-XSRF-TOKEN` i status `204` — 197f925
+- [x] 3.5 Po wylogowaniu wejście na `/` → `/sign-in` (sesja naprawdę zakończona) — 197f925
+- [x] 3.6 Wygaśnięcie sesji: usunięcie cookie `JSESSIONID` w DevTools (lub restart Springa) i odświeżenie `/` → `/sign-in` — 197f925

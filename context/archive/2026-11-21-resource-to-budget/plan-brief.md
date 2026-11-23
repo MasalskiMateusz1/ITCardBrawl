@@ -54,13 +54,13 @@ Trzy fazy jak w stress-to-hp. Backend idzie razem, bo zmiana nazw w `game` łami
 | 2. SPA | Panel „Budżet”, typy, i18n, specy; push i wdrożenie | Push przed tą fazą = pusty panel na produkcji |
 | 3. PRD i resztki | Zdanie o budżecie w PRD; pusty grep | Grep z wykluczeniami przepuści nową nazwę Springa |
 
-**Prerequisites:** brak aktywnej zmiany na silniku (stress-to-hp zarchiwizowany, `ffe2d90`).
+**Prerequisites:** brak aktywnej zmiany na silniku (stress-to-hp zarchiwizowany, `7d5c40b`).
 **Estimated effort:** ~1 sesja, 3 fazy.
 
 ## Open Risks & Assumptions
 
 - Zakładamy, że SPA jest jedynym konsumentem JSON (jak w stress-to-hp), więc nie potrzebujemy zgodności wstecznej.
-- Commit archiwizacji `ffe2d90` jest jeszcze niewypchnięty; pójdzie razem z pushem po Fazie 2.
+- Commit archiwizacji `7d5c40b` jest jeszcze niewypchnięty; pójdzie razem z pushem po Fazie 2.
 
 ## Success Criteria (Summary)
 
