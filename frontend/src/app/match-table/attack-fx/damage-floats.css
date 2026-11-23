@@ -11,7 +11,7 @@
   translate: -50% 0;
   color: var(--color-danger);
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: calc(32px * var(--ui-scale, 1));
   font-weight: 700;
   text-shadow:
     0 2px 0 var(--color-bg),

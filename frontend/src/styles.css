@@ -92,3 +92,12 @@
   --faction-tint: #2a1a0b;
   --faction-bg: url('./assets-media/bg-testers.svg');
 }
+
+/* Visually hidden, still read by assistive tech. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

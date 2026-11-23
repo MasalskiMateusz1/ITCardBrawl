@@ -448,6 +448,33 @@ describe('MatchTable', () => {
     );
   });
 
+  it('grows the board past 1600×900 by the tighter viewport ratio, and never shrinks it', async () => {
+    const size = { width: window.innerWidth, height: window.innerHeight };
+    const resize = (width: number, height: number) => {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: height });
+      window.dispatchEvent(new Event('resize'));
+    };
+    try {
+      resize(1366, 768);
+      const fixture = await renderFixture(matchView());
+      const host = fixture.nativeElement as HTMLElement;
+      const scale = () => host.style.getPropertyValue('--ui-scale');
+      expect(scale()).toBe('1');
+
+      resize(1920, 1080);
+      await fixture.whenStable();
+      expect(scale()).toBe('1.2');
+
+      // Ultrawide: the height limits the growth, the extra width goes to the main column.
+      resize(3440, 1440);
+      await fixture.whenStable();
+      expect(scale()).toBe('1.6');
+    } finally {
+      resize(size.width, size.height);
+    }
+  });
+
   it('links back to the lobby from the bottom of the aside', async () => {
     const element = await renderWithMatch();
 

@@ -357,7 +357,12 @@
 
     @if (hoverCard(); as h) {
       @for (key of [h.key]; track key) {
-        <app-hover-card class="hover-card" [anchor]="h.anchor" [placement]="h.placement">
+        <app-hover-card
+          class="hover-card"
+          [anchor]="h.anchor"
+          [placement]="h.placement"
+          [scale]="uiScale()"
+        >
           <ng-container
             *ngTemplateOutlet="cardTpl; context: { $implicit: h.props, variant: 'full' }"
           />

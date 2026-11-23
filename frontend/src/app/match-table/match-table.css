@@ -13,20 +13,32 @@
   --gap: var(--space-3);
   --pad: var(--space-5);
   --zone-h: clamp(212px, 30vh, 270px);
-  --side-w: 224px;
+  /* --ui-scale is set on the host by the table. */
+  --side-w: calc(224px * var(--ui-scale));
   --card-zoom: 1;
 }
 
+/*
+ * Past the design size (1600×900) the board regions grow uniformly by --ui-scale (set by the
+ * table). The grid itself is not zoomed, so its tracks and gaps are scaled here; the fixed overlays
+ * (hover card, ghost, arrow, drop area, damage) stay in screen px and scale their own card.
+ */
 .table {
+  --sp: calc(var(--pad) * var(--ui-scale));
   box-sizing: border-box;
   display: grid;
   grid-template-columns: var(--side-w) minmax(0, 1fr) var(--side-w);
   grid-template-areas: 'left main right';
-  gap: var(--pad);
+  gap: var(--sp);
   min-width: 1280px;
   min-height: 720px;
   height: 100%;
-  padding: var(--pad);
+  padding: var(--sp);
+}
+
+.main,
+.aside {
+  zoom: var(--ui-scale);
 }
 
 .main {
@@ -60,14 +72,6 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-secondary);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
 }
 
 .zone {

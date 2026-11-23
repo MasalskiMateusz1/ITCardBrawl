@@ -127,6 +127,10 @@ const DRAG_TILT_REST_MS = 90;
 /** Distance (px) from the newest log entry within which the log keeps following new entries. */
 const LOG_STICK_PX = 24;
 
+/** Viewport the board is drawn for at `--ui-scale: 1` (CSS px); smaller ones tighten in CSS. */
+const DESIGN_WIDTH = 1600;
+const DESIGN_HEIGHT = 900;
+
 /**
  * A card pressed with the pointer: a hand card to play (`HAND`) or an own character to attack with
  * (`PLAYER`). `pressed` is still a click; past the threshold it is `dragging`; Escape (or the card
@@ -191,7 +195,11 @@ type Aim = { from: Point; to: Point; locked: boolean };
   styleUrl: './match-table.css',
   templateUrl: './match-table.html',
   // The hover card is fixed to the viewport: it would drift from its card on scroll or resize.
-  host: { '(scroll)': 'hidePreview()', '(window:resize)': 'hidePreview()' },
+  host: {
+    '(scroll)': 'hidePreview()',
+    '(window:resize)': 'onResize()',
+    '[style.--ui-scale]': 'uiScale()',
+  },
 })
 export class MatchTable {
   private readonly gameService = inject(GameService);
@@ -202,6 +210,11 @@ export class MatchTable {
   private readonly injector = inject(Injector);
 
   protected readonly texts = this.languageService.texts;
+  /**
+   * How much the board grows past its design size (`--ui-scale`, zoom of the board regions):
+   * 1 up to 1600×900, then uniformly with the viewport, so a big screen shows the same board larger.
+   */
+  protected readonly uiScale = signal(boardScale());
   protected readonly match = signal<MatchView | null>(null);
   /** True while a move request is in flight — every move button is disabled then. */
   protected readonly pending = signal(false);
@@ -621,7 +634,9 @@ export class MatchTable {
     const key = ++this.fxKey;
     const from = centre(attackerRect);
     const to = centre(targetRect);
-    const vector = { x: to.x - from.x, y: to.y - from.y };
+    // Screen px; the lunge runs inside the zoomed board, so in board px.
+    const scale = this.uiScale();
+    const vector = { x: (to.x - from.x) / scale, y: (to.y - from.y) / scale };
     const cues = new Map<string, FxCue>([
       [`PLAYER:${attackerId}`, { key, role: 'lunge', vector }],
       [`OPPONENT:${targetId ?? 'panel'}`, { key, role: 'hit', vector }],
@@ -1075,6 +1090,11 @@ export class MatchTable {
     this.previewed.set(null);
   }
 
+  protected onResize(): void {
+    this.hidePreview();
+    this.uiScale.set(boardScale());
+  }
+
   /** Fades the lifted card while the pointer is over a legal target. */
   protected hoverTarget(action: CardAction | null, over: boolean): void {
     this.targetingHover.set(over && (action === 'attack' || action === 'target'));
@@ -1409,6 +1429,12 @@ function stepView(final: MatchView, step: ReplayStep): MatchView {
     log: final.log.slice(0, step.logSize),
     replay: [],
   };
+}
+
+/** The board's zoom past the design size: the tighter of the width and height ratios, at least 1. */
+function boardScale(): number {
+  const scale = Math.min(window.innerWidth / DESIGN_WIDTH, window.innerHeight / DESIGN_HEIGHT);
+  return Math.max(1, Math.round(scale * 1000) / 1000);
 }
 
 function emptySlots(used: number): number[] {
