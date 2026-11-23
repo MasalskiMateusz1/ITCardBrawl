@@ -20,7 +20,6 @@ import { Router, RouterLink } from '@angular/router';
 import { Observable, Subscription, finalize } from 'rxjs';
 import { GameService } from '../game/game.service';
 import {
-  ActiveEvent,
   BoardCharacter,
   CardType,
   HandCard,
@@ -33,6 +32,7 @@ import { LanguageSwitch } from '../i18n/language-switch';
 import { LanguageService } from '../i18n/language.service';
 import { Messages } from '../i18n/messages';
 import { Card } from '../ui/card/card';
+import { ActiveEventsList } from './active-events-list/active-events-list';
 import { AimArrow } from './aim-arrow/aim-arrow';
 import { BoardOverlay } from './board-overlay/board-overlay';
 import { BoardSkeleton } from './board-skeleton/board-skeleton';
@@ -60,7 +60,8 @@ import { ZoneSide } from './zone-side/zone-side';
 type MatchTableError = 'loadMatch' | 'moveRejected' | 'moveFailed';
 
 /** The overlay opened over the main column; the game over shows on its own (see the template). */
-type BoardOverlayKind = 'graveyard-player' | 'graveyard-opponent';
+type BoardOverlayKind =
+  'graveyard-player' | 'graveyard-opponent' | 'events-player' | 'events-opponent';
 
 /** Delay between computer moves played back on the table; specs provide their own. */
 export const REPLAY_STEP_MS = new InjectionToken<number>('REPLAY_STEP_MS', {
@@ -85,7 +86,7 @@ type CardAction = 'play' | 'cancelEvent' | 'select' | 'cancelAttack' | 'attack' 
  * resolved against the current view on every render.
  */
 type PreviewRef = {
-  zone: CardZone | 'PLAYER_EVENT' | 'OPPONENT_EVENT';
+  zone: CardZone;
   instanceId: number;
   anchor: HoverAnchor;
 };
@@ -184,6 +185,7 @@ type Aim = { from: Point; to: Point; locked: boolean };
     RouterLink,
     NgTemplateOutlet,
     Card,
+    ActiveEventsList,
     AimArrow,
     BoardOverlay,
     BoardSkeleton,
@@ -208,6 +210,7 @@ type Aim = { from: Point; to: Point; locked: boolean };
   // The hover card is fixed to the viewport: it would drift from its card on scroll or resize.
   host: {
     '(scroll)': 'hidePreview()',
+    '(pointerdown)': 'onTablePointerDown($event)',
     '(window:resize)': 'onResize()',
     '[style.--ui-scale]': 'uiScale()',
   },
@@ -255,8 +258,9 @@ export class MatchTable {
 
   protected readonly finished = computed(() => this.match()?.status === 'FINISHED');
   /**
-   * The graveyard overlay opened from a status panel, `null` when none is. It stacks above the
-   * game-over overlay, which renders whenever `result` is set.
+   * The graveyard overlay opened from a status panel, or the active events overlay opened from a
+   * zone's event stack; `null` when none is. It stacks above the game-over overlay, which renders
+   * whenever `result` is set.
    */
   protected readonly openOverlay = signal<BoardOverlayKind | null>(null);
   /** The computer is moving (its turn, or its moves being played back): the player zone dims. */
@@ -448,20 +452,15 @@ export class MatchTable {
     if (ref.zone === 'HAND') {
       const card = match.player.hand.find((c) => c.instanceId === id);
       props = card ? handProps(card, texts) : null;
-    } else if (ref.zone === 'PLAYER' || ref.zone === 'OPPONENT') {
+    } else {
       const side = ref.zone === 'PLAYER' ? match.player : match.opponent;
       const character = side.board.find((c) => c.instanceId === id);
       props = character ? boardProps(character, texts) : null;
-    } else {
-      const side = ref.zone === 'PLAYER_EVENT' ? match.player : match.opponent;
-      const event = side.activeEvents.find((e) => e.instanceId === id);
-      props = event ? eventProps(event) : null;
     }
     if (props === null) {
       return null;
     }
-    const placement: HoverPlacement =
-      ref.zone === 'OPPONENT' || ref.zone === 'OPPONENT_EVENT' ? 'below' : 'above';
+    const placement: HoverPlacement = ref.zone === 'OPPONENT' ? 'below' : 'above';
     return { key: `${ref.zone}:${id}`, props, anchor: ref.anchor, placement };
   });
 
@@ -598,6 +597,24 @@ export class MatchTable {
 
   protected cancelAttack(): void {
     this.selectedAttacker.set(null);
+  }
+
+  /**
+   * While aiming, a press on anything that is not a live control (an illegal target, whose button
+   * is disabled, an empty slot, the board itself) drops the selected attacker or event. Legal
+   * targets, the cancel button and other enabled controls keep their own click. `pointerdown`
+   * because a disabled button swallows the click but still lets the press reach the table.
+   */
+  protected onTablePointerDown(event: PointerEvent): void {
+    if (!this.targeting() || this.busy() || event.button !== 0 || this.press !== null) {
+      return;
+    }
+    const target = event.target;
+    if (target instanceof Element && target.closest('button:enabled, a[href]') !== null) {
+      return;
+    }
+    this.cancelAttack();
+    this.cancelTarget();
   }
 
   /**
@@ -1101,11 +1118,7 @@ export class MatchTable {
 
   /** `event.currentTarget` is the hovered/focused card's `<li>`; the hover card opens at it. */
   protected showPreview(zone: PreviewRef['zone'], instanceId: number, event: Event): void {
-    const source = event.currentTarget as Element;
-    this.showPreviewAt(zone, instanceId, source.getBoundingClientRect());
-  }
-
-  protected showPreviewAt(zone: PreviewRef['zone'], instanceId: number, rect: DOMRect): void {
+    const rect = (event.currentTarget as Element).getBoundingClientRect();
     const anchor = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
     this.previewed.set({ zone, instanceId, anchor });
   }
@@ -1121,7 +1134,15 @@ export class MatchTable {
 
   /** A status panel's graveyard button: opens that side's graveyard, or closes it when open. */
   protected toggleGraveyard(side: Side): void {
-    const kind: BoardOverlayKind = side === 'PLAYER' ? 'graveyard-player' : 'graveyard-opponent';
+    this.toggleOverlay(side === 'PLAYER' ? 'graveyard-player' : 'graveyard-opponent');
+  }
+
+  /** A zone's active events stack: opens that side's active events, or closes them when open. */
+  protected toggleEvents(side: Side): void {
+    this.toggleOverlay(side === 'PLAYER' ? 'events-player' : 'events-opponent');
+  }
+
+  private toggleOverlay(kind: BoardOverlayKind): void {
     if (this.openOverlay() === kind) {
       this.closeOverlay();
     } else {
@@ -1136,14 +1157,13 @@ export class MatchTable {
       return;
     }
     this.openOverlay.set(null);
-    const zone = kind === 'graveyard-player' ? 'player' : 'opponent';
-    afterNextRender(
-      () =>
-        this.host.nativeElement
-          .querySelector<HTMLElement>(`.status.${zone} .graveyard-open`)
-          ?.focus(),
-      { injector: this.injector },
-    );
+    const zone = kind.endsWith('-player') ? 'player' : 'opponent';
+    const opener = kind.startsWith('graveyard')
+      ? `.status.${zone} .graveyard-open`
+      : `.zone.${zone} .events-open`;
+    afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>(opener)?.focus(), {
+      injector: this.injector,
+    });
   }
 
   /** Fades the lifted card while the pointer is over a legal target. */
@@ -1536,28 +1556,6 @@ function boardProps(character: BoardCharacter, texts: Messages): CardProps {
     duration: null,
     turnsLeft: null,
     trapped: character.trapped,
-  };
-}
-
-function eventProps(event: ActiveEvent): CardProps {
-  return {
-    cardId: event.cardId,
-    faction: event.faction,
-    type: 'EVENT',
-    name: event.name,
-    cost: event.cost,
-    attack: null,
-    health: null,
-    baseAttack: null,
-    baseHealth: null,
-    damaged: false,
-    keyword: null,
-    ability: null,
-    text: null,
-    effects: event.effects.map((effect) => effect.text),
-    duration: null,
-    turnsLeft: event.turnsLeft,
-    trapped: false,
   };
 }
 

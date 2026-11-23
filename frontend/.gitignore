@@ -31,6 +31,11 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+# Playwright screenshot baselines are committed, but only the Linux ones (CI); local runs on other
+# platforms write their own next to them.
+!/e2e/__screenshots__/
+/e2e/__screenshots__/**/*-win32.png
+/e2e/__screenshots__/**/*-darwin.png
 
 # System files
 .DS_Store

@@ -1,0 +1,33 @@
+/*
+ * Active events overlay: full cards from ui/card at the board's card size, wrapping, each with
+ * its target as a caption. Only tokens.
+ */
+ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.active-event {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+app-card {
+  zoom: var(--card-zoom, 1);
+}
+
+.target,
+.none {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.target {
+  font-size: 13px;
+}
