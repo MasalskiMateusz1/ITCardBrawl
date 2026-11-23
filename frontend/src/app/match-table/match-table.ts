@@ -479,6 +479,9 @@ export class MatchTable {
   /** The click that follows a drag's release is the drag itself, not a second action. */
   private swallowClick = false;
   private tiltTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The latest pointer move waiting for the next animation frame (see queueMove). */
+  private queuedMove: { event: PointerEvent; apply: (event: PointerEvent) => void } | null = null;
+  private moveFrame: number | null = null;
   /** The pointer is followed for the aim arrow while an attacker is selected by click. */
   private aimTracking = false;
   /** The battle log container; it follows the newest entry unless the player scrolled away. */
@@ -859,6 +862,15 @@ export class MatchTable {
       }
       this.startDrag(press);
     }
+    this.queueMove(event, this.applyDragMove);
+  };
+
+  /** The layout-reading part of a drag move, run at most once per animation frame. */
+  private readonly applyDragMove = (event: PointerEvent): void => {
+    const press = this.press;
+    if (press === null || press.state !== 'dragging') {
+      return;
+    }
     if (press.zone === 'PLAYER') {
       this.aimAt(press.instanceId, event.clientX, event.clientY);
       return;
@@ -1029,6 +1041,9 @@ export class MatchTable {
       doc.addEventListener('pointermove', this.onAimMove);
     } else {
       doc.removeEventListener('pointermove', this.onAimMove);
+      if (this.press === null) {
+        this.cancelMove();
+      }
       if (this.drag()?.zone !== 'PLAYER') {
         this.aim.set(null);
       }
@@ -1036,12 +1051,47 @@ export class MatchTable {
   }
 
   private readonly onAimMove = (event: PointerEvent): void => {
+    this.queueMove(event, this.applyAimMove);
+  };
+
+  private readonly applyAimMove = (event: PointerEvent): void => {
     const attackerId = this.selectedAttacker();
     // A drag aims for itself (see onPointerMove).
-    if (attackerId !== null && this.press?.state !== 'dragging') {
+    if (this.aimTracking && attackerId !== null && this.press?.state !== 'dragging') {
       this.aimAt(attackerId, event.clientX, event.clientY);
     }
   };
+
+  /**
+   * Coalesces pointer moves: only the latest one is applied, once per animation frame, so
+   * high-rate pointers don't force several layout reads and signal writes per frame.
+   */
+  private queueMove(event: PointerEvent, apply: (event: PointerEvent) => void): void {
+    this.queuedMove = { event, apply };
+    const win = this.host.nativeElement.ownerDocument.defaultView;
+    if (typeof win?.requestAnimationFrame !== 'function') {
+      this.flushMove();
+      return;
+    }
+    this.moveFrame ??= win.requestAnimationFrame(() => {
+      this.moveFrame = null;
+      this.flushMove();
+    });
+  }
+
+  private flushMove(): void {
+    const queued = this.queuedMove;
+    this.queuedMove = null;
+    queued?.apply(queued.event);
+  }
+
+  private cancelMove(): void {
+    if (this.moveFrame !== null) {
+      this.host.nativeElement.ownerDocument.defaultView?.cancelAnimationFrame(this.moveFrame);
+      this.moveFrame = null;
+    }
+    this.queuedMove = null;
+  }
 
   /** The element under a viewport point; the ghost, drop area and arrow are click-through. */
   private elementAt(x: number, y: number): Element | null {
@@ -1056,6 +1106,7 @@ export class MatchTable {
       return;
     }
     this.press = null;
+    this.cancelMove();
     const doc = this.host.nativeElement.ownerDocument;
     doc.removeEventListener('pointermove', this.onPointerMove);
     doc.removeEventListener('pointerup', this.onPointerUp);

@@ -114,7 +114,7 @@ jobs:
 
   # Image only from code that passed the tests, and only on push to main
   image:
-    needs: test
+    needs: [test, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

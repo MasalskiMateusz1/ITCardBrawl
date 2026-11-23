@@ -9,13 +9,25 @@ export const signedInPlayer: Player = {
   avatarUrl: null,
 };
 
+export interface MockMatchOptions {
+  /** Lets `/media/cards/**` through to the built art files instead of answering 404. */
+  art?: boolean;
+}
+
 /**
  * Drives the board without a backend: `/api/me` answers signed in and every `/api/matches/**`
  * request (the current match and any move) answers with `match`. Card art (`/media/cards/**`)
- * answers 404, so every card shows the placeholder whatever image files exist.
+ * answers 404 by default, so every card shows the placeholder whatever image files exist; with
+ * `art: true` the cards load their images from the production build.
  */
-export async function mockMatch(page: Page, match: MatchView): Promise<void> {
+export async function mockMatch(
+  page: Page,
+  match: MatchView,
+  { art = false }: MockMatchOptions = {},
+): Promise<void> {
   await page.route('**/api/me', (route) => route.fulfill({ json: signedInPlayer }));
   await page.route('**/api/matches/**', (route) => route.fulfill({ json: match }));
-  await page.route('**/media/cards/**', (route) => route.fulfill({ status: 404 }));
+  if (!art) {
+    await page.route('**/media/cards/**', (route) => route.fulfill({ status: 404 }));
+  }
 }

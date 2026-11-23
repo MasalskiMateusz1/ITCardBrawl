@@ -1500,6 +1500,11 @@ describe('MatchTable', () => {
     });
   }
 
+  /** Pointer moves are applied once per animation frame (see MatchTable.queueMove). */
+  function nextFrame(): Promise<void> {
+    return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
   function pointer(target: EventTarget, type: string, x: number, y: number): void {
     target.dispatchEvent(
       new PointerEvent(type, {
@@ -1519,6 +1524,7 @@ describe('MatchTable', () => {
     pointer(cardButton(card), 'pointerdown', 100, 100);
     pointer(document, 'pointermove', 100 + dx / 2, 100);
     pointer(document, 'pointermove', 100 + dx, 100);
+    await nextFrame();
     await fixture.whenStable();
   }
 
@@ -1898,10 +1904,12 @@ describe('MatchTable', () => {
         element.querySelectorAll('.zone.opponent .board .character')[0].querySelector('.name'),
       );
       pointer(document, 'pointermove', 300, 50);
+      await nextFrame();
       await fixture.whenStable();
       expect(locked(element)).toBe(true);
       pointAt(element.querySelector('.turn-bar'));
       pointer(document, 'pointermove', 300, 150);
+      await nextFrame();
       await fixture.whenStable();
       expect(locked(element)).toBe(false);
 
@@ -1909,6 +1917,7 @@ describe('MatchTable', () => {
       await fixture.whenStable();
       expect(arrow(element)).toBeNull();
       pointer(document, 'pointermove', 300, 160);
+      await nextFrame();
       await fixture.whenStable();
       expect(arrow(element)).toBeNull();
 

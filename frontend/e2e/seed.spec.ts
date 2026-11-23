@@ -18,7 +18,7 @@ test('signed-in player sees the mid-game board: both zones, the hand and the sid
   await expect(
     opponentZone.getByRole('button', { name: 'Tester manualny (Ochrona)' }),
   ).toBeVisible();
-  await expect(opponentZone.getByRole('button', { name: 'Automatyk testów' })).toBeVisible();
+  await expect(opponentZone.getByRole('button', { name: 'Tester automatyczny' })).toBeVisible();
 
   // Player zone: a character that can attack is offered as an attacker.
   const playerZone = page.getByRole('region', { name: 'Ty', exact: true });

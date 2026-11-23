@@ -240,10 +240,10 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 
 	}
 
-	/** A card in a side's graveyard; {@code faction} is the card's own faction id (neutral cards report it). */
 	/**
-	 * Karta na cmentarzu z treścią z katalogu: {@code attack}/{@code health}/{@code ability} tylko dla postaci,
-	 * {@code duration}/{@code effects} tylko dla wydarzeń (pozostałe {@code null}, efekty puste).
+	 * A card in a side's graveyard with its catalog content; {@code faction} is the card's own faction id
+	 * (neutral cards report it). {@code attack}/{@code health}/{@code ability} are set for characters only,
+	 * {@code duration}/{@code effects} for events only (the others are {@code null}, effects empty).
 	 */
 	public record GraveyardCardView(int instanceId, String cardId, String name, CardType type, int cost,
 			String faction, Integer attack, Integer health, AbilityView ability, Integer duration,

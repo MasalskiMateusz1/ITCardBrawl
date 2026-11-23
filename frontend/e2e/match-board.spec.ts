@@ -6,7 +6,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import type { MatchView } from '../src/app/game/match';
 import { eventStack, gameOverWin, opponentReplay } from './fixtures/board-states';
 import { midGame } from './fixtures/mid-game';
-import { mockMatch } from './mock-match';
+import { mockMatch, type MockMatchOptions } from './mock-match';
 
 /**
  * Any fixed instants: the board shows no dates, the clock only has to stand still. The clock is
@@ -68,9 +68,34 @@ async function placeholderArt(page: Page): Promise<void> {
   }).toPass({ intervals: [0] });
 }
 
-/** Screenshots the page once the art placeholders and the battle log have settled. */
-async function snap(page: Page, name: string): Promise<void> {
-  await placeholderArt(page);
+/**
+ * Waits until every card shows its image: the art requests reach the built files (mockMatch with
+ * `art: true`), and the page draws a decoded image only on its next (fake) frame.
+ */
+async function loadedArt(page: Page): Promise<void> {
+  const images = page.locator('app-card img');
+  await expect(async () => {
+    await page.clock.runFor(16);
+    expect(await images.count()).toBeGreaterThan(0);
+    const loaded = await images.evaluateAll((all) =>
+      all.every(
+        (img) => (img as HTMLImageElement).complete && (img as HTMLImageElement).naturalWidth > 0,
+      ),
+    );
+    expect(loaded).toBe(true);
+  }).toPass({ intervals: [0] });
+}
+
+/**
+ * Screenshots the page once the card art (placeholders, or the images with `art: true`) and the
+ * battle log have settled.
+ */
+async function snap(
+  page: Page,
+  name: string,
+  { art = false }: MockMatchOptions = {},
+): Promise<void> {
+  await (art ? loadedArt(page) : placeholderArt(page));
   if ((await page.getByRole('region', { name: 'Przebieg partii' }).count()) > 0) {
     await logAtBottom(page);
   }
@@ -78,15 +103,15 @@ async function snap(page: Page, name: string): Promise<void> {
 }
 
 /** Freezes the clock at NOW, before the page loads, and mocks the API with `match`. */
-async function freeze(page: Page, match: MatchView): Promise<void> {
+async function freeze(page: Page, match: MatchView, options?: MockMatchOptions): Promise<void> {
   await page.clock.install({ time: INSTALLED });
   await page.clock.pauseAt(NOW);
-  await mockMatch(page, match);
+  await mockMatch(page, match, options);
 }
 
 /** Opens /match on `match` with the clock frozen and waits for the board. */
-async function openBoard(page: Page, match: MatchView): Promise<void> {
-  await freeze(page, match);
+async function openBoard(page: Page, match: MatchView, options?: MockMatchOptions): Promise<void> {
+  await freeze(page, match, options);
   await page.goto('/match');
   await rendered(page, page.getByRole('region', { name: 'Przebieg partii' }));
   await settle(page);
@@ -107,6 +132,15 @@ test('default mid-game board', async ({ page }) => {
 
   await expect(page.getByRole('timer')).toHaveText(/Pozostało: 45 s/);
   await snap(page, 'mid-game.png');
+});
+
+// Phase 8: the same board with the card art from the build (public/media/cards); every other state
+// keeps the placeholder art, so its baseline does not depend on the image files.
+test('default mid-game board with card art', async ({ page }) => {
+  await openBoard(page, midGame, { art: true });
+
+  await expect(page.getByRole('timer')).toHaveText(/Pozostało: 45 s/);
+  await snap(page, 'mid-game-art.png', { art: true });
 });
 
 test('attacker selected: targets highlighted, the attacker lifted into the centre', async ({
@@ -142,10 +176,10 @@ test('a click on an illegal target cancels the attack selection', async ({ page 
   await pressCard(page, 'Wybierz do ataku: Full-stack Developer');
   await expect(page.getByRole('button', { name: 'Anuluj atak' })).toBeVisible();
 
-  // The Guard (Tester manualny) makes Automatyk testów an illegal target: its button is disabled.
+  // The Guard (Tester manualny) makes Tester automatyczny an illegal target: its button is disabled.
   const illegal = page
     .getByRole('region', { name: 'Przeciwnik', exact: true })
-    .getByRole('button', { name: 'Automatyk testów', exact: true });
+    .getByRole('button', { name: 'Tester automatyczny', exact: true });
   await expect(illegal).toBeDisabled();
   const box = (await illegal.boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
