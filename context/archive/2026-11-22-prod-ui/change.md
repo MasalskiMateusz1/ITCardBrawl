@@ -1,10 +1,10 @@
 ---
 change_id: prod-ui
 title: Prod ui
-status: impl_reviewed
+status: archived
 created: 2026-11-22
 updated: 2026-11-23
-archived_at: null
+archived_at: 2026-11-23T19:40:17Z
 ---
 
 ## Notes
