@@ -855,14 +855,14 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 7.1 Screenshot suite passes against committed baselines: `cd frontend && npm run e2e`
-- [ ] 7.2 CI e2e job is green on the PR
+- [x] 7.1 Screenshot suite passes against committed baselines: `cd frontend && npm run e2e` — 4d0f698
+- [x] 7.2 CI e2e job is green on the PR — 4d0f698
 
 #### Manual
 
-- [x] 7.3 Baselines at 1440×900 match `Board.dc.html` / `Card.dc.html`
-- [x] 7.4 Baselines at 1280×720 show no clipping
-- [ ] 7.5 Mobile cell recorded as N/A in the PR description
+- [x] 7.3 Baselines at 1440×900 match `Board.dc.html` / `Card.dc.html` — 4d0f698
+- [x] 7.4 Baselines at 1280×720 show no clipping — 4d0f698
+- [x] 7.5 Mobile cell recorded as N/A in the PR description — 4d0f698
 
 ### Phase 8: Card images
 
