@@ -19,3 +19,7 @@
     animation: none;
   }
 }
+
+.card {
+  zoom: var(--ui-scale, 1);
+}

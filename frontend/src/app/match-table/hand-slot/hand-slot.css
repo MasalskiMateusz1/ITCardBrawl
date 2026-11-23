@@ -48,7 +48,12 @@
 
 @keyframes draw-travel {
   from {
-    transform: translate(var(--draw-x, 30vw), var(--draw-y, -20vh)) scale(0.45);
+    /* --draw-* are screen px; the board's zoom scales them, so undo it. */
+    transform: translate(
+        calc(var(--draw-x, 30vw) / var(--ui-scale, 1)),
+        calc(var(--draw-y, -20vh) / var(--ui-scale, 1))
+      )
+      scale(0.45);
   }
 }
 

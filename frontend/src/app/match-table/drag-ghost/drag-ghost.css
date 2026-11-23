@@ -12,7 +12,7 @@
 
 /* Screen px come in from the table; the card inside keeps the board's card size. */
 .card {
-  zoom: var(--card-zoom);
+  zoom: calc(var(--card-zoom) * var(--ui-scale, 1));
 }
 
 @keyframes pick-up {

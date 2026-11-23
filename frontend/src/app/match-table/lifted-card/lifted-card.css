@@ -15,10 +15,10 @@
 
 @keyframes lift-in {
   from {
-    /* --lift-* are screen px; zoom scales them, so undo it. */
+    /* --lift-* are screen px; the card's and the board's zoom scale them, so undo both. */
     transform: translate(
-        calc(-50% + var(--lift-x, 0px) / var(--card-zoom, 1)),
-        calc(-50% + var(--lift-y, 0px) / var(--card-zoom, 1))
+        calc(-50% + var(--lift-x, 0px) / var(--card-zoom, 1) / var(--ui-scale, 1)),
+        calc(-50% + var(--lift-y, 0px) / var(--card-zoom, 1) / var(--ui-scale, 1))
       )
       scale(0.9);
     opacity: 0.4;
