@@ -868,13 +868,13 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [ ] 8.1 Art completeness check passes
-- [ ] 8.2 Production build passes and ships the art (31 files under `media/cards/`)
-- [ ] 8.3 Screenshot suite passes including the art state: `cd frontend && npm run e2e`
+- [x] 8.1 Art completeness check passes
+- [x] 8.2 Production build passes and ships the art (31 files under `media/cards/`)
+- [x] 8.3 Screenshot suite passes including the art state: `cd frontend && npm run e2e`
 - [ ] 8.4 CI e2e job is green on the PR
 
 #### Manual
 
-- [ ] 8.5 Every card shows its own image, cropped cleanly, at 1440×900 and 1280×720
-- [ ] 8.6 A card with a missing file falls back to the placeholder without layout shift
-- [ ] 8.7 `/media/cards/<cardId>.webp` loads without a session
+- [x] 8.5 Every card shows its own image, cropped cleanly, at 1440×900 and 1280×720
+- [x] 8.6 A card with a missing file falls back to the placeholder without layout shift
+- [x] 8.7 `/media/cards/<cardId>.webp` loads without a session

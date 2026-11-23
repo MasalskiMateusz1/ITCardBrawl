@@ -266,7 +266,7 @@ export const midGame: MatchView = {
       {
         instanceId: 202,
         cardId: 'tst-automation',
-        name: 'Automatyk testów',
+        name: 'Tester automatyczny',
         attack: 4,
         health: 7,
         damage: 0,
@@ -372,7 +372,7 @@ export const midGame: MatchView = {
       reason: true,
     },
     { side: 'OPPONENT', text: 'Przeciwnik zagrywa: Testy regresji', reason: false },
-    { side: 'OPPONENT', text: 'Automatyk testów atakuje: HP 25 → 24/30', reason: false },
+    { side: 'OPPONENT', text: 'Tester automatyczny atakuje: HP 25 → 24/30', reason: false },
     { side: 'PLAYER', text: 'Twoja tura 5', reason: false },
     { side: 'PLAYER', text: 'Dobierasz: Senior Developer', reason: false },
     { side: 'PLAYER', text: 'Backendowiec atakuje przeciwnika', reason: false },
