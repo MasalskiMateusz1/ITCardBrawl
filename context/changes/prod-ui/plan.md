@@ -833,22 +833,22 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 5.1 Frontend tests pass: `cd frontend && npx ng test --watch=false`
-- [x] 5.2 Production build passes without a component style budget warning
-- [x] 5.3 No hex literal in component CSS of the board
+- [x] 5.1 Frontend tests pass: `cd frontend && npx ng test --watch=false` — 86ce038
+- [x] 5.2 Production build passes without a component style budget warning — 86ce038
+- [x] 5.3 No hex literal in component CSS of the board — 86ce038
 
 #### Manual
 
-- [x] 5.4 Each state of the matrix plus urgent timer, opponent's turn, targeting and game over is visible and readable at 1440×900
-- [x] 5.5 Text contrast at least 4.5:1 for muted labels on panel/surface
-- [x] 5.6 Overlays open, close with Escape, and return focus to their button
+- [x] 5.4 Each state of the matrix plus urgent timer, opponent's turn, targeting and game over is visible and readable at 1440×900 — 86ce038
+- [x] 5.5 Text contrast at least 4.5:1 for muted labels on panel/surface — 86ce038
+- [x] 5.6 Overlays open, close with Escape, and return focus to their button — 86ce038
 
 ### Phase 6: Playwright setup
 
 #### Automated
 
-- [ ] 6.1 Seed test passes locally: `cd frontend && npm run e2e`
-- [ ] 6.2 Unit tests still pass: `cd frontend && npx ng test --watch=false`
+- [x] 6.1 Seed test passes locally: `cd frontend && npm run e2e`
+- [x] 6.2 Unit tests still pass: `cd frontend && npx ng test --watch=false`
 - [ ] 6.3 CI e2e job is green on the PR
 
 ### Phase 7: Visual gate
