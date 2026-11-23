@@ -61,6 +61,11 @@ export interface Messages {
     opponentMoving: string;
     board: string;
     activeEvents: string;
+    /** Accessible name of a zone's active events stack (opens the active events overlay). */
+    showActiveEvents: (count: number) => string;
+    /** Titles of the active events overlays. */
+    opponentActiveEvents: string;
+    playerActiveEvents: string;
     graveyard: string;
     /** Accessible name of a status panel's graveyard button (opens the graveyard overlay). */
     showGraveyard: (count: number) => string;
@@ -82,7 +87,6 @@ export interface Messages {
     eventTarget: (name: string) => string;
     /** Names of the keywords a character has. */
     keyword: Record<AbilityKeyword, string>;
-    turnsLeft: (turns: number) => string;
     moveRejected: string;
     moveFailed: string;
     resultWin: string;

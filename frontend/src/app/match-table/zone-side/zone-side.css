@@ -1,4 +1,7 @@
-/* Zone side column (Board.dc.html B:42-49). Only tokens. */
+/*
+ * Zone side column (Board.dc.html B:42-49): the active events as a pile of compact cards, one
+ * card wide, scaled down, with a count badge like the deck pile's. Only tokens.
+ */
 :host {
   display: flex;
   flex-direction: column;
@@ -6,11 +9,13 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding-inline-start: var(--space-6);
+  padding-inline-start: var(--space-4);
   border-inline-start: 1px solid var(--color-divider);
 }
 
 .label {
+  /* Wraps word by word, so the heading never widens the column past one card. */
+  width: min-content;
   margin: 0;
   font-size: 12px;
   font-weight: 600;
@@ -19,46 +24,63 @@
   color: var(--color-text-secondary);
 }
 
-ul {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  margin: 0;
+.events-open {
+  position: relative;
+  align-self: flex-start;
+  display: block;
+  margin: 0 var(--space-2) var(--space-2) 0;
   padding: 0;
-  list-style: none;
+  border: 0;
+  border-radius: var(--radius-card-compact);
+  background: none;
+  cursor: pointer;
+  --stack-zoom: calc(var(--card-zoom, 1) * 0.6);
 }
 
+.events {
+  display: grid;
+}
+
+/* Every card in one cell, the newest on top; the older ones peek out below and to the right. */
 .event {
+  grid-area: 1 / 1;
+  display: block;
+  translate: calc((var(--n) - 1 - var(--i)) * 3px) calc((var(--n) - 1 - var(--i)) * 3px);
+  z-index: var(--i);
+}
+
+.event app-card {
+  zoom: var(--stack-zoom);
+}
+
+.events-open:hover app-card {
+  filter: brightness(1.15);
+}
+
+.events-count {
+  position: absolute;
+  /* Above every card of the pile (at most three layers, z-index 0-2). */
+  z-index: 3;
+  right: calc(-1 * var(--space-2));
+  bottom: calc(-1 * var(--space-2));
+  min-width: 24px;
+  height: 24px;
+  box-sizing: border-box;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 4px var(--space-2);
-  margin: 0;
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  background-color: var(--color-raised);
-  font-size: 12px;
-}
-
-.event-name {
-  font-weight: 600;
-}
-
-.event-turns {
+  justify-content: center;
   padding: 0 var(--space-1);
+  border: 2px solid var(--color-panel);
   border-radius: var(--radius-pill);
-  background-color: var(--faction-accent);
-  color: var(--color-on-accent);
+  background-color: var(--color-attack);
+  color: var(--color-on-attack);
   font-family: var(--font-mono);
-}
-
-.event-target-name,
-.none {
-  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .none {
   margin: 0;
   font-size: 12px;
+  color: var(--color-text-muted);
 }

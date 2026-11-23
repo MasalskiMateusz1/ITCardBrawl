@@ -847,21 +847,21 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [x] 6.1 Seed test passes locally: `cd frontend && npm run e2e`
-- [x] 6.2 Unit tests still pass: `cd frontend && npx ng test --watch=false`
-- [ ] 6.3 CI e2e job is green on the PR
+- [x] 6.1 Seed test passes locally: `cd frontend && npm run e2e` — 464a4c1
+- [x] 6.2 Unit tests still pass: `cd frontend && npx ng test --watch=false` — 464a4c1
+- [x] 6.3 CI e2e job is green on the PR — 464a4c1
 
 ### Phase 7: Visual gate
 
 #### Automated
 
-- [ ] 7.1 Screenshot suite passes against committed baselines: `cd frontend && npm run e2e`
+- [x] 7.1 Screenshot suite passes against committed baselines: `cd frontend && npm run e2e`
 - [ ] 7.2 CI e2e job is green on the PR
 
 #### Manual
 
-- [ ] 7.3 Baselines at 1440×900 match `Board.dc.html` / `Card.dc.html`
-- [ ] 7.4 Baselines at 1280×720 show no clipping
+- [x] 7.3 Baselines at 1440×900 match `Board.dc.html` / `Card.dc.html`
+- [x] 7.4 Baselines at 1280×720 show no clipping
 - [ ] 7.5 Mobile cell recorded as N/A in the PR description
 
 ### Phase 8: Card images

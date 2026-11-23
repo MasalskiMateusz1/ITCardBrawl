@@ -2,23 +2,28 @@
 @if (events().length === 0) {
   <p class="none">{{ texts().matchTable.none }}</p>
 } @else {
-  <ul class="events">
-    @for (event of events(); track event.instanceId) {
-      <li
-        class="event"
-        tabindex="0"
-        [attr.data-faction]="event.faction"
-        (mouseenter)="emitPreview(event.instanceId, $event)"
-        (mouseleave)="preview.emit(null)"
-        (focusin)="emitPreview(event.instanceId, $event)"
-        (focusout)="preview.emit(null)"
-      >
-        <span class="event-name">{{ event.name }}</span>
-        <span class="event-turns">{{ texts().matchTable.turnsLeft(event.turnsLeft) }}</span>
-        @if (event.targetName; as targetName) {
-          <span class="event-target-name">{{ texts().matchTable.eventTarget(targetName) }}</span>
-        }
-      </li>
-    }
-  </ul>
+  <button
+    type="button"
+    class="events-open"
+    [attr.aria-label]="texts().matchTable.showActiveEvents(events().length)"
+    [attr.aria-expanded]="expanded()"
+    (click)="toggled.emit()"
+  >
+    <span class="events" [style.--n]="layers().length">
+      @for (event of layers(); track event.instanceId; let i = $index) {
+        <span class="event" [style.--i]="i">
+          <app-card
+            variant="compact"
+            type="EVENT"
+            [cardId]="event.cardId"
+            [faction]="event.faction"
+            [name]="event.name"
+            [cost]="event.cost"
+            [turnsLeft]="event.turnsLeft"
+          />
+        </span>
+      }
+    </span>
+    <span class="events-count" aria-hidden="true">{{ events().length }}</span>
+  </button>
 }
