@@ -28,6 +28,7 @@
     <main
       class="main"
       [class.targeting]="targeting()"
+      [class.opponent-turn]="opponentTurn()"
       [class.targeting-hover]="targeting() && targetingHover()"
       [class.dragging]="dragged() !== null || draggedAttacker() !== null"
       [style.cursor]="
@@ -35,17 +36,35 @@
       "
     >
       @if (m.result; as result) {
-        <section class="result" [class.win]="result.winner === 'PLAYER'">
-          <h2>
-            {{
-              result.winner === 'PLAYER'
-                ? texts().matchTable.resultWin
-                : texts().matchTable.resultLose
-            }}
-          </h2>
+        <app-board-overlay
+          class="result"
+          [class.win]="result.winner === 'PLAYER'"
+          [title]="
+            result.winner === 'PLAYER'
+              ? texts().matchTable.resultWin
+              : texts().matchTable.resultLose
+          "
+          [closable]="false"
+          [dim]="true"
+        >
           <p class="result-reason">{{ texts().matchTable.reason[result.reason] }}</p>
           <a class="play-again" routerLink="/new-match">{{ texts().matchTable.playAgain }}</a>
-        </section>
+        </app-board-overlay>
+      }
+      @if (openOverlay(); as kind) {
+        <app-board-overlay
+          class="graveyard-overlay"
+          [title]="
+            kind === 'graveyard-player'
+              ? texts().matchTable.playerGraveyard
+              : texts().matchTable.opponentGraveyard
+          "
+          (closed)="closeOverlay()"
+        >
+          <app-graveyard-list
+            [cards]="kind === 'graveyard-player' ? m.player.graveyard : m.opponent.graveyard"
+          />
+        </app-board-overlay>
       }
 
       <section
@@ -67,7 +86,11 @@
                 (focusin)="showPreview('OPPONENT', c.item.instanceId, $event)"
                 (focusout)="hidePreview()"
               >
-                <app-board-slot [guard]="c.guard" [aimed]="c.action === 'attack'">
+                <app-board-slot
+                  [guard]="c.guard"
+                  [aimed]="c.action === 'attack'"
+                  [target]="c.action === 'attack' || c.action === 'target'"
+                >
                   <button
                     type="button"
                     class="card-action"
@@ -108,7 +131,7 @@
       <div class="turn-bar">
         <p class="turn">{{ texts().matchTable.turn(m.turn.number, m.turn.active === 'PLAYER') }}</p>
         @if (errorText(); as message) {
-          <p class="message">{{ message }}</p>
+          <p class="message" role="alert">{{ message }}</p>
         }
         @if (!finished()) {
           @if (selectedAttacker() !== null) {
@@ -139,9 +162,13 @@
             }
           } @else {
             @if (myTurn() && secondsLeft() !== null) {
-              <span class="turn-timer" role="timer" [class.urgent]="urgent()">
-                {{ texts().matchTable.timeLeft(secondsLeft()!) }}
-              </span>
+              <app-turn-timer
+                class="turn-timer"
+                role="timer"
+                [class.urgent]="urgent()"
+                [seconds]="secondsLeft()!"
+                [limit]="m.turn.timeLimitSeconds ?? secondsLeft()!"
+              />
             }
             <button
               type="button"
@@ -187,7 +214,11 @@
                 (focusin)="showPreview('PLAYER', c.item.instanceId, $event)"
                 (focusout)="hidePreview()"
               >
-                <app-board-slot [guard]="c.guard" [aimed]="c.action === 'attack'">
+                <app-board-slot
+                  [guard]="c.guard"
+                  [aimed]="c.action === 'attack'"
+                  [target]="c.action === 'attack' || c.action === 'target'"
+                >
                   <button
                     type="button"
                     class="card-action"
@@ -294,6 +325,8 @@
         [deckCount]="m.opponent.deckCount"
         [handCount]="m.opponent.handCount"
         [graveyardCount]="m.opponent.graveyardCount"
+        [graveyardOpen]="openOverlay() === 'graveyard-opponent'"
+        (graveyardToggle)="toggleGraveyard('OPPONENT')"
         [targetLabel]="opponentTargetLabel()"
         [appFx]="fxCue('OPPONENT', null)"
         [disabled]="busy()"
@@ -340,6 +373,8 @@
         [budget]="m.player.budget"
         [deckCount]="m.player.deckCount"
         [graveyardCount]="m.player.graveyardCount"
+        [graveyardOpen]="openOverlay() === 'graveyard-player'"
+        (graveyardToggle)="toggleGraveyard('PLAYER')"
         [detailed]="true"
         [targetLabel]="playerTargetLabel()"
         [appFx]="fxCue('PLAYER', null)"
@@ -396,11 +431,11 @@
       </app-drag-ghost>
     }
   </div>
-} @else {
+} @else if (errorText(); as message) {
   <div class="table-empty">
-    @if (errorText(); as message) {
-      <p class="message">{{ message }}</p>
-    }
+    <p class="message" role="alert">{{ message }}</p>
     <a class="exit" routerLink="/">{{ texts().matchTable.exit }}</a>
   </div>
+} @else {
+  <app-board-skeleton />
 }

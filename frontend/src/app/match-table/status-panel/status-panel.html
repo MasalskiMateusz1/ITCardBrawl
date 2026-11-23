@@ -24,7 +24,17 @@
     </div>
     <div class="graveyard">
       <dt>{{ texts().matchTable.graveyard }}</dt>
-      <dd>{{ graveyardCount() }}</dd>
+      <dd>
+        <button
+          type="button"
+          class="graveyard-open"
+          [attr.aria-label]="texts().matchTable.showGraveyard(graveyardCount())"
+          [attr.aria-expanded]="graveyardOpen()"
+          (click)="graveyardToggle.emit()"
+        >
+          {{ graveyardCount() }}
+        </button>
+      </dd>
     </div>
   </dl>
   @if (detailed()) {

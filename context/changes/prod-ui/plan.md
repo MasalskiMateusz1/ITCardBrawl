@@ -833,15 +833,15 @@ The API change is additive (new fields), so an older SPA build keeps working. No
 
 #### Automated
 
-- [ ] 5.1 Frontend tests pass: `cd frontend && npx ng test --watch=false`
-- [ ] 5.2 Production build passes without a component style budget warning
-- [ ] 5.3 No hex literal in component CSS of the board
+- [x] 5.1 Frontend tests pass: `cd frontend && npx ng test --watch=false`
+- [x] 5.2 Production build passes without a component style budget warning
+- [x] 5.3 No hex literal in component CSS of the board
 
 #### Manual
 
-- [ ] 5.4 Each state of the matrix plus urgent timer, opponent's turn, targeting and game over is visible and readable at 1440×900
-- [ ] 5.5 Text contrast at least 4.5:1 for muted labels on panel/surface
-- [ ] 5.6 Overlays open, close with Escape, and return focus to their button
+- [x] 5.4 Each state of the matrix plus urgent timer, opponent's turn, targeting and game over is visible and readable at 1440×900
+- [x] 5.5 Text contrast at least 4.5:1 for muted labels on panel/surface
+- [x] 5.6 Overlays open, close with Escape, and return focus to their button
 
 ### Phase 6: Playwright setup
 

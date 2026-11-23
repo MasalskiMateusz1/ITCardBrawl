@@ -1,6 +1,7 @@
 package com.example.itcardbrawl.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
+import com.example.itcardbrawl.api.MatchView.EffectView;
 import com.example.itcardbrawl.game.AbilityKeyword;
 import com.example.itcardbrawl.game.ActiveEvent;
 import com.example.itcardbrawl.game.BoardCharacter;
@@ -319,15 +321,35 @@ class MatchViewTests {
 		DocumentContext json = JsonPath.parse(JsonMapper.builder().build().writeValueAsString(view));
 
 		assertThat(view.player().graveyard()).as("cmentarz gracza").isEmpty();
-		assertThat(view.opponent().graveyard()).as("cmentarz przeciwnika").containsExactly(
-				new MatchView.GraveyardCardView(91, "tst-manual", "Tester manualny",
-						com.example.itcardbrawl.game.CardType.CHARACTER, 3, "testers"),
-				new MatchView.GraveyardCardView(92, "neu-sprint-planning", "Planowanie sprintu",
-						com.example.itcardbrawl.game.CardType.EVENT, 3, "neutral"));
+		List<MatchView.GraveyardCardView> graveyard = view.opponent().graveyard();
+		assertThat(graveyard).as("cmentarz przeciwnika")
+			.extracting(MatchView.GraveyardCardView::instanceId, MatchView.GraveyardCardView::cardId,
+					MatchView.GraveyardCardView::name, MatchView.GraveyardCardView::type,
+					MatchView.GraveyardCardView::cost, MatchView.GraveyardCardView::faction)
+			.containsExactly(
+					tuple(91, "tst-manual", "Tester manualny", com.example.itcardbrawl.game.CardType.CHARACTER, 3,
+							"testers"),
+					tuple(92, "neu-sprint-planning", "Planowanie sprintu",
+							com.example.itcardbrawl.game.CardType.EVENT, 3, "neutral"));
+		MatchView.GraveyardCardView character = graveyard.get(0);
+		assertThat(character.attack()).as("atak postaci z karty").isEqualTo(2);
+		assertThat(character.health()).as("zdrowie postaci z karty").isEqualTo(5);
+		assertThat(character.ability().keyword()).as("zdolność postaci").isEqualTo(AbilityKeyword.GUARD);
+		assertThat(character.ability().text()).as("opis zdolności postaci").isNotBlank();
+		assertThat(character.duration()).as("czas trwania postaci").isNull();
+		assertThat(character.effects()).as("efekty postaci").isEmpty();
+		assertThat(character.text()).as("tekst karty postaci")
+			.isEqualTo("Przeklikał ścieżkę 47 razy. Za 48. razem znalazł buga.");
+		MatchView.GraveyardCardView event = graveyard.get(1);
+		assertThat(event.attack()).as("atak wydarzenia").isNull();
+		assertThat(event.ability()).as("zdolność wydarzenia").isNull();
+		assertThat(event.duration()).as("czas trwania wydarzenia").isEqualTo(2);
+		assertThat(event.effects()).as("efekty wydarzenia").extracting(EffectView::text).hasSize(2)
+			.allSatisfy(text -> assertThat(text).isNotBlank());
 		assertThat(view.opponent().graveyardCount()).as("licznik cmentarza").isEqualTo(2);
 		Map<String, Object> entry = json.read("$.opponent.graveyard[0]");
-		assertThat(entry).as("klucze karty na cmentarzu")
-			.containsOnlyKeys("instanceId", "cardId", "name", "type", "cost", "faction");
+		assertThat(entry).as("klucze karty na cmentarzu").containsOnlyKeys("instanceId", "cardId", "name", "type",
+				"cost", "faction", "attack", "health", "ability", "duration", "effects", "text");
 	}
 
 	// A match whose log consists of consecutive TurnStarted entries (turn 1..logSize), sides without cards.

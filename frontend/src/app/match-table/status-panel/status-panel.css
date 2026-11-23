@@ -103,7 +103,21 @@ dd {
   cursor: not-allowed;
 }
 
-.status-target:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
+/* Opens the side's graveyard; above the target button, so it stays usable while aiming. */
+.graveyard-open {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-raised);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.graveyard-open:hover,
+.graveyard-open[aria-expanded='true'] {
+  border-color: var(--color-border-strong);
+  background-color: var(--color-raised-2);
 }

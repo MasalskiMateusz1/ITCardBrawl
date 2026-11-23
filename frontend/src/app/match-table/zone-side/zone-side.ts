@@ -3,7 +3,8 @@ import { ActiveEvent } from '../../game/match';
 import { LanguageService } from '../../i18n/language.service';
 
 /**
- * The side column of a board zone: "Aktywne wydarzenia" as turns-left chips. A chip reports hover/focus (with its viewport rectangle) so the table can show the
+ * The side column of a board zone: "Aktywne wydarzenia" as turns-left chips, or "brak" when none
+ * is active. A chip reports hover/focus (with its viewport rectangle) so the table can show the
  * enlarged event card next to it.
  */
 @Component({

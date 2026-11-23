@@ -41,11 +41,6 @@ ul {
   font-size: 12px;
 }
 
-.event:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
 .event-name {
   font-weight: 600;
 }
@@ -58,6 +53,12 @@ ul {
   font-family: var(--font-mono);
 }
 
-.event-target-name {
+.event-target-name,
+.none {
   color: var(--color-text-muted);
+}
+
+.none {
+  margin: 0;
+  font-size: 12px;
 }

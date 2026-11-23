@@ -241,8 +241,13 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 	}
 
 	/** A card in a side's graveyard; {@code faction} is the card's own faction id (neutral cards report it). */
+	/**
+	 * Karta na cmentarzu z treścią z katalogu: {@code attack}/{@code health}/{@code ability} tylko dla postaci,
+	 * {@code duration}/{@code effects} tylko dla wydarzeń (pozostałe {@code null}, efekty puste).
+	 */
 	public record GraveyardCardView(int instanceId, String cardId, String name, CardType type, int cost,
-			String faction) {
+			String faction, Integer attack, Integer health, AbilityView ability, Integer duration,
+			List<EffectView> effects, String text) {
 
 		static List<GraveyardCardView> listOf(MatchSide side, Language language) {
 			return side.graveyard().stream().map(instance -> of(instance, language)).toList();
@@ -251,7 +256,10 @@ public record MatchView(UUID matchId, Match.Status status, TurnView turn, Player
 		static GraveyardCardView of(CardInstance instance, Language language) {
 			Card card = instance.card();
 			return new GraveyardCardView(instance.instanceId(), card.id(), card.name().in(language), card.type(),
-					card.cost(), card.faction());
+					card.cost(), card.faction(), card.attack(), card.health(), AbilityView.of(card.ability(), language),
+					card.duration(), card.effects() == null ? List.of() : card.effects().stream()
+						.map(effect -> EffectView.of(effect, language)).toList(),
+					card.text().in(language));
 		}
 
 	}

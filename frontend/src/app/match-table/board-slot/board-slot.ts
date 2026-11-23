@@ -4,7 +4,8 @@ import { Component, input } from '@angular/core';
  * Wraps one board character's card button. A Guard character (`guard`, from its effective
  * keywords) stands on a shield plate that peeks out around the card's sides and bottom; while an
  * attacker is aimed and the backend offers it as a target (`aimed`) the plate lights up, so it reads
- * "hit this first". Decorative: the button's accessible name already names Guard.
+ * "hit this first". Decorative: the button's accessible name already names Guard. A legal attack
+ * or event target (`target`) gets the attack-coloured ring; other cards stay un-highlighted.
  */
 @Component({
   selector: 'app-board-slot',
@@ -15,9 +16,14 @@ import { Component, input } from '@angular/core';
     }
     <ng-content />
   `,
-  host: { '[class.guard]': 'guard()', '[class.aimed]': 'guard() && aimed()' },
+  host: {
+    '[class.guard]': 'guard()',
+    '[class.aimed]': 'guard() && aimed()',
+    '[class.target]': 'target()',
+  },
 })
 export class BoardSlot {
   readonly guard = input(false);
   readonly aimed = input(false);
+  readonly target = input(false);
 }

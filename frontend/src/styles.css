@@ -101,3 +101,13 @@
   overflow: hidden;
   clip-path: inset(50%);
 }
+
+/*
+ * Keyboard focus on the board: one ring for every button, link and focusable element (headings
+ * focused by script, tabindex -1, get none). Scoped to the board, whose dark ground the
+ * --color-focus ring is drawn for; the light screens keep the browser's ring.
+ */
+app-match-table :is(button, a, [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}

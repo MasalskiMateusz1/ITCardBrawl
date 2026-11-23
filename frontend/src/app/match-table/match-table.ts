@@ -34,6 +34,8 @@ import { LanguageService } from '../i18n/language.service';
 import { Messages } from '../i18n/messages';
 import { Card } from '../ui/card/card';
 import { AimArrow } from './aim-arrow/aim-arrow';
+import { BoardOverlay } from './board-overlay/board-overlay';
+import { BoardSkeleton } from './board-skeleton/board-skeleton';
 import { BoardSlot } from './board-slot/board-slot';
 import {
   ATTACK_FX_MS,
@@ -46,14 +48,19 @@ import {
 } from './attack-fx/attack-fx';
 import { DragGhost } from './drag-ghost/drag-ghost';
 import { DropZone } from './drop-zone/drop-zone';
+import { GraveyardList } from './graveyard-list/graveyard-list';
 import { HandSlot } from './hand-slot/hand-slot';
 import { HoverAnchor, HoverCard, HoverPlacement } from './hover-card/hover-card';
 import { LiftedCard } from './lifted-card/lifted-card';
 import { SideCards } from './side-cards/side-cards';
 import { StatusPanel } from './status-panel/status-panel';
+import { TurnTimer } from './turn-timer/turn-timer';
 import { ZoneSide } from './zone-side/zone-side';
 
 type MatchTableError = 'loadMatch' | 'moveRejected' | 'moveFailed';
+
+/** The overlay opened over the main column; the game over shows on its own (see the template). */
+type BoardOverlayKind = 'graveyard-player' | 'graveyard-opponent';
 
 /** Delay between computer moves played back on the table; specs provide their own. */
 export const REPLAY_STEP_MS = new InjectionToken<number>('REPLAY_STEP_MS', {
@@ -178,16 +185,20 @@ type Aim = { from: Point; to: Point; locked: boolean };
     NgTemplateOutlet,
     Card,
     AimArrow,
+    BoardOverlay,
+    BoardSkeleton,
     BoardSlot,
     DamageFloats,
     FxDirective,
     DragGhost,
     DropZone,
+    GraveyardList,
     HandSlot,
     HoverCard,
     LiftedCard,
     SideCards,
     StatusPanel,
+    TurnTimer,
     ZoneSide,
     LanguageSwitch,
   ],
@@ -243,6 +254,19 @@ export class MatchTable {
   });
 
   protected readonly finished = computed(() => this.match()?.status === 'FINISHED');
+  /**
+   * The graveyard overlay opened from a status panel, `null` when none is. It stacks above the
+   * game-over overlay, which renders whenever `result` is set.
+   */
+  protected readonly openOverlay = signal<BoardOverlayKind | null>(null);
+  /** The computer is moving (its turn, or its moves being played back): the player zone dims. */
+  protected readonly opponentTurn = computed(() => {
+    const match = this.match();
+    return (
+      this.replaying() ||
+      (match !== null && match.status === 'IN_PROGRESS' && match.turn.active === 'OPPONENT')
+    );
+  });
   /** The player may act: the match is running and it is the player's turn. */
   protected readonly myTurn = computed(() => {
     const match = this.match();
@@ -1093,6 +1117,33 @@ export class MatchTable {
   protected onResize(): void {
     this.hidePreview();
     this.uiScale.set(boardScale());
+  }
+
+  /** A status panel's graveyard button: opens that side's graveyard, or closes it when open. */
+  protected toggleGraveyard(side: Side): void {
+    const kind: BoardOverlayKind = side === 'PLAYER' ? 'graveyard-player' : 'graveyard-opponent';
+    if (this.openOverlay() === kind) {
+      this.closeOverlay();
+    } else {
+      this.openOverlay.set(kind);
+    }
+  }
+
+  /** Closes the open overlay and gives focus back to the button that opened it. */
+  protected closeOverlay(): void {
+    const kind = this.openOverlay();
+    if (kind === null) {
+      return;
+    }
+    this.openOverlay.set(null);
+    const zone = kind === 'graveyard-player' ? 'player' : 'opponent';
+    afterNextRender(
+      () =>
+        this.host.nativeElement
+          .querySelector<HTMLElement>(`.status.${zone} .graveyard-open`)
+          ?.focus(),
+      { injector: this.injector },
+    );
   }
 
   /** Fades the lifted card while the pointer is over a legal target. */

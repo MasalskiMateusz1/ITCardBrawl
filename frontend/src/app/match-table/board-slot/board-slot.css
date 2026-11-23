@@ -35,6 +35,13 @@
   animation: guard-aim 0.9s ease-in-out infinite alternate;
 }
 
+/* The ring follows the zoomed card's corners. */
+:host(.target) {
+  border-radius: calc(var(--radius-card-compact) * var(--card-zoom, 1));
+  outline: 3px solid var(--color-attack);
+  outline-offset: 3px;
+}
+
 @keyframes guard-aim {
   to {
     background-color: var(--color-attack);
