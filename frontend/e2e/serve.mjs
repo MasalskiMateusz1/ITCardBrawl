@@ -33,7 +33,15 @@ function send(res, status, file) {
 }
 
 createServer((req, res) => {
-  const path = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
+  let path;
+  try {
+    path = decodeURIComponent(new URL(req.url ?? '/', 'http://localhost').pathname);
+  } catch {
+    // A malformed escape (e.g. /%E0) must not take the test server down.
+    res.writeHead(400);
+    res.end();
+    return;
+  }
   // The API is mocked in the browser (page.route); a request that reaches this server was not mocked.
   if (path === '/api' || path.startsWith('/api/') || path.startsWith('/oauth2/')) {
     res.writeHead(404, { 'Content-Type': 'application/json' });

@@ -23,7 +23,7 @@ const GAP = 8;
 @Component({
   selector: 'app-hover-card',
   styleUrl: './hover-card.css',
-  template: '<div class="card"><ng-content /></div>',
+  templateUrl: './hover-card.html',
   host: {
     'aria-hidden': 'true',
     '[style.left.px]': 'box().left',
