@@ -5,7 +5,8 @@ import { LanguageService } from '../../i18n/language.service';
 /**
  * A side's status in the board aside: name, stats, and for the player budget pips and an HP bar.
  * While the side is a legal attack or event target, `targetLabel` is set and the panel renders a
- * button over itself; otherwise it is a plain region.
+ * button over itself; otherwise it is a plain region. The graveyard count is a button that opens
+ * the side's graveyard overlay; it stays usable while busy, aiming and after the game.
  */
 @Component({
   imports: [],
@@ -27,6 +28,8 @@ export class StatusPanel {
   /** Shown for the opponent only. */
   readonly handCount = input<number | null>(null);
   readonly graveyardCount = input.required<number>();
+  /** The side's graveyard overlay is open (`aria-expanded` of the graveyard button). */
+  readonly graveyardOpen = input(false);
   /** The player's panel adds budget pips and an HP bar. */
   readonly detailed = input(false);
   /** Accessible name of the target button; `null` renders no button. */
@@ -38,6 +41,8 @@ export class StatusPanel {
   readonly targeted = output<void>();
   /** The pointer enters (`true`) or leaves (`false`) the target button. */
   readonly targetHover = output<boolean>();
+  /** The graveyard button was clicked: open the side's graveyard, or close it when open. */
+  readonly graveyardToggle = output<void>();
 
   protected readonly texts = this.languageService.texts;
   protected readonly hpPercent = computed(() => {

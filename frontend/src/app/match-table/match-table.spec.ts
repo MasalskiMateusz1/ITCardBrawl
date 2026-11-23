@@ -7,6 +7,7 @@ import {
   BoardCharacter,
   EffectView,
   EndReason,
+  GraveyardCard,
   HandCard,
   LogEntry,
   MatchView,
@@ -343,10 +344,15 @@ describe('MatchTable', () => {
     return element.querySelector<HTMLButtonElement>(`.status.${side} .status-target`);
   }
 
-  /** Move buttons only: the language switch in the aside is no move. */
+  /**
+   * Move buttons only: the language switch, the graveyard buttons and the overlays' close buttons
+   * are no moves.
+   */
   function moveButtons(element: HTMLElement): HTMLButtonElement[] {
     return Array.from(element.querySelectorAll<HTMLButtonElement>('button')).filter(
-      (candidate) => candidate.closest('app-language-switch') === null,
+      (candidate) =>
+        candidate.closest('app-language-switch, app-board-overlay') === null &&
+        !candidate.classList.contains('graveyard-open'),
     );
   }
 
@@ -443,9 +449,24 @@ describe('MatchTable', () => {
     await fixture.whenStable();
 
     expect(navigateByUrl).not.toHaveBeenCalled();
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Nie udało się wczytać partii — spróbuj ponownie.',
-    );
+    const message = (fixture.nativeElement as HTMLElement).querySelector('.message');
+    expect(text(message)).toBe('Nie udało się wczytać partii — spróbuj ponownie.');
+    expect(message?.getAttribute('role')).toBe('alert');
+    expect((fixture.nativeElement as HTMLElement).querySelector('app-board-skeleton')).toBeNull();
+  });
+
+  it('shows the board skeleton with a loading status while the match is loading', async () => {
+    const fixture = await render();
+    const element = fixture.nativeElement as HTMLElement;
+
+    const status = element.querySelector('app-board-skeleton [role="status"]');
+    expect(text(status)).toBe('Ładowanie partii…');
+    expect(element.querySelectorAll('app-board-skeleton .slot').length).toBe(10);
+
+    httpTesting.expectOne({ method: 'GET', url: '/api/matches/current' }).flush(matchView());
+    await fixture.whenStable();
+    expect(element.querySelector('app-board-skeleton')).toBeNull();
+    expect(element.querySelector('.zone.player')).not.toBeNull();
   });
 
   it('grows the board past 1600×900 by the tighter viewport ratio, and never shrinks it', async () => {
@@ -1370,6 +1391,7 @@ describe('MatchTable', () => {
     await fixture.whenStable();
 
     expect(text(element.querySelector('.message'))).toBe('Ten ruch jest niedozwolony.');
+    expect(element.querySelector('.message')?.getAttribute('role')).toBe('alert');
     expect(handCards(element).length).toBe(5);
   });
 
@@ -2317,12 +2339,15 @@ describe('MatchTable', () => {
       expect(timer(element)).toBe('Pozostało: 45 s');
       expect(element.querySelector('.turn-timer')?.getAttribute('role')).toBe('timer');
       expect(element.querySelector('.turn-timer.urgent')).toBeNull();
+      const bar = () => element.querySelector<HTMLElement>('.turn-timer .bar span')!.style.width;
+      expect(bar()).toBe('100%');
 
       advance(fixture, 1000);
       expect(timer(element)).toBe('Pozostało: 44 s');
       advance(fixture, 34_000);
       expect(timer(element)).toBe('Pozostało: 10 s');
       expect(element.querySelector('.turn-timer.urgent')).not.toBeNull();
+      expect(parseFloat(bar())).toBeCloseTo((10 / 45) * 100);
     });
 
     it('shows the countdown in English', () => {
@@ -2477,6 +2502,8 @@ describe('MatchTable', () => {
     const element = await renderWithMatch(finishedView('PLAYER', 'HP_DEPLETED'));
 
     const result = element.querySelector('.result')!;
+    expect(result.closest('main')).not.toBeNull();
+    expect(result.classList).toContain('win');
     expect(text(result.querySelector('h2'))).toBe('Wygrana');
     expect(text(result.querySelector('.result-reason'))).toBe(
       'Przyczyna: HP spadło do 0 lub niżej',
@@ -2527,6 +2554,240 @@ describe('MatchTable', () => {
       'Tech Lead atakuje Cię i zadaje 8 obrażeń',
     ]);
     expect(text(element.querySelector('.log h2'))).toBe('Przebieg partii');
+  });
+
+  describe('overlays and states', () => {
+    const GRAVEYARD: GraveyardCard[] = [
+      {
+        instanceId: 50,
+        cardId: 'dev-1',
+        name: 'Junior Dev',
+        type: 'CHARACTER',
+        cost: 1,
+        faction: 'developers',
+        attack: 2,
+        health: 3,
+        ability: { keyword: 'RUSH', text: 'Atakuje w turze zagrania.' },
+        duration: null,
+        effects: [],
+        text: 'Pierwszy commit.',
+      },
+      {
+        instanceId: 51,
+        cardId: 'neu-1',
+        name: 'Kawa',
+        type: 'EVENT',
+        cost: 5,
+        faction: 'neutral',
+        attack: null,
+        health: null,
+        ability: null,
+        duration: 2,
+        effects: [{ kind: 'DRAW', scope: 'SELF', amount: 1, text: 'Dobierz 1 kartę' }],
+        text: 'Czarna, bez cukru.',
+      },
+    ];
+
+    function graveyardView(): MatchView {
+      const match = matchView();
+      return {
+        ...match,
+        player: { ...match.player, graveyardCount: 2, graveyard: GRAVEYARD },
+      };
+    }
+
+    function opener(element: HTMLElement, side: 'player' | 'opponent'): HTMLButtonElement {
+      return button(element, `.status.${side} .graveyard-open`);
+    }
+
+    function overlay(element: HTMLElement): Element | null {
+      return element.querySelector('app-board-overlay.graveyard-overlay');
+    }
+
+    it('opens the player graveyard as compact cards from `graveyard` and moves focus to its heading', async () => {
+      const fixture = await renderFixture(graveyardView());
+      const element = fixture.nativeElement as HTMLElement;
+      const open = opener(element, 'player');
+      expect(label(open)).toBe('Cmentarz 2 — pokaż karty');
+      expect(open.getAttribute('aria-expanded')).toBe('false');
+      expect(overlay(element)).toBeNull();
+
+      open.click();
+      await fixture.whenStable();
+
+      const dialog = overlay(element)!;
+      expect(dialog.closest('main')).not.toBeNull();
+      expect(dialog.getAttribute('role')).toBe('dialog');
+      const heading = dialog.querySelector('h2')!;
+      expect(text(heading)).toBe('Twój cmentarz');
+      expect(dialog.getAttribute('aria-labelledby')).toBe(heading.id);
+      expect(document.activeElement).toBe(heading);
+      expect(open.getAttribute('aria-expanded')).toBe('true');
+      const cards = Array.from(dialog.querySelectorAll('.graveyard-card app-card.compact'));
+      expect(cards.map((card) => label(card.querySelector('article')))).toEqual([
+        'Junior Dev',
+        'Kawa',
+      ]);
+      expect(cards.map((card) => card.getAttribute('data-faction'))).toEqual([
+        'developers',
+        'neutral',
+      ]);
+      expect(label(cards[1].querySelector('.cost'))).toBe('Koszt 5');
+      expect(text(cards[0].querySelector('.stat.attack'))).toBe('2');
+      expect(text(cards[0].querySelector('.stat.hp'))).toBe('3');
+      expect(cards[1].querySelector('.stat')).toBeNull();
+    });
+
+    it('shows a clicked graveyard card in full with its ability, and hides it on a second click', async () => {
+      const fixture = await renderFixture(graveyardView());
+      const element = fixture.nativeElement as HTMLElement;
+      opener(element, 'player').click();
+      await fixture.whenStable();
+      const dialog = overlay(element)!;
+      const toggles = Array.from(dialog.querySelectorAll<HTMLButtonElement>('.card-toggle'));
+      expect(toggles.map(label)).toEqual(['Pokaż kartę: Junior Dev', 'Pokaż kartę: Kawa']);
+      expect(dialog.querySelector('app-card.details')).toBeNull();
+
+      toggles[0].click();
+      await fixture.whenStable();
+      const details = dialog.querySelector('app-card.details')!;
+      expect(toggles[0].getAttribute('aria-pressed')).toBe('true');
+      expect(label(details.querySelector('article'))).toBe('Junior Dev');
+      expect(text(details.querySelector('.ability'))).toBe('Atakuje w turze zagrania.');
+      expect(text(details.querySelector('.text'))).toBe('Pierwszy commit.');
+
+      toggles[1].click();
+      await fixture.whenStable();
+      expect(toggles[0].getAttribute('aria-pressed')).toBe('false');
+      expect(text(dialog.querySelector('app-card.details .effect'))).toBe('Dobierz 1 kartę');
+
+      toggles[1].click();
+      await fixture.whenStable();
+      expect(toggles[1].getAttribute('aria-pressed')).toBe('false');
+      expect(dialog.querySelector('app-card.details')).toBeNull();
+    });
+
+    it('closes the graveyard with Escape and gives focus back to its button', async () => {
+      const fixture = await renderFixture(graveyardView());
+      const element = fixture.nativeElement as HTMLElement;
+      opener(element, 'player').click();
+      await fixture.whenStable();
+
+      overlay(element)!
+        .querySelector('h2')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+
+      expect(overlay(element)).toBeNull();
+      expect(document.activeElement).toBe(opener(element, 'player'));
+      expect(opener(element, 'player').getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('closes the graveyard with its close button or its opener, giving focus back', async () => {
+      const fixture = await renderFixture(graveyardView());
+      const element = fixture.nativeElement as HTMLElement;
+      opener(element, 'opponent').click();
+      await fixture.whenStable();
+      expect(text(overlay(element)!.querySelector('h2'))).toBe('Cmentarz przeciwnika');
+      expect(text(overlay(element)!.querySelector('.none'))).toBe('brak');
+
+      button(overlay(element)!, '.overlay-close').click();
+      await fixture.whenStable();
+      expect(overlay(element)).toBeNull();
+      expect(document.activeElement).toBe(opener(element, 'opponent'));
+
+      opener(element, 'opponent').click();
+      await fixture.whenStable();
+      expect(overlay(element)).not.toBeNull();
+      opener(element, 'opponent').click();
+      await fixture.whenStable();
+      expect(overlay(element)).toBeNull();
+    });
+
+    it("switches to the other side's graveyard from its button", async () => {
+      const fixture = await renderFixture(graveyardView());
+      const element = fixture.nativeElement as HTMLElement;
+      opener(element, 'opponent').click();
+      await fixture.whenStable();
+
+      opener(element, 'player').click();
+      await fixture.whenStable();
+
+      expect(element.querySelectorAll('app-board-overlay.graveyard-overlay').length).toBe(1);
+      expect(text(overlay(element)!.querySelector('h2'))).toBe('Twój cmentarz');
+      expect(opener(element, 'opponent').getAttribute('aria-expanded')).toBe('false');
+      expect(opener(element, 'player').getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('shows the game over as a non-closable dialog that takes focus, with the graveyard above it', async () => {
+      const finished = finishedView('OPPONENT', 'HP_DEPLETED');
+      const fixture = await renderFixture({
+        ...finished,
+        player: { ...finished.player, graveyardCount: 2, graveyard: GRAVEYARD },
+      });
+      const element = fixture.nativeElement as HTMLElement;
+
+      const result = element.querySelector('app-board-overlay.result')!;
+      expect(result.getAttribute('role')).toBe('dialog');
+      expect(result.querySelector('.overlay-close')).toBeNull();
+      expect(document.activeElement).toBe(result.querySelector('h2'));
+
+      // Escape does not close the game over.
+      result.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+      expect(element.querySelector('app-board-overlay.result')).not.toBeNull();
+
+      // The graveyard stays reachable behind it and opens on top of it.
+      opener(element, 'player').click();
+      await fixture.whenStable();
+      expect(element.querySelector('app-board-overlay.result')).not.toBeNull();
+      expect(overlay(element)!.querySelectorAll('.graveyard-card').length).toBe(2);
+    });
+
+    it('shows "brak" for a zone without active events', async () => {
+      const element = await renderWithMatch();
+
+      expect(text(element.querySelector('.zone.player .side .none'))).toBe('brak');
+      expect(element.querySelector('.zone.player .events')).toBeNull();
+    });
+
+    it('rings only the legal targets of the selected attacker', async () => {
+      const fixture = await renderFixture(boardView(true));
+      const element = fixture.nativeElement as HTMLElement;
+      expect(element.querySelector('app-board-slot.target')).toBeNull();
+
+      characterButtons(element, 'player')[0].click();
+      await fixture.whenStable();
+
+      const slots = Array.from(element.querySelectorAll('.zone.opponent app-board-slot'));
+      expect(slots.map((slot) => slot.classList.contains('target'))).toEqual([false, true]);
+      expect(element.querySelector('.zone.player app-board-slot.target')).toBeNull();
+    });
+
+    it('rings the legal event targets on both boards', async () => {
+      const fixture = await renderFixture(targetView());
+      const element = fixture.nativeElement as HTMLElement;
+
+      playButtons(element)[2].click();
+      await fixture.whenStable();
+
+      const ringed = (side: string) =>
+        Array.from(element.querySelectorAll(`.zone.${side} app-board-slot`)).map((slot) =>
+          slot.classList.contains('target'),
+        );
+      expect(ringed('player')).toEqual([true]);
+      expect(ringed('opponent')).toEqual([false, true]);
+    });
+
+    it("dims the player zone during the opponent's turn only", async () => {
+      const element = await renderWithMatch(matchView('OPPONENT'));
+      expect(element.querySelector('main.opponent-turn')).not.toBeNull();
+    });
+
+    it("keeps the player zone undimmed on the player's turn", async () => {
+      const element = await renderWithMatch(matchView('PLAYER'));
+      expect(element.querySelector('main.opponent-turn')).toBeNull();
+    });
   });
 });
 

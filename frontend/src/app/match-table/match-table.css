@@ -1,7 +1,8 @@
 /*
  * Battle board layout (Board.dc.html B:18-204): the opponent's column, the board, the player's
- * column. Only tokens; the status panels, card piles, zone side columns, hand slots and the hover
- * card style themselves (their own folders), cards come from ui/.
+ * column. Only tokens; the status panels, card piles, zone side columns, hand slots, overlays,
+ * turn timer, loading skeleton and the hover card style themselves (their own folders), cards come
+ * from ui/; the focus ring is global (styles.css).
  */
 :host {
   position: fixed;
@@ -128,11 +129,6 @@ ul {
   cursor: pointer;
 }
 
-.card-action:focus-visible {
-  outline: 3px solid var(--color-focus);
-  outline-offset: 3px;
-}
-
 .targeting,
 .targeting .card-action:enabled {
   cursor: var(--cursor-target);
@@ -164,18 +160,32 @@ ul {
   color: var(--color-text-secondary);
 }
 
-.turn-timer {
-  font-family: var(--font-mono);
+/* The computer is moving: its pill pulses and the player's zone dims. */
+.opponent-moving {
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-raised);
+  animation: pulse 1s ease-in-out infinite alternate;
 }
 
-.message,
-.turn-timer.urgent {
+@keyframes pulse {
+  to {
+    opacity: 0.7;
+  }
+}
+
+.opponent-turn .zone.player {
+  opacity: 0.6;
+}
+
+.message {
   font-weight: 700;
   color: var(--color-danger);
 }
 
 .turn-bar button,
-.exit {
+.exit,
+.play-again {
   height: 44px;
   padding: 0 var(--space-5);
   border: 1px solid var(--color-border);
@@ -201,7 +211,8 @@ ul {
 }
 
 .turn-bar button:disabled {
-  opacity: 0.6;
+  background-color: var(--color-raised);
+  color: var(--color-text-muted);
 }
 
 .targeting-hover .lifted {
@@ -255,32 +266,17 @@ ul {
   justify-content: space-between;
 }
 
-.exit {
+.exit,
+.play-again {
   display: inline-flex;
   align-items: center;
   background-color: var(--color-panel);
   color: var(--color-link);
 }
 
-.exit:hover {
+.exit:hover,
+.play-again:hover {
   color: var(--color-link-hover);
-}
-
-.result {
-  position: absolute;
-  top: var(--pad);
-  left: 50%;
-  z-index: 3;
-  transform: translateX(-50%);
-  padding: var(--pad) var(--space-6);
-  border: 2px solid var(--color-danger);
-  border-radius: var(--radius-zone);
-  background-color: var(--color-overlay);
-  text-align: center;
-}
-
-.result.win {
-  border-color: var(--color-attack);
 }
 
 /*
@@ -296,6 +292,12 @@ ul {
 @media (max-height: 839px), (max-width: 1439px) {
   :host {
     --card-zoom: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opponent-moving {
+    animation: none;
   }
 }
 

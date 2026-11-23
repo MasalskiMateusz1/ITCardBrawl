@@ -1,0 +1,51 @@
+@if (cards().length === 0) {
+  <p class="none">{{ texts().matchTable.none }}</p>
+} @else {
+  <div class="graveyard">
+    @if (selected(); as card) {
+      <app-card
+        class="details"
+        variant="full"
+        [cardId]="card.cardId"
+        [faction]="card.faction"
+        [type]="card.type"
+        [name]="card.name"
+        [cost]="card.cost"
+        [attack]="card.attack"
+        [health]="card.health"
+        [keyword]="keyword(card)"
+        [ability]="card.ability?.text ?? null"
+        [text]="card.text"
+        [effects]="effects(card)"
+        [duration]="card.duration"
+      />
+    }
+    <ol class="graveyard-cards">
+      @for (card of cards(); track card.instanceId) {
+        <li class="graveyard-card">
+          <button
+            type="button"
+            class="card-toggle"
+            [attr.aria-label]="texts().matchTable.showCardDetails(card.name)"
+            [attr.aria-pressed]="selectedId() === card.instanceId"
+            (click)="toggle(card)"
+          >
+            <app-card
+              variant="compact"
+              [cardId]="card.cardId"
+              [faction]="card.faction"
+              [type]="card.type"
+              [name]="card.name"
+              [cost]="card.cost"
+              [attack]="card.attack"
+              [health]="card.health"
+              [keyword]="keyword(card)"
+              [duration]="card.duration"
+              [selected]="selectedId() === card.instanceId"
+            />
+          </button>
+        </li>
+      }
+    </ol>
+  </div>
+}

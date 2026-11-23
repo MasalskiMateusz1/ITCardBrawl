@@ -1,21 +1,24 @@
 <h3 class="label events-heading">{{ texts().matchTable.activeEvents }}</h3>
-<ul class="events">
-  @for (event of events(); track event.instanceId) {
-    <li
-      class="event"
-      tabindex="0"
-      [attr.data-faction]="event.faction"
-      (mouseenter)="emitPreview(event.instanceId, $event)"
-      (mouseleave)="preview.emit(null)"
-      (focusin)="emitPreview(event.instanceId, $event)"
-      (focusout)="preview.emit(null)"
-    >
-      <span class="event-name">{{ event.name }}</span>
-      <span class="event-turns">{{ texts().matchTable.turnsLeft(event.turnsLeft) }}</span>
-      @if (event.targetName; as targetName) {
-        <span class="event-target-name">{{ texts().matchTable.eventTarget(targetName) }}</span>
-      }
-    </li>
-  }
-</ul>
-
+@if (events().length === 0) {
+  <p class="none">{{ texts().matchTable.none }}</p>
+} @else {
+  <ul class="events">
+    @for (event of events(); track event.instanceId) {
+      <li
+        class="event"
+        tabindex="0"
+        [attr.data-faction]="event.faction"
+        (mouseenter)="emitPreview(event.instanceId, $event)"
+        (mouseleave)="preview.emit(null)"
+        (focusin)="emitPreview(event.instanceId, $event)"
+        (focusout)="preview.emit(null)"
+      >
+        <span class="event-name">{{ event.name }}</span>
+        <span class="event-turns">{{ texts().matchTable.turnsLeft(event.turnsLeft) }}</span>
+        @if (event.targetName; as targetName) {
+          <span class="event-target-name">{{ texts().matchTable.eventTarget(targetName) }}</span>
+        }
+      </li>
+    }
+  </ul>
+}

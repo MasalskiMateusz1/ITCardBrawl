@@ -139,7 +139,10 @@ export type ActiveEvent = {
   faction: string;
 };
 
-/** A card in a side's graveyard, oldest first. */
+/**
+ * A card in a side's graveyard, oldest first, with its catalog content: `attack`, `health` and
+ * `ability` only for characters, `duration` and `effects` only for events (others `null`/empty).
+ */
 export type GraveyardCard = {
   instanceId: number;
   cardId: string;
@@ -147,6 +150,12 @@ export type GraveyardCard = {
   type: CardType;
   cost: number;
   faction: string;
+  attack: number | null;
+  health: number | null;
+  ability: AbilityView | null;
+  duration: number | null;
+  effects: EffectView[];
+  text: string;
 };
 
 export type PlayerView = {

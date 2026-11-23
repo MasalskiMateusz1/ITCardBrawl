@@ -62,6 +62,19 @@ export interface Messages {
     board: string;
     activeEvents: string;
     graveyard: string;
+    /** Accessible name of a status panel's graveyard button (opens the graveyard overlay). */
+    showGraveyard: (count: number) => string;
+    /** A graveyard card's button: shows the whole card with its ability. */
+    showCardDetails: (name: string) => string;
+    /** Titles of the graveyard overlays. */
+    opponentGraveyard: string;
+    playerGraveyard: string;
+    /** Close button of an overlay. */
+    close: string;
+    /** Empty list placeholder (no active events, empty graveyard). */
+    none: string;
+    /** Status shown while the match is loading. */
+    loading: string;
     log: string;
     chooseTarget: string;
     cancelTarget: string;

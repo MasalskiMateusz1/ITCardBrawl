@@ -1,0 +1,11 @@
+<div class="panel">
+  <div class="head">
+    <h2 #heading class="overlay-title" tabindex="-1" [id]="headingId">{{ title() }}</h2>
+    @if (closable()) {
+      <button type="button" class="overlay-close" (click)="closed.emit()">
+        {{ texts().matchTable.close }}
+      </button>
+    }
+  </div>
+  <div class="body"><ng-content /></div>
+</div>
