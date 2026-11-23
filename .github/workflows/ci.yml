@@ -71,6 +71,11 @@ jobs:
   # Playwright against the production build; the API is mocked in the browser (no backend, no OAuth)
   e2e:
     runs-on: ubuntu-latest
+    # The image the screenshot baselines are generated in (npm run e2e:linux): same browser, same
+    # system fonts. Must match the @playwright/test version in frontend/package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --ipc=host
     steps:
       - uses: actions/checkout@v7
 
@@ -87,10 +92,6 @@ jobs:
       - name: Instalacja zaleznosci frontu
         working-directory: frontend
         run: npm ci
-
-      - name: Instalacja przegladarki Playwright
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
 
       - name: Build produkcyjny SPA
         working-directory: frontend

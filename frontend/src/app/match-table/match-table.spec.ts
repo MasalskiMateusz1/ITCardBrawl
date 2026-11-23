@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { GameService } from '../game/game.service';
 import {
+  ActiveEvent,
   BoardCharacter,
   EffectView,
   EndReason,
@@ -496,13 +497,18 @@ describe('MatchTable', () => {
     }
   });
 
-  it('links back to the lobby from the bottom of the aside', async () => {
+  it('links back to the lobby from the top of the right aside, next to the language switch', async () => {
     const element = await renderWithMatch();
 
-    const link = element.querySelector('.aside-footer a.exit');
+    // The top-right corner: the first thing in the right aside, above the battle log.
+    expect(element.querySelector('.aside.right')?.firstElementChild?.classList).toContain(
+      'aside-top',
+    );
+
+    const link = element.querySelector('.aside-top a.exit');
     expect(text(link)).toBe('Wyjdź do menu');
     expect(link?.getAttribute('href')).toBe('/');
-    expect(element.querySelector('.aside-footer app-language-switch')).not.toBeNull();
+    expect(element.querySelector('.aside-top app-language-switch')).not.toBeNull();
   });
 
   it('renders in English when English is chosen', async () => {
@@ -770,24 +776,24 @@ describe('MatchTable', () => {
     expect(text(player.querySelector('.character .stat.hp'))).toBe('3');
     expect(text(element.querySelector('.status.player .graveyard dd'))).toBe('2');
     expect(text(element.querySelector('.status.opponent .graveyard dd'))).toBe('4');
-    expect(text(player.querySelector('.event-name'))).toBe('Sprint');
-    expect(text(player.querySelector('.event-turns'))).toBe('Pozostało tur: 2');
-    expect(text(opponent.querySelector('.event-name'))).toBe('Code Freeze');
-    expect(text(opponent.querySelector('.event-turns'))).toBe('Pozostało tur: 1');
-    expect(text(player.querySelector('.event-target-name'))).toBe('Cel: Tech Lead');
-    expect(opponent.querySelector('.event-target-name')).toBeNull();
+    // Each zone shows its active events as a stack of compact cards: one button, with a count.
+    const playerStack = button(player, '.events-open');
+    expect(label(playerStack)).toBe('Aktywne wydarzenia 1 — pokaż karty');
+    expect(text(playerStack.querySelector('.events-count'))).toBe('1');
+    expect(label(playerStack.querySelector('app-card.compact article'))).toBe('Sprint');
+    expect(text(playerStack.querySelector('app-card .line'))).toBe('Zostało: 2 tury');
+    const opponentStack = button(opponent, '.events-open');
+    expect(label(opponentStack.querySelector('app-card.compact article'))).toBe('Code Freeze');
+    expect(opponentStack.querySelector('app-card')!.getAttribute('data-faction')).toBe('testers');
     expect(text(player.querySelector('.events-heading'))).toBe('Aktywne wydarzenia');
     expect(player.querySelectorAll('.board .slot').length).toBe(4);
     expect(opponent.querySelectorAll('.board .slot').length).toBe(3);
     expect(player.getAttribute('data-faction')).toBe('developers');
     expect(opponent.getAttribute('data-faction')).toBe('testers');
 
-    // The chips carry no effect text; the hover card shows the full event card.
-    await hover(fixture, player.querySelector('.event')!);
-    expect(hoverCard(element)).toBe('Sprint');
-    expect(text(element.querySelector('app-hover-card .effect'))).toBe('Wybrana postać: +2 ataku');
-    await hover(fixture, opponent.querySelector('.event')!);
-    expect(text(element.querySelector('app-hover-card .effect'))).toBe('Własne postacie: Szarża');
+    // The stack carries no effect text and opens no hover card: its overlay shows the full cards.
+    await hover(fixture, playerStack);
+    expect(element.querySelector('app-hover-card')).toBeNull();
   });
 
   it('attacks the opponent player after choosing an attacker', async () => {
@@ -867,6 +873,57 @@ describe('MatchTable', () => {
     expect(element.querySelector('.cancel-attack')).toBeNull();
     expect(statusTarget(element, 'opponent')).toBeNull();
     httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/attack` });
+  });
+
+  /** A primary-button press on `target`, bubbling to the table as in a browser. */
+  function pressOn(target: Element): void {
+    target.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, cancelable: true, button: 0 }),
+    );
+  }
+
+  it('cancels the attacker selection on a press on an illegal target or the empty board, not on a legal one', async () => {
+    // The Guard (QA Lead) makes QA Junior an illegal attack target.
+    const fixture = await renderFixture(boardView(true));
+    const element = fixture.nativeElement as HTMLElement;
+
+    characterButtons(element, 'player')[0].click();
+    await fixture.whenStable();
+    const [illegal, legal] = characterButtons(element, 'opponent');
+    expect(illegal.disabled).toBe(true);
+
+    pressOn(legal);
+    await fixture.whenStable();
+    expect(element.querySelector('.cancel-attack')).not.toBeNull();
+
+    pressOn(illegal);
+    await fixture.whenStable();
+    expect(element.querySelector('.cancel-attack')).toBeNull();
+    expect(characterButtons(element, 'player')[0].getAttribute('aria-pressed')).toBe('false');
+
+    characterButtons(element, 'player')[0].click();
+    await fixture.whenStable();
+    pressOn(element.querySelector('section.zone.opponent')!);
+    await fixture.whenStable();
+    expect(element.querySelector('.cancel-attack')).toBeNull();
+    httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/attack` });
+  });
+
+  it('cancels event targeting on a press on a character the event cannot target', async () => {
+    const fixture = await renderFixture(targetView());
+    const element = fixture.nativeElement as HTMLElement;
+
+    playButtons(element)[2].click();
+    await fixture.whenStable();
+    expect(element.querySelector('.cancel-target')).not.toBeNull();
+    // Hotfix targets Tech Lead, QA Lead or the opponent, not QA Junior.
+    const illegal = characterButtons(element, 'opponent')[0];
+    expect(illegal.disabled).toBe(true);
+
+    pressOn(illegal);
+    await fixture.whenStable();
+    expect(element.querySelector('.cancel-target')).toBeNull();
+    httpTesting.expectNone({ method: 'POST', url: `/api/matches/${MATCH_ID}/play` });
   });
 
   it('renders a card with no legal action as a disabled button named after the card', async () => {
@@ -984,7 +1041,7 @@ describe('MatchTable', () => {
     expect(right.querySelector('.status.player')).not.toBeNull();
     expect(right.querySelector('.status.opponent')).toBeNull();
     expect(right.querySelector('.log')).not.toBeNull();
-    expect(right.querySelector('.aside-footer a.exit')).not.toBeNull();
+    expect(right.querySelector('.aside-top a.exit')).not.toBeNull();
   });
 
   it("renders the opponent's hand as one card back per card in hand", async () => {
@@ -2748,7 +2805,127 @@ describe('MatchTable', () => {
       const element = await renderWithMatch();
 
       expect(text(element.querySelector('.zone.player .side .none'))).toBe('brak');
-      expect(element.querySelector('.zone.player .events')).toBeNull();
+      expect(element.querySelector('.zone.player .events-open')).toBeNull();
+    });
+
+    const SPRINT: ActiveEvent = {
+      instanceId: 30,
+      cardId: 'ev',
+      name: 'Sprint',
+      turnsLeft: 2,
+      effects: [BUFF],
+      targetName: 'Tech Lead',
+      cost: 3,
+      faction: 'neutral',
+    };
+    const FREEZE: ActiveEvent = {
+      instanceId: 31,
+      cardId: 'ev2',
+      name: 'Code Freeze',
+      turnsLeft: 1,
+      effects: [{ kind: 'RUSH', scope: 'OWN_BOARD', amount: 0, text: 'Własne postacie: Szarża' }],
+      targetName: null,
+      cost: 4,
+      faction: 'testers',
+    };
+
+    function eventsView(): MatchView {
+      const match = matchView();
+      return {
+        ...match,
+        player: { ...match.player, activeEvents: [SPRINT, FREEZE] },
+        opponent: { ...match.opponent, activeEvents: [FREEZE] },
+      };
+    }
+
+    function stack(element: HTMLElement, side: 'player' | 'opponent'): HTMLButtonElement {
+      return button(element, `.zone.${side} .events-open`);
+    }
+
+    function eventsOverlay(element: HTMLElement): Element | null {
+      return element.querySelector('app-board-overlay.events-overlay');
+    }
+
+    it('stacks the active events with the newest on top and a count', async () => {
+      const element = await renderWithMatch(eventsView());
+      const open = stack(element, 'player');
+
+      expect(label(open)).toBe('Aktywne wydarzenia 2 — pokaż karty');
+      expect(text(open.querySelector('.events-count'))).toBe('2');
+      const cards = Array.from(open.querySelectorAll('app-card.compact article'));
+      // DOM order is paint order: the last card, the newest event, lies on top.
+      expect(cards.map(label)).toEqual(['Sprint', 'Code Freeze']);
+    });
+
+    it("opens the zone's active events as full cards with effects, turns left and target", async () => {
+      const fixture = await renderFixture(eventsView());
+      const element = fixture.nativeElement as HTMLElement;
+      const open = stack(element, 'player');
+      expect(open.getAttribute('aria-expanded')).toBe('false');
+      expect(eventsOverlay(element)).toBeNull();
+
+      open.click();
+      await fixture.whenStable();
+
+      const dialog = eventsOverlay(element)!;
+      expect(dialog.closest('main')).not.toBeNull();
+      const heading = dialog.querySelector('h2')!;
+      expect(text(heading)).toBe('Twoje aktywne wydarzenia');
+      expect(document.activeElement).toBe(heading);
+      expect(stack(element, 'player').getAttribute('aria-expanded')).toBe('true');
+      const items = Array.from(dialog.querySelectorAll('.active-event'));
+      expect(items.map((item) => label(item.querySelector('app-card article')))).toEqual([
+        'Sprint',
+        'Code Freeze',
+      ]);
+      expect(items[0].querySelector('app-card.compact')).toBeNull();
+      expect(text(items[0].querySelector('.effect'))).toBe('Wybrana postać: +2 ataku');
+      expect(text(items[0].querySelector('.chip.time'))).toBe('Zostało: 2 tury');
+      expect(text(items[0].querySelector('.target'))).toBe('Cel: Tech Lead');
+      expect(text(items[1].querySelector('.effect'))).toBe('Własne postacie: Szarża');
+      expect(text(items[1].querySelector('.chip.time'))).toBe('Zostało: 1 tura');
+      expect(items[1].querySelector('.target')).toBeNull();
+    });
+
+    it("opens the opponent's active events and closes them with Escape, giving focus back", async () => {
+      const fixture = await renderFixture(eventsView());
+      const element = fixture.nativeElement as HTMLElement;
+      stack(element, 'opponent').click();
+      await fixture.whenStable();
+      const dialog = eventsOverlay(element)!;
+      expect(text(dialog.querySelector('h2'))).toBe('Aktywne wydarzenia przeciwnika');
+      expect(dialog.querySelectorAll('.active-event').length).toBe(1);
+
+      dialog
+        .querySelector('h2')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await fixture.whenStable();
+
+      expect(eventsOverlay(element)).toBeNull();
+      expect(document.activeElement).toBe(stack(element, 'opponent'));
+      expect(stack(element, 'opponent').getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('closes the active events with the close button and swaps to a graveyard', async () => {
+      const fixture = await renderFixture(eventsView());
+      const element = fixture.nativeElement as HTMLElement;
+      stack(element, 'player').click();
+      await fixture.whenStable();
+
+      button(eventsOverlay(element)!, '.overlay-close').click();
+      await fixture.whenStable();
+      expect(eventsOverlay(element)).toBeNull();
+      expect(document.activeElement).toBe(stack(element, 'player'));
+
+      stack(element, 'player').click();
+      await fixture.whenStable();
+      button(element, '.status.player .graveyard-open').click();
+      await fixture.whenStable();
+      expect(eventsOverlay(element)).toBeNull();
+      expect(element.querySelectorAll('app-board-overlay').length).toBe(1);
+      expect(text(element.querySelector('app-board-overlay.graveyard-overlay h2'))).toBe(
+        'Twój cmentarz',
+      );
     });
 
     it('rings only the legal targets of the selected attacker', async () => {

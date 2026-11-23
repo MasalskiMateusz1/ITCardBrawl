@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "e2e": "tsc -p e2e/tsconfig.json && playwright test"
+    "e2e": "tsc -p e2e/tsconfig.json && playwright test",
+    "e2e:linux": "node e2e/linux.mjs"
   },
   "private": true,
   "packageManager": "npm@12.1.0",

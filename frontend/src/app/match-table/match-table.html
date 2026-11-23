@@ -52,19 +52,41 @@
         </app-board-overlay>
       }
       @if (openOverlay(); as kind) {
-        <app-board-overlay
-          class="graveyard-overlay"
-          [title]="
-            kind === 'graveyard-player'
-              ? texts().matchTable.playerGraveyard
-              : texts().matchTable.opponentGraveyard
-          "
-          (closed)="closeOverlay()"
-        >
-          <app-graveyard-list
-            [cards]="kind === 'graveyard-player' ? m.player.graveyard : m.opponent.graveyard"
-          />
-        </app-board-overlay>
+        @switch (kind) {
+          @case ('events-player') {
+            <app-board-overlay
+              class="events-overlay"
+              [title]="texts().matchTable.playerActiveEvents"
+              (closed)="closeOverlay()"
+            >
+              <app-active-events-list [events]="m.player.activeEvents" />
+            </app-board-overlay>
+          }
+          @case ('events-opponent') {
+            <app-board-overlay
+              class="events-overlay"
+              [title]="texts().matchTable.opponentActiveEvents"
+              (closed)="closeOverlay()"
+            >
+              <app-active-events-list [events]="m.opponent.activeEvents" />
+            </app-board-overlay>
+          }
+          @default {
+            <app-board-overlay
+              class="graveyard-overlay"
+              [title]="
+                kind === 'graveyard-player'
+                  ? texts().matchTable.playerGraveyard
+                  : texts().matchTable.opponentGraveyard
+              "
+              (closed)="closeOverlay()"
+            >
+              <app-graveyard-list
+                [cards]="kind === 'graveyard-player' ? m.player.graveyard : m.opponent.graveyard"
+              />
+            </app-board-overlay>
+          }
+        }
       }
 
       <section
@@ -120,11 +142,8 @@
         <app-zone-side
           class="side"
           [events]="m.opponent.activeEvents"
-          (preview)="
-            $event === null
-              ? hidePreview()
-              : showPreviewAt('OPPONENT_EVENT', $event.instanceId, $event.anchor)
-          "
+          [expanded]="openOverlay() === 'events-opponent'"
+          (toggled)="toggleEvents('OPPONENT')"
         />
       </section>
 
@@ -256,11 +275,8 @@
         <app-zone-side
           class="side"
           [events]="m.player.activeEvents"
-          (preview)="
-            $event === null
-              ? hidePreview()
-              : showPreviewAt('PLAYER_EVENT', $event.instanceId, $event.anchor)
-          "
+          [expanded]="openOverlay() === 'events-player'"
+          (toggled)="toggleEvents('PLAYER')"
         />
       </section>
 
@@ -342,6 +358,11 @@
     </div>
 
     <div class="aside right">
+      <div class="aside-top">
+        <app-language-switch />
+        <a class="exit" routerLink="/">{{ texts().matchTable.exit }}</a>
+      </div>
+
       <section
         #logBox
         class="log"
@@ -383,11 +404,6 @@
         (targeted)="targetPlayer()"
         (targetHover)="hoverTarget('target', $event)"
       />
-
-      <div class="aside-footer">
-        <app-language-switch />
-        <a class="exit" routerLink="/">{{ texts().matchTable.exit }}</a>
-      </div>
     </div>
 
     @if (hoverCard(); as h) {

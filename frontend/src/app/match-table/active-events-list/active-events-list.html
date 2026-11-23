@@ -1,0 +1,23 @@
+@if (events().length === 0) {
+  <p class="none">{{ texts().matchTable.none }}</p>
+} @else {
+  <ol class="active-events">
+    @for (event of events(); track event.instanceId) {
+      <li class="active-event" [attr.data-faction]="event.faction">
+        <app-card
+          variant="full"
+          type="EVENT"
+          [cardId]="event.cardId"
+          [faction]="event.faction"
+          [name]="event.name"
+          [cost]="event.cost"
+          [effects]="effects(event)"
+          [turnsLeft]="event.turnsLeft"
+        />
+        @if (event.targetName; as targetName) {
+          <p class="target">{{ texts().matchTable.eventTarget(targetName) }}</p>
+        }
+      </li>
+    }
+  </ol>
+}

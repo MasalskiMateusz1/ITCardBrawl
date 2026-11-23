@@ -77,7 +77,8 @@
 
 .zone {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  /* The slots take the width; the active-events column is as wide as one stacked card. */
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-6);
   padding: var(--space-4) var(--space-6) var(--pad);
   background:
@@ -260,10 +261,12 @@ ul {
   color: var(--color-text-muted);
 }
 
-.aside-footer {
+/* Language switch and "exit to menu" in the top-right corner, above the battle log. */
+.aside-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: var(--space-3);
 }
 
 .exit,
